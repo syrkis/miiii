@@ -15,7 +15,7 @@ author: Noah Syrkis
 - Grokking is when a model suddenly generalises.
 - @nanda2023 shows grokking in a transformer.
 - Grokking means the weights represents an algorithm...
-- ... rather than a weired data base.
+- ... rather than a dataset.
 
 \framebreak
 
@@ -39,6 +39,41 @@ author: Noah Syrkis
 
 # MIII
 
-- I want to explore the use of MI on $\mathbb{Z}$-sequences.
-- Initially, I want to explore the classification task...
-- ... with possibility of moving up in task complexity.
+
+- MI on primes.
+- Base 10 centric.
+- Last digits $d_l \in \{1,3,7,9\}$
+
+\framebreak
+
+| $x_0$ | $x_1$ | $x_2$ | $x_3$ | $y_0$ | $y_1$ | $y_2$ | $y_3$ |
+|:------|:------|:------|:------|------:|------:|------:|------:|
+|  1001 |  1003 |  1007 |  1009 |     0 |     0 |     0 |     1 |
+|  1011 |  1013 |  1017 |  1019 |     0 |     1 |     0 |     1 |
+| $\vdots$ ||||||| $\vdots$ |
+|  9981 |  9983 |  9987 |  9989 |     0 |     0 |     0 |     0 |
+|  9991 |  9993 |  9997 |  9999 |     0 |     0 |     0 |     0 |
+
+Table: Four digit dataset with numbers and labels ($[ \textbf{X} | \textbf{Y} ]$).
+
+\framebreak
+
+- I will focus on @he2023's simple transformer (see [@sec:simpletrans]).
+
+
+# Simple trans. [@he2023] {#sec:simpletrans}
+
+::: {.columns align=center }
+:::: column
+
+- Simple attention [@eq:attn]
+
+::::
+:::: column
+$$\textbf{A}(\textbf{X}) \leftarrow (\alpha I_T + \beta \textbf{A}(\textbf{X}))$$ {#eq:attn}
+::::
+:::
+
+\framebreak
+
+![@he2023's transformer block](attn.png)

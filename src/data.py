@@ -9,7 +9,7 @@ from jax import jit, random, vmap
 from tqdm import tqdm
 
 # functions
-def prime_iterator_fn():
+def prime_fn():
     D, q = {}, 2
     while True:
         if q not in D:  # q is a new prime.
@@ -21,40 +21,16 @@ def prime_iterator_fn():
             del D[q]    # Remove this number, it's no longer needed.
         q += 1
 
-def data_fn(n):
-    prime_iter = prime_iterator_fn()
-    primes = []
-    for _ in range(n):
-        p = next(prime_iter)
-        primes.append(p)
+def primes_fn(n):
+    prime_iter = prime_fn()
+    primes = [next(prime_iter) for _ in range(n)]
     return jnp.array(primes)
 
-# scrapped code generating [1, 3, 7, 9] context for each prime of partcular digitlength (too base 10 focused).
-def d_data_fn(d):
-    prime_iter = prime_iterator_fn()
-    primes     = d_digit_primes(prime_iter, d - 1)
-    context    = context_fn(primes)
-    x          = context            # n x 4
-    y          = jnp.equal(x, primes).astype(jnp.uint32)
-    data       = jnp.concatenate([x, y], axis=1)
-    rng        = random.PRNGKey(0)
-    idxs       = random.permutation(rng, jnp.arange(len(data)))
-    return data[idxs].astype(jnp.uint32)
+def data_fn(n, d):
+    primes = primes_fn(n)
+    context = vmap(context_fn)(primes)
+    return context
 
-
-def d_digit_primes(prime_iter, d):
-    primes = []
-    if d is not None:
-        for _ in range(100_000):
-            p = next(prime_iter)
-            if p < 10**d:
-                continue
-            if p > 10**(d+1):
-                break
-            primes.append(p)
-    return jnp.array(primes)[:, None]
-
-@vmap
 def context_fn(p):
     floor = 10 * jnp.floor(p / 10)
     context = [floor + 1, floor + 3, floor + 7, floor + 9]
