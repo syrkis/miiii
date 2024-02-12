@@ -1,5 +1,5 @@
 ---
-title: Mechanistic Interpretability on Irreducible Integers
+title: Mechanistic Interpretability on Irreducible Unsigned-Integer Identifier
 type: slides
 author: Noah Syrkis
 ---
@@ -43,6 +43,8 @@ author: Noah Syrkis
 - MI on primes.
 - Base 10 centric.
 - Last digits $d_l \in \{1,3,7,9\}$
+- @conmy2023 tries to automate this.
+
 
 \framebreak
 

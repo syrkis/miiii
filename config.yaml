@@ -1,0 +1,11 @@
+n_layers: 6
+n_heads: 4
+epochs: 10
+block_size: 128
+embed_dim: 64
+batch_size: 32
+scale: 0.01
+dropout: 0.2
+weight_decay: 0.01
+learning_rate: 0.001
+vocab_size: 10
