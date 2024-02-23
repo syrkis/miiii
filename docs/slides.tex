@@ -3,33 +3,59 @@
 
 % Load packages
 \usepackage{datetime}
-\usepackage{graphicx}
-\usepackage{amssymb}
-\usepackage{booktabs}
-\usepackage{siunitx}
-\usepackage{listings}
 \usepackage{ifthen}
-\usepackage{caption}
-\usepackage{etoolbox}
-\usepackage{hyperref}
 \usepackage{ragged2e}
-\usepackage{adjustbox}
-\usepackage{xcolor}
-\usepackage{longtable}
-\usepackage{float}
+\usepackage{fancyvrb}   % Alternative verbatim environment
+\usepackage{graphicx}      % For handling graphics
+\usepackage{amssymb}       % For mathematical symbols
+\usepackage{amsmath}
+\usepackage{xparse}
+\usepackage{pgfplotstable} % For handling CSV data
+\usepackage{fancyhdr}
+\usepackage{parskip} % Removes default interparagraph spacing
+\usepackage{booktabs}      % For publication quality tables
+\usepackage{siunitx}       % For handling units and numbers
+\usepackage{listings}      % For source code listings
+\usepackage{caption}       % For captions customization
+\usepackage{etoolbox}      % For programming tools
+\usepackage{hyperref}      % For cross-referencing and hyperlinks
+\usepackage{float}         % For floating environments
+\usepackage{multicol}      % For multi-column layout
+\usepackage{longtable}     % For long tables
+\usepackage{adjustbox}     % For adjusting boxes
+\usepackage{xcolor}        % For color customization
 \usepackage[backend=biber, style=numeric]{biblatex}
 
+% code listing
+\lstset{
+    basicstyle=\ttfamily, % Use monospace font at a smaller size
+    breaklines=true, % Enable line breaking
+    numbers=left, % Adjust or remove according to preference
+    tabsize=4, % Reduce tab size for more compact code
+    showstringspaces=true, % Don't show spaces in strings as special characters
+    frame=single, % Optional: Adds a frame around the code block
+    framesep=2pt, % Reduce frame separation
+    aboveskip=3pt, % Reduce space above the code block
+    belowskip=3pt, % Reduce space below the code block
+    xleftmargin=5pt, % Reduce left margin
+    xrightmargin=5pt % Reduce right margin
+}
+
+
+
 % Metadata
-\title{Mechanistic Interpretability on Irreducible Unsigned-Integer
-Identifier}
+\title{Mechanistic Interpretability on Irreducible Integer Identifiers}
 \date{\mydate\today}
 \author{Noah Syrkis}
+\newcommand{\affiliation}{University of
+Copenhagen} % Capture affiliation from the header
+\newcommand{\footerurl}{false} % Capture the URL from the header
 
 % BibTeX setup
 \addbibresource{/Users/syrkis/code/press/library.bib}
 
 % Listings and date setup
-\newdateformat{mydate}{\monthname[\THEMONTH] \THEDAY, \THEYEAR}
+\newdateformat{mydate}{\shortmonthname[\the\month]. \THEDAY, \THEYEAR}
 % tight list
 \providecommand{\tightlist}{\setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
 
@@ -69,13 +95,16 @@ Identifier}
   \leavevmode
   \hbox{
     \ifnum\thepage>1
-      \begin{beamercolorbox}[wd=\paperwidth,ht=2.5ex,dp=1ex]{page number}
-        \hfill\insertpagenumber{} of \insertdocumentendpage\hspace{0.5cm}
-        % \hfill\insertframenumber/\inserttotalframenumber\hspace{0.5cm}
+      \hspace{0.4cm}\insertframenumber{} of \inserttotalframenumber
+      \begin{beamercolorbox}[wd=\paperwidth, ht=2.5ex,dp=1ex]{page number}
+        % Check if URL is defined and not set to "false"
+        \ifthenelse{\equal{\footerurl}{} \OR \equal{\footerurl}{false}}{}{%
+          \hfill\footerurl\hspace{1.7cm}
+        }
       \end{beamercolorbox}
     \fi
   }
-    \vspace*{0.5cm}
+    \vspace*{0.4cm}
 }
 
 % Modify the frametitle template
@@ -91,19 +120,31 @@ Identifier}
   }
 }
 
+% \AtBeginSection[]{
+%   \begin{frame}[allowframebreaks]
+%     \vfill
+%     \tableofcontents[hideallsubsections]
+%     \vfill
+%   \end{frame}
+% }
+
+
 % Custom title page
 \defbeamertemplate*{title page}{customized}
 {
-  \begin{minipage}[c][\textheight][c]{0.55\textwidth}
+  \begin{minipage}[c][\textheight][c]{0.5\textwidth}
     \begin{center}
       \usebeamerfont{title}\inserttitle\par
       \vspace{1cm}
       \small\usebeamerfont{author}\insertauthor\par
+      \ifthenelse{\equal{\affiliation}{}}{}{% Check if affiliation is defined
+        \small\affiliation\par % Display affiliation
+      }
       \small\usebeamerfont{date}\insertdate\par
     \end{center}
   \end{minipage}%
   \hfill
-  \begin{minipage}[c][0.7\textheight][c]{0.35\textwidth}
+  \begin{minipage}[c][0.7\textheight][c]{0.4\textwidth}
     \tableofcontents[hideallsubsections]
   \end{minipage}
 }
@@ -117,8 +158,16 @@ Identifier}
 \begin{document}
 
   % Front page
+  \ifthenelse{\equal{\inserttitle}{}}{}{% Check if title is empty
   \begin{frame}[allowframebreaks]
     \titlepage
+  \end{frame}
+  }
+
+  \begin{frame}[allowframebreaks]
+  ``This disgusting pile of matrices with some non-linearities in
+  between is an impressively poorly written beautiful and concise
+  algorithm''\footnote<.->{Neel Nanda (not verbatim)}
   \end{frame}
 
   \section{\textbar{} Mech. interp. (MI)}\label{mech.-interp.-mi}
@@ -127,91 +176,141 @@ Identifier}
   \begin{itemize}
   \tightlist
   \item
-    Reverse-engineering neural network circuits.
+    To look into black (or opaque) machine learning (ML) boxes.
   \item
-    \textcite{nanda2023} shows MI modular addition transformer.
+    Reverse-engineering deep learned circuits.
   \item
-    There are (allegedly) low hanging fruits in MI.
+    \textcite{nanda2023} shows MI on modular addition transformer.
+  \item
+    We show MI on prime number classification transformer.
   \end{itemize}
   \end{frame}
 
-  \section{\textbar{} Grokking}\label{grokking}
+  \subsection{\textbar{} On complexity}\label{on-complexity}
+
+  \begin{frame}{\textbar{} On complexity}
+  \begin{itemize}[<+->]
+  \tightlist
+  \item
+    ML complexity (probably) grows faster than MI \autocite{sarkar2022}.
+  \item
+    Lessons from MI might still inform ML development and risk.
+  \item
+    Work on automatic MI \autocite{conmy2023}: ML might have a rôle in
+    MI.
+  \item
+    Current ML is sub-symbolic (lacks the rigor of formal systems).
+  \item
+    Metric frenzy has made ML more engineering than science.
+  \end{itemize}
+  \end{frame}
+
+  \subsection{\textbar{} Grokking}\label{grokking}
 
   \begin{frame}[allowframebreaks]{\textbar{} Grokking}
   \begin{itemize}
   \tightlist
   \item
-    Grokking is when a model suddenly generalises.
+    When a model suddenly generalizes \autocite{power2022}.
   \item
-    \textcite{nanda2023} shows grokking in a transformer.
-  \item
-    Grokking means the weights represents an algorithm\ldots{}
+    Grokking means the weights represent an algorithm \ldots{}
   \item
     \ldots{} rather than a dataset.
-  \end{itemize}
-
-  \framebreak
-
-  \begin{itemize}
-  \tightlist
   \item
-    Since MI is about reverse-engineering circuits\ldots{}
-  \item
-    \ldots{} grokking is a good sign for MI \ldots{}
-  \item
-    \ldots{} as it means circuits are \emph{there}.
+    Good for MI, as it means circuits are there to be discovered.
   \end{itemize}
   \end{frame}
 
-  \section{\texorpdfstring{\textbar{} \(\mathbb{Z}\)-sequences}{\textbar{} \textbackslash mathbb\{Z\}-sequences}}\label{mathbbz-sequences}
+  \section{\textbar{} Transformers}\label{transformers}
 
-  \begin{frame}[allowframebreaks]{\textbar{} \(\mathbb{Z}\)-sequences}
+  \begin{frame}[allowframebreaks]{\textbar{} Transformers}
   \begin{itemize}
   \tightlist
   \item
-    \textcite{belcak2022} shows that transformers can sequences
-    \(\in\mathbb{Z}\).
+    Famously introduced by \textcite{vaswani2017}.
   \item
-    They work in thousands of squences from OEIS \autocite{sloane2003}.
+    Batch normalization, residual streams, projections, etc.
   \item
-    They have four tasks: (1) sequence classification, (2) sequence
-    comparission, (3) sequence continuation, and (4) sequence unmasking.
-  \item
-    Each task is strictly harder than the previous one.
-  \end{itemize}
-
-  \framebreak
-
-  \begin{itemize}
-  \tightlist
-  \item
-    Though \(\mathbb{Z}\)-sequences are simple to see, some can be hard
-    to impossible to understand.
-  \item
-    \(1, 2, 3, ..., 100\) is easy, while the busy beaver sequence
-    \autocite{aaronson2020} is hard/impossible.
-  \item
-    Complexity ranges from trivial to fuck-off-forever.
+    We use \textcite{he2023}'s simplified transformer block.
   \end{itemize}
   \end{frame}
 
-  \section{\textbar{} MIII}\label{miii}
+  \begin{frame}[allowframebreaks]
+  ``God made the natural numbers; all else is the work of
+  man.''\footnote<.->{Leopold Kronecker (also not verbatim)}
+  \end{frame}
 
-  \begin{frame}[allowframebreaks]{\textbar{} MIII}
+  \section{\texorpdfstring{\textbar{} \(\mathbb{Z}\)}{\textbar{} \textbackslash mathbb\{Z\}}}\label{mathbbz}
+
+  \begin{frame}[allowframebreaks]{\textbar{} \(\mathbb{Z}\)}
+  \begin{columns}[c]
+  \begin{column}{0.6\textwidth}
+  \small
+
   \begin{itemize}
   \tightlist
   \item
-    MI on primes.
+    Complexity from trivial in seq. \ref{eq:nat} to impossible in seq.
+    \ref{eq:bb} (busy beaver \autocite{aaronson2020}).
   \item
-    Base 10 centric.
+    OEIS \autocite{sloane2003} is a big database of \(\mathbb{Z}\)-seqs.
   \item
-    Last digits \(d_l \in \{1,3,7,9\}\)
+    Four \(\mathbb{Z}\) tasks: classify, compare, continue, and unmask
+    \autocite{belcak2022}.
   \item
-    \textcite{conmy2023} tries to automate this.
+    We focus on primes (seq. \ref{eq:prime}), which \textcite{lee2024}
+    shows is doable.
   \end{itemize}
+  \end{column}
 
-  \framebreak
+  \begin{column}{0.3\textwidth}
+  \begin{equation}\phantomsection\label{eq:nat}{
+  0,  1, 2, 3, \dots
+  }\end{equation}
 
+  \begin{equation}\phantomsection\label{eq:bb}{
+  6, 21, 107, \dots
+  }\end{equation}
+
+  \begin{equation}\phantomsection\label{eq:prime}{
+  2, 3, 5, 7, 9, \dots
+  }\end{equation}
+  \end{column}
+  \end{columns}
+  \end{frame}
+
+  \subsection[\textbar{} Irreducible
+  integers]{\texorpdfstring{\textbar{} Irreducible
+  integers\footnote<.->{\tiny Is what you call prime numbers when you
+    really want the acronym of your project title to be MIIII.}}{\textbar{} Irreducible integers}}\label{irreducible-integers}
+
+  \begin{frame}[allowframebreaks]{\textbar{} Irreducible integers\footnote<.->{\tiny Is
+    what you call prime numbers when you really want the acronym of your
+    project title to be MIIII.}}
+  \begin{itemize}
+  \tightlist
+  \item
+    Given a sequence from \(\mathbb{Z}\), which numbers are prime?
+  \item
+    Tests to determine primality include:
+
+    \begin{itemize}
+    \tightlist
+    \item
+      Wilson's Theorem: \(n>1\) is prime if \((n-1)\equiv -1 \mod n\).
+    \item
+      Fermat's Little Theorem: \(a^{n-1} \mod n = 1\), for \(a < n\).
+    \item
+      Euler's Criterion, AKS Primality Test, Miller-Rabin Primality
+      Test, and more.
+    \end{itemize}
+  \end{itemize}
+  \end{frame}
+
+  \subsection{\textbar{} Irreducible integers
+  (cont.)}\label{irreducible-integers-cont.}
+
+  \begin{frame}[allowframebreaks]{\textbar{} Irreducible integers (cont.)}
   \begin{longtable}[]{@{}llllrrrr@{}}
   \caption{Four digit dataset with numbers and labels
   (\([ \textbf{X} | \textbf{Y} ]\)).}\tabularnewline
@@ -232,47 +331,72 @@ Identifier}
   9991 & 9993 & 9997 & 9999 & 0 & 0 & 0 & 0 \\
   \bottomrule\noalign{}
   \end{longtable}
+  \end{frame}
 
-  \framebreak
+  \section{\texorpdfstring{\textbar{} The MU puzzle
+  \autocite{hofstadter2000}}{\textbar{} The MU puzzle {[}@hofstadter2000{]}}}\label{the-mu-puzzle-hofstadter2000}
 
+  \begin{frame}[fragile,allowframebreaks]{\textbar{} The MU puzzle
+  \autocite{hofstadter2000}}
   \begin{itemize}
   \tightlist
   \item
-    I will focus on \textcite{he2023}'s simple transformer (see
-    sec.~\ref{sec:simpletrans}).
+    Can you get \texttt{MI} from
+    \texttt{MU} by:
+
+    \begin{enumerate}
+    \tightlist
+    \item
+      Adding a~\texttt{U}~to the end of any string
+      ending in~\texttt{I}.
+    \item
+      Doubling the string after the \texttt{M}.
+    \item
+      Replacing any~\texttt{III}~with
+      a~\texttt{U}.
+    \item
+      Removing any \texttt{UU}.
+    \end{enumerate}
   \end{itemize}
   \end{frame}
 
-  \section{\texorpdfstring{\textbar{} Simple trans.
-  \autocite{he2023}}{\textbar{} Simple trans. {[}@he2023{]}}}\label{sec:simpletrans}
+  \section{\textbar{} MIIII}\label{miiii}
 
-  \begin{frame}[allowframebreaks]{\textbar{} Simple trans. \autocite{he2023}}
-  \begin{columns}[c]
-  \begin{column}{0.48\textwidth}
+  \begin{frame}[allowframebreaks]{\textbar{} MIIII}
   \begin{itemize}
   \tightlist
   \item
-    Simple attention eq.~\ref{eq:attn}
+    We something soemthign
+  \item
+    Then this
+  \item
+    Then this
+  \item
+    Then this
   \end{itemize}
-  \end{column}
-
-  \begin{column}{0.48\textwidth}
-  \begin{equation}\phantomsection\label{eq:attn}{\textbf{A}(\textbf{X}) \leftarrow (\alpha I_T + \beta \textbf{A}(\textbf{X}))}\end{equation}
-  \end{column}
-  \end{columns}
 
   \framebreak
 
-  \begin{figure}
-  \centering
-  \includegraphics{attn.png}
-  \caption{\textcite{he2023}'s transformer block}
-  \end{figure}
+  \begin{itemize}
+  \tightlist
+  \item
+    But then this.
+  \end{itemize}
+  \end{frame}
+
+  \subsection{\textbar{} MIIII (cont.)}\label{miiii-cont.}
+
+  \begin{frame}[fragile]{\textbar{} MIIII (cont.)}
+\begin{lstlisting}[title={The algorithm}]
+def fib(n):
+    | -> return n :: []
+    | Match P <- <> DIV (1 \in N)
+\end{lstlisting}
   \end{frame}
 
   % bibliography
-  
-\begin{frame}[allowframebreaks]
+
+\begin{frame}[allowframebreaks,allowframebreaks]
   \Large{References}
   \small\linespread{1.2}\printbibliography
 \end{frame}

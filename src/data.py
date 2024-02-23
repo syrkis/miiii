@@ -32,11 +32,12 @@ def primes_fn(d):  # returns a jnp.array of all d-digit primes
     return jnp.array(primes).astype(jnp.int32)
 
 def data_fn(d):  # returns a marix of all d digit numbers ending in 1,3,7, or 9, in a sorted (-1 x 4 x d)
+    # x       = vmap(lambda row: extract_digits(row, d))(context)  # (10 ** d, 4, 4)
     primes  = primes_fn(d)                                       # (n_primes,  )
     context = context_fn(d)                                      # (10 ** d , 4)
     y       = vmap(lambda row: target_fn(primes, row))(context)  # (10 ** d, 4)
-    x       = vmap(lambda row: extract_digits(row, d))(context)  # (10 ** d, 4, 4)
-    return x, y
+    data    = jnp.concatenate((context, y), axis=1)
+    return data
 
 def extract_digits(row, d):
     # each entry in row is a digit. it should be a vector of powers of 10
@@ -53,9 +54,3 @@ def context_fn(d):
     context = context[:, [1, 3, 7, 9]]
     return context
 
-def batch_fn(rng, data):
-    x, y = data
-    while True:
-        rng, key = random.split(rng)
-        idxs = random.permutation(key, x.shape[0])
-        yield x[idxs], y[idxs]
