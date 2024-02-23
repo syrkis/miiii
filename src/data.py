@@ -20,7 +20,46 @@ def prime_fn():  # generates prime numbers
                 D.setdefault(p + q, []).append(p)
             del D[q]    # Remove this number, it's no longer needed.
         q += 1
-    
+
+# convert base ten int d to base n
+def base_fn(digit, base=10):
+    if digit == 0:
+        return "0"
+    digits = []
+    while digit:
+        remainder = digit % base
+        if remainder > 9:
+            # Map 10-15 to 'A'-'F' for base 16, and similarly for other bases
+            digits.append(chr(55 + remainder))
+        else:
+            digits.append(str(remainder))
+        digit //= base
+    return ''.join(digits[::-1])
+
+def data_fn(rng, n, base):
+    primes     = prime_fn()
+    primes     = set([next(primes) for _ in range(n)])
+    not_primes = []
+    while len(not_primes) != len(primes):
+        rng, key = random.split(rng)
+        q        = random.randint(key, (1,), 0, max(primes))
+        if q.item() not in primes:
+            not_primes.append(q.item())
+    primes     = list(map(lambda x: base_fn(x, base), list(primes)))
+    not_primes = list(map(lambda x: base_fn(x, base), not_primes))
+    return primes
+
+
+
+""" 
+def data_fn(d):  # returns a marix of all d digit numbers ending in 1,3,7, or 9, in a sorted (-1 x 4 x d)
+    # x       = vmap(lambda row: extract_digits(row, d))(context)  # (10 ** d, 4, 4)
+    primes  = primes_fn(d)                                       # (n_primes,  )
+    context = context_fn(d)                                      # (10 ** d , 4)
+    y       = vmap(lambda row: target_fn(primes, row))(context)  # (10 ** d, 4)
+    data    = jnp.concatenate((context, y), axis=1)
+    return data
+
 def primes_fn(d):  # returns a jnp.array of all d-digit primes
     prime_iter = prime_fn()
     primes     = []
@@ -30,14 +69,6 @@ def primes_fn(d):  # returns a jnp.array of all d-digit primes
             primes.append(prime)
         prime = next(prime_iter)
     return jnp.array(primes).astype(jnp.int32)
-
-def data_fn(d):  # returns a marix of all d digit numbers ending in 1,3,7, or 9, in a sorted (-1 x 4 x d)
-    # x       = vmap(lambda row: extract_digits(row, d))(context)  # (10 ** d, 4, 4)
-    primes  = primes_fn(d)                                       # (n_primes,  )
-    context = context_fn(d)                                      # (10 ** d , 4)
-    y       = vmap(lambda row: target_fn(primes, row))(context)  # (10 ** d, 4)
-    data    = jnp.concatenate((context, y), axis=1)
-    return data
 
 def extract_digits(row, d):
     # each entry in row is a digit. it should be a vector of powers of 10
@@ -54,3 +85,4 @@ def context_fn(d):
     context = context[:, [1, 3, 7, 9]]
     return context
 
+ """
