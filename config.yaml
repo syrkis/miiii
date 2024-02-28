@@ -1,12 +1,12 @@
 base: 16
 n_primes: 1000
 repr: "positional"
+epochs: 100
 n_toks: 10
-n_layers: 6
+n_layers: 2
 n_heads: 4
-epochs: 10
 block_size: 128
-embed_dim: 64
+emb_dim: 64
 batch_size: 32
 scale: 0.01
 dropout: 0.2
