@@ -45,7 +45,6 @@ def data_fn(config):
     x      = jnp.arange(primes.max())
     y      = jnp.zeros_like(x).at[primes].add(1)
     return repr_fn(x, config), y
-
 def repr_fn(x, config):
     if config['repr'] == 'positional':
         return position_fn(x, config)

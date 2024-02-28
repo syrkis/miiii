@@ -56,8 +56,8 @@ def init_head_fn(rng, conf):  # emb_dim, n_heads, scale):
         params[f'head_{i}'] = {
             'key'   : jax.random.normal(key, shape=(conf['emb_dim'] , head_size)) * conf['scale'] ,
             'query' : jnp.zeros((conf['emb_dim'] , head_size)),
-            'alpha' : jnp.array(1),
-            'beta'  : jnp.array(0),
+            'alpha' : jnp.array(1).astype(jnp.float32),
+            'beta'  : jnp.array(0).astype(jnp.float32),
             }
     return params
 
