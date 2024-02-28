@@ -41,7 +41,7 @@ def base_fn(digit, base=10):
 
 def data_fn(config):
     prime  = prime_fn()
-    primes = jnp.array(list(set([next(prime) for _ in range(config['n'])])))
+    primes = jnp.array(list(set([next(prime) for _ in range(config['n_primes'])])))
     x      = jnp.arange(primes.max())
     y      = jnp.zeros_like(x).at[primes].add(1)
     return repr_fn(x, config), y
@@ -63,7 +63,7 @@ def position_fn(x, config):
     return split_vect(x, config['base'], max_length)
 
 def main():  # currently vocab = base (might want to generalise), toks=10)
-    config = dict(n=100, repr='positional', base=16)
+    config = dict(n_primes=100, repr='positional', base=16)
     data   = data_fn(config)
     print(data)
 
