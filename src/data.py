@@ -2,7 +2,6 @@
 #   miii data functions
 # by: Noah Syrkis
 
-
 # Imports
 import math
 import jax.numpy as jnp
