@@ -2,11 +2,14 @@
 #   miii data functions
 # by: Noah Syrkis
 
+
 # Imports
 import math
 import jax.numpy as jnp
+import numpy as np
 from jax import jit, random, vmap
 from tqdm import tqdm
+
 
 # functions
 def prime_fn():  # generates prime numbers
@@ -20,6 +23,7 @@ def prime_fn():  # generates prime numbers
                 D.setdefault(p + q, []).append(p)
             del D[q]    # Remove this number, it's no longer needed.
         q += 1
+
 
 # convert base ten int d to base n
 def base_fn(digit, base=10):
@@ -36,53 +40,33 @@ def base_fn(digit, base=10):
         digit //= base
     return ''.join(digits[::-1])
 
-def data_fn(rng, n, base):
-    primes     = prime_fn()
-    primes     = set([next(primes) for _ in range(n)])
-    not_primes = []
-    while len(not_primes) != len(primes):
-        rng, key = random.split(rng)
-        q        = random.randint(key, (1,), 0, max(primes))
-        if q.item() not in primes:
-            not_primes.append(q.item())
-    primes     = list(map(lambda x: base_fn(x, base), list(primes)))
-    not_primes = list(map(lambda x: base_fn(x, base), not_primes))
-    return primes
+def data_fn(config):
+    prime  = prime_fn()
+    primes = jnp.array(list(set([next(prime) for _ in range(config['n'])])))
+    x      = jnp.arange(primes.max())
+    y      = jnp.zeros_like(x).at[primes].add(1)
+    return repr_fn(x, config), y
 
+def repr_fn(x, config):
+    if config['repr'] == 'positional':
+        return position_fn(x, config)
+    if config['repr'] == 'surreal':
+        pass
+    if config['repr'] == 'fibonacci':
+        pass
+    return x
 
+def position_fn(x, config):
+    def split_number_base_n(n, base, length): # Split an individual number into its digits for base-n
+        return jnp.array([(n // (base ** i)) % base for i in range(length - 1, -1, -1)])
+    max_length = jnp.max(jnp.log(x + 1) / jnp.log(config['base'])).astype(int) + 1
+    split_vect = vmap(split_number_base_n, in_axes=(0, None, None), out_axes=0)
+    return split_vect(x, config['base'], max_length)
 
-""" 
-def data_fn(d):  # returns a marix of all d digit numbers ending in 1,3,7, or 9, in a sorted (-1 x 4 x d)
-    # x       = vmap(lambda row: extract_digits(row, d))(context)  # (10 ** d, 4, 4)
-    primes  = primes_fn(d)                                       # (n_primes,  )
-    context = context_fn(d)                                      # (10 ** d , 4)
-    y       = vmap(lambda row: target_fn(primes, row))(context)  # (10 ** d, 4)
-    data    = jnp.concatenate((context, y), axis=1)
-    return data
+def main():  # currently vocab = base (might want to generalise), toks=10)
+    config = dict(n=100, repr='positional', base=16)
+    data   = data_fn(config)
+    print(data)
 
-def primes_fn(d):  # returns a jnp.array of all d-digit primes
-    prime_iter = prime_fn()
-    primes     = []
-    prime      = next(prime_iter)
-    while prime < 10 ** d:
-        if prime >= 10 ** (d - 1):
-            primes.append(prime)
-        prime = next(prime_iter)
-    return jnp.array(primes).astype(jnp.int32)
-
-def extract_digits(row, d):
-    # each entry in row is a digit. it should be a vector of powers of 10
-    powers_of_ten = 10 ** jnp.arange(d-1, -1, -1)
-    digits        = row[:, None] // powers_of_ten[None, :] % 10
-    return digits
-
-def target_fn(primes, row):
-    # return vector of 4 booleans, indicating if the row contains the prime numbers
-    return jnp.any(row[None, :] == primes[:, None], axis=0).astype(jnp.int32)
-
-def context_fn(d):
-    context = jnp.arange(10 ** (d - 1), 10 ** d).reshape(-1, 10)
-    context = context[:, [1, 3, 7, 9]]
-    return context
-
- """
+if __name__ == '__main__':
+    main()
