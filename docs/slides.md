@@ -1,1 +1,0 @@
-/Users/syrkis/talk/miiii.md
