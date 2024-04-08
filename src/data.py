@@ -15,12 +15,12 @@ def prime_fn():  # generates prime numbers
     D, q = {}, 2
     while True:
         if q not in D:  # q is a new prime.
-            yield q     # Yield it and mark its first multiple that isn't already marked.
+            yield q  # Yield it and mark its first multiple that isn't already marked.
             D[q * q] = [q]
-        else:           # q is not a prime. q is a composite number.
+        else:  # q is not a prime. q is a composite number.
             for p in D[q]:
                 D.setdefault(p + q, []).append(p)
-            del D[q]    # Remove this number, it's no longer needed.
+            del D[q]  # Remove this number, it's no longer needed.
         q += 1
 
 
@@ -37,34 +37,43 @@ def base_fn(digit, base=10):
         else:
             digits.append(str(remainder))
         digit //= base
-    return ''.join(digits[::-1])
+    return "".join(digits[::-1])
+
 
 def data_fn(config):
-    prime  = prime_fn()
-    primes = jnp.array(list(set([next(prime) for _ in range(config['n_primes'])])))
-    x      = jnp.arange(primes.max())
-    y      = jnp.zeros_like(x).at[primes].add(1)
-    return repr_fn(x, config), y
+    prime = prime_fn()
+    primes = jnp.array(list(set([next(prime) for _ in range(config["n_primes"])])))
+    x = jnp.arange(primes.max())
+    y = jnp.zeros_like(x).at[primes].add(1)
+    return repr_fn(x, config)[2:], y[2:]
+
+
 def repr_fn(x, config):
-    if config['repr'] == 'positional':
+    if config["repr"] == "positional":
         return position_fn(x, config)
-    if config['repr'] == 'surreal':
+    if config["repr"] == "surreal":
         pass
-    if config['repr'] == 'fibonacci':
+    if config["repr"] == "fibonacci":
         pass
     return x
 
+
 def position_fn(x, config):
-    def split_number_base_n(n, base, length): # Split an individual number into its digits for base-n
-        return jnp.array([(n // (base ** i)) % base for i in range(length - 1, -1, -1)])
-    max_length = jnp.max(jnp.log(x + 1) / jnp.log(config['base'])).astype(int) + 1
+    def split_number_base_n(
+        n, base, length
+    ):  # Split an individual number into its digits for base-n
+        return jnp.array([(n // (base**i)) % base for i in range(length - 1, -1, -1)])
+
+    max_length = jnp.max(jnp.log(x + 1) / jnp.log(config["base"])).astype(int) + 1
     split_vect = vmap(split_number_base_n, in_axes=(0, None, None), out_axes=0)
-    return split_vect(x, config['base'], max_length)
+    return split_vect(x, config["base"], max_length)
+
 
 def main():  # currently vocab = base (might want to generalise), toks=10)
-    config = dict(n_primes=100, repr='positional', base=16)
-    data   = data_fn(config)
-    print(data)
+    config = dict(n_primes=10000, repr="positional", base=10)
+    x, y = data_fn(config)
+    print(x.shape, y.shape)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()
