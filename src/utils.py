@@ -4,7 +4,12 @@
 
 # imports
 import argparse
+import os
 import jax.numpy as jnp
+import yaml
+
+# constants
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
 # functions
@@ -16,13 +21,6 @@ def args_fn():
 
 
 def conf_fn():
-    return {
-        "n_primes": 1000,
-        "repr": "positional",
-        "base": 10,
-        "emb_dim": 128,
-        "block_size": 64,
-        "n_layers": 3,
-        "n_heads": 8,
-        "scale": 1 / jnp.sqrt(128),
-    }
+    with open(f"{ROOT}/conf.yaml", "r") as file:
+        conf = yaml.safe_load(file)
+    return conf

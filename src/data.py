@@ -43,9 +43,10 @@ def base_fn(digit, base=10):
 def data_fn(config):
     prime = prime_fn()
     primes = jnp.array(list(set([next(prime) for _ in range(config["n_primes"])])))
-    x = jnp.arange(primes.max())
-    y = jnp.zeros_like(x).at[primes].add(1)
-    return repr_fn(x, config)[2:], y[2:]
+    nats = jnp.arange(primes.max())  # natural numbers (excluding 0 and 1)
+    y = jnp.zeros_like(nats).at[primes].add(1)[2:]
+    x = repr_fn(nats, config)[2:]
+    return x, y
 
 
 def repr_fn(x, config):

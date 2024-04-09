@@ -7,7 +7,6 @@ import jax
 import jax.numpy as jnp
 from jax import grad, jit, vmap, lax, random
 from jax.tree_util import tree_flatten, tree_unflatten
-import numpy as np
 
 from functools import partial
 from einops import rearrange
@@ -15,13 +14,13 @@ from typing import Any, Callable, Dict, Optional, Tuple, Union
 
 
 # forward functions
-@partial(vmap, in_axes=(0, None))
-def apply_fn(x, params):
+@partial(vmap, in_axes=(None, 0))
+def apply_fn(params, x):
     x = embed_fn(params, x)  # T x d
     for block in params["blocks"]:
-        x = head_fn(x, *block["head"]) + mlp_fn(x, block["mlp"])
+        x = head_fn(x, *block["head"]) + mlp_fn(x, *block["mlp"])
     logits = x @ params["lm_head"]
-    return logits[:, -1]
+    return jax.nn.sigmoid(logits[-1])
 
 
 def head_fn(x, w_key, w_query, alpha, beta):
@@ -33,8 +32,7 @@ def head_fn(x, w_key, w_query, alpha, beta):
     return z
 
 
-def mlp_fn(x, params):
-    dense1, bias1, dense2, bias2 = params
+def mlp_fn(x, dense1, bias1, dense2, bias2):
     z = x @ dense1 + bias1
     z = jax.nn.relu(z)  # TODO: maybe switch activation
     z = z @ dense2 + bias2
@@ -42,7 +40,7 @@ def mlp_fn(x, params):
 
 
 def embed_fn(params, x):
-    z = params["tok_emb"][x]  # tok embeddings
+    z = params["tok_emb"][x]  # T x d
     z += params["pos_emb"][jnp.arange(x.shape[0])]  # pos embeddings
     return z
 
@@ -52,8 +50,8 @@ def init_head_fn(rng, conf):
     rngs = random.split(rng, conf["n_heads"])
     shape = (conf["n_heads"], conf["emb_dim"], conf["emb_dim"] // conf["n_heads"])
     keys = random.normal(rngs[0], shape=shape) * conf["scale"]
-    values = jnp.zeros_like(keys)
-    alpha, beta = jnp.array(1), jnp.array(0)
+    values = jnp.zeros_like(keys).astype(jnp.float32)
+    alpha, beta = jnp.array(1).astype(jnp.float32), jnp.array(0).astype(jnp.float32)
     return (keys, values, alpha, beta)
 
 
@@ -62,9 +60,9 @@ def init_mlp_fn(rng, conf):
     emb_dim, scale = conf["emb_dim"], conf["scale"]
     params = (
         random.normal(key1, shape=(emb_dim, emb_dim)) * scale,
-        jnp.zeros((emb_dim)),
+        jnp.zeros((emb_dim)).astype(jnp.float32),
         random.normal(key2, shape=(emb_dim, emb_dim)) * scale,
-        jnp.zeros((emb_dim)),
+        jnp.zeros((emb_dim)).astype(jnp.float32),
     )
     return params
 
@@ -95,7 +93,7 @@ def main():
     conf = conf_fn()
     x, y = data_fn(conf)
     params = init_fn(rng, conf)
-    logits = apply_fn(x, params)
+    logits = apply_fn(params, x)
     print(logits.shape)
 
 
