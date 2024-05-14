@@ -17,8 +17,10 @@ from typing import Any, Callable, Dict, Optional, Tuple, Union
 @partial(vmap, in_axes=(None, 0))
 def apply_fn(params, x):
     x = embed_fn(params, x)  # T x d
+    activations = [x]
     for block in params["blocks"]:
         x = head_fn(x, *block["head"]) + mlp_fn(x, *block["mlp"])
+        activations.append(x)
     logits = x @ params["lm_head"]
     return jax.nn.sigmoid(logits[-1])
 
@@ -51,7 +53,7 @@ def init_head_fn(rng, conf):
     shape = (conf["n_heads"], conf["emb_dim"], conf["emb_dim"] // conf["n_heads"])
     keys = random.normal(rngs[0], shape=shape) * conf["scale"]
     values = jnp.zeros_like(keys).astype(jnp.float32)
-    alpha, beta = jnp.array(1).astype(jnp.float32), jnp.array(0).astype(jnp.float32)
+    alpha, beta = jnp.array(1.0), jnp.array(0.0)
     return (keys, values, alpha, beta)
 
 
