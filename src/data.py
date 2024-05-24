@@ -5,8 +5,10 @@
 # Imports
 import math
 import jax.numpy as jnp
+import os
 from jax import jit, random, vmap
 import numpy as np
+import requests
 from tqdm import tqdm
 from typing import List, Set, Tuple, Callable
 from oeis import oeis
@@ -54,3 +56,24 @@ def continue_fn(rng: jnp.array, seq_id: str, n: int) -> jnp.array:
     seq = oeis[seq_id]
     seq_set = jnp.array(seq[seq.offset : n + seq.offset])
     return rng, seq_set
+
+
+# conrad data function
+def conrad_fn(rng, seq_len) -> None:
+    # f_dir is in data dir of parent of current file
+    parent_dir = os.path.dirname(os.path.dirname(__file__))
+    f_name = os.path.join(parent_dir, "data", "nostromo.txt")
+    with open(f_name, "r") as f:
+        text = f.read()
+    c2i = {c: idx for idx, c in enumerate(sorted(list(set(text))))}
+    i2c = {idx: c for c, idx in c2i.items()}
+    toks = jnp.array([c2i[c] for c in text])[: len(text) // seq_len * seq_len]
+    data = toks.reshape(-1, seq_len)
+    idxs = random.permutation(rng, data.shape[0])
+    return data[idxs][:128], c2i, i2c
+
+
+# testing
+if __name__ == "__main__":
+    rng = random.PRNGKey(0)
+    data, c2i, i2c = conrad_fn(rng, 32)

@@ -6,6 +6,12 @@ Transformers are used to as model architecture. Table of contents:
 - [Tasks](#tasks)
 - [Mechanistic Interpretability](#mechanistic-interpretability)
 
+## Structure
+
+- `src/data.py` contains data generation functions for the different tasks.
+- `src/model.py` contains the transformer model.
+
+
 ## Tasks
 
 - Division.
