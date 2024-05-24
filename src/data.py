@@ -5,76 +5,52 @@
 # Imports
 import math
 import jax.numpy as jnp
-import numpy as np
 from jax import jit, random, vmap
+import numpy as np
 from tqdm import tqdm
+from typing import List, Set, Tuple, Callable
+from oeis import oeis
 
 
-# functions
-def prime_fn():  # generates prime numbers
-    D, q = {}, 2
-    while True:
-        if q not in D:  # q is a new prime.
-            yield q  # Yield it and mark its first multiple that isn't already marked.
-            D[q * q] = [q]
-        else:  # q is not a prime. q is a composite number.
-            for p in D[q]:
-                D.setdefault(p + q, []).append(p)
-            del D[q]  # Remove this number, it's no longer needed.
-        q += 1
+# operator related functions
+def operator_fn(operator: Callable, n: int) -> jnp.array:
+    a, b = jnp.arange(n), n - jnp.arange(n)  # TODO: all combinations
+    return jnp.stack([a, b, operator(a, b)], axis=-1)
 
 
-# convert base ten int d to base n
-def base_fn(digit, base=10):
-    if digit == 0:
-        return "0"
-    digits = []
-    while digit:
-        remainder = digit % base
-        if remainder > 9:
-            # Map 10-15 to 'A'-'F' for base 16, and similarly for other bases
-            digits.append(chr(55 + remainder))
-        else:
-            digits.append(str(remainder))
-        digit //= base
-    return "".join(digits[::-1])
+addition_fn = lambda a, b: a + b
+subtraction_fn = lambda a, b: a - b
+division_fn = lambda a, b: a / b
+multiplication_fn = lambda a, b: a * b
+modulus_fn = lambda a, b: a % b
+exponentiation_fn = lambda a, b: a**b
 
 
-def data_fn(config):
-    prime = prime_fn()
-    primes = jnp.array(list(set([next(prime) for _ in range(config["n_primes"])])))
-    nats = jnp.arange(primes.max())  # natural numbers (excluding 0 and 1)
-    y = jnp.zeros_like(nats).at[primes].add(1)[2:]
-    x = repr_fn(nats, config)[2:]
-    return x, y
+# classification related functions
+def classify_fn(rng: jnp.array, seq_id: str, n: int) -> Tuple[jnp.array, jnp.array]:
+    seq = oeis[seq_id]
+    seq_set = jnp.array(seq[seq.offset : n + seq.offset])
+    rng, com_set = comp_fn(rng, seq_set, n)
+    x = jnp.concatenate([seq_set, com_set])
+    y = jnp.array([1] * len(seq_set) + [0] * len(com_set))
+    idx = random.permutation(rng, len(x))
+    return rng, x[idx], y[idx]
 
 
-def repr_fn(x, config):
-    if config["repr"] == "positional":
-        return position_fn(x, config)
-    if config["repr"] == "surreal":
-        pass
-    if config["repr"] == "fibonacci":
-        pass
-    return x
+def comp_fn(rng: jnp.array, seq_set: Set[int], n: int) -> Tuple[jnp.array, jnp.array]:
+    # generate a set of numbers that are not in seq_set
+    com_set, seq_set = set(), set(seq_set.tolist())
+    while len(com_set) < n:
+        rng, key = random.split(rng)
+        sample = random.randint(key, (n,), min(seq_set), max(seq_set) + 1)
+        com_set |= set(sample.tolist())
+        com_set -= seq_set
+        com_set = set(list(com_set)[:n])
+    return rng, jnp.array(list(com_set))
 
 
-def position_fn(x, config):
-    def split_number_base_n(
-        n, base, length
-    ):  # Split an individual number into its digits for base-n
-        return jnp.array([(n // (base**i)) % base for i in range(length - 1, -1, -1)])
-
-    max_length = jnp.max(jnp.log(x + 1) / jnp.log(config["base"])).astype(int) + 1
-    split_vect = vmap(split_number_base_n, in_axes=(0, None, None), out_axes=0)
-    return split_vect(x, config["base"], max_length)
-
-
-def main():  # currently vocab = base (might want to generalise), toks=10)
-    config = dict(n_primes=10000, repr="positional", base=10)
-    x, y = data_fn(config)
-    print(x.shape, y.shape)
-
-
-if __name__ == "__main__":
-    main()
+# continuation related functions
+def continue_fn(rng: jnp.array, seq_id: str, n: int) -> jnp.array:
+    seq = oeis[seq_id]
+    seq_set = jnp.array(seq[seq.offset : n + seq.offset])
+    return rng, seq_set

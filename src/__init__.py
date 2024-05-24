@@ -1,5 +1,5 @@
-from .utils import args_fn, conf_fn
+from .utils import args_fn
 from .model import apply_fn, init_fn
-from .data import data_fn
+from .data import modulus_fn, operator_fn
 
-__all__ = ["args_fn", "conf_fn", "apply_fn", "data_fn", "init_fn"]
+__all__ = ["apply_fn", "init_fn", "modulus_fn", "operator_fn", "args_fn"]

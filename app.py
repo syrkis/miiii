@@ -7,7 +7,9 @@ import streamlit as st
 
 
 # constants
-title = "miiii | mechanistic interpreability on irriducible integer identifiers"
+title = (
+    "miiii | mechanistic interpreability and implementability of integer identifiers"
+)
 st.set_page_config(page_title=title, layout="wide", initial_sidebar_state="expanded")
 
 

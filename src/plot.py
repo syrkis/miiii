@@ -8,6 +8,20 @@ import pandas as pd
 import numpy as np
 from datetime import date, timedelta
 import tikz
+import matplotlib.pyplot as plt
+
+
+def polar_fn(v):  # maps v to a polar plot
+    # map each point n in v to (n, n * theta)
+    theta = 2 * np.pi / len(v)
+    coords = [(n, n * theta) for n in v]
+    fig, ax = plt.subplots(subplot_kw={"projection": "polar"})
+    ax.plot(coords)
+    plt.show()
+
+
+def hilbert_fn(v):  # maps v to a hilbert curve
+    pass
 
 
 # tikz functions
