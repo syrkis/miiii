@@ -70,7 +70,7 @@ def conrad_fn(rng, seq_len) -> None:
     toks = jnp.array([c2i[c] for c in text])[: len(text) // seq_len * seq_len]
     data = toks.reshape(-1, seq_len)
     idxs = random.permutation(rng, data.shape[0])
-    return data[idxs][:128], c2i, i2c
+    return data[idxs][:256], c2i, i2c
 
 
 # testing

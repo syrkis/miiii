@@ -49,8 +49,8 @@ def embed_fn(params, x):
 
 if __name__ == "__main__":
     from utils import load_conf
+    from param import init_fn
     from data import conrad_fn
-    from init import init_fn
 
     rng, data_key, param_key = random.split(random.PRNGKey(0), 3)
     data, c2i, i2c = conrad_fn(data_key, 128)
