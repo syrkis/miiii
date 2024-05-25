@@ -9,10 +9,11 @@ import jax.numpy as jnp
 import yaml
 
 
-def load_conf():
+def load_conf(vocab: int):
     parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     with open(os.path.join(parent_dir, "conf.yaml"), "r") as file:
         conf = yaml.safe_load(file)
+    conf["vocab"] = vocab
     return conf
 
 
