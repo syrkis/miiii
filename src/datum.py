@@ -59,21 +59,37 @@ def continue_fn(rng: jnp.array, seq_id: str, n: int) -> jnp.array:
 
 
 # conrad data function
-def conrad_fn(rng, seq_len) -> None:
-    # f_dir is in data dir of parent of current file
+def text_fn(rng, block_size, batch_size):
     parent_dir = os.path.dirname(os.path.dirname(__file__))
-    f_name = os.path.join(parent_dir, "data", "nostromo.txt")
+    f_name = os.path.join(parent_dir, "data", "input.txt")
+
     with open(f_name, "r") as f:
         text = f.read()
-    c2i = {c: idx for idx, c in enumerate(sorted(list(set(text))))}
-    i2c = {idx: c for c, idx in c2i.items()}
-    toks = jnp.array([c2i[c] for c in text])[: len(text) // seq_len * seq_len]
-    data = toks.reshape(-1, seq_len)
-    idxs = random.permutation(rng, data.shape[0])
-    return data[idxs][:256], c2i, i2c
+    vocab = sorted(list(set(text)))
+
+    stoi = {c: idx for idx, c in enumerate(vocab)}
+    itos = {idx: c for c, idx in stoi.items()}
+
+    encode = lambda x: jnp.array([stoi[c] for c in x])
+    decode = lambda x: "".join([itos[idx] for idx in x.tolist()])
+
+    def aux(rng, toks):
+        while True:
+            rng, key = random.split(rng)
+            idxs = random.randint(key, (batch_size,), 0, len(toks) - block_size)
+            x = jnp.stack([toks[idx : idx + block_size] for idx in idxs])
+            y = jnp.stack([toks[idx + 1 : idx + block_size + 1] for idx in idxs])
+            yield x, y
+
+    data = aux(rng, encode(text))
+
+    return data, encode, decode, vocab
 
 
 # testing
 if __name__ == "__main__":
     rng = random.PRNGKey(0)
-    data, c2i, i2c = conrad_fn(rng, 32)
+    data, encode, decode, vocab = text_fn(rng, 8, 4)
+    for i in range(10):
+        x, y = next(data)
+        print(x.shape, y.shape)

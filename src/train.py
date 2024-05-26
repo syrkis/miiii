@@ -12,14 +12,12 @@ from typing import List, Set, Tuple
 
 
 # functions
-def loss_fn(params, x, y):
-    pred = apply_fn(params, x)
-    return jnp.mean((pred - y) ** 2)
-
-
 @jit
-def grad_fn(params, x, y):
-    return value_and_grad(loss_fn)(params, x, y)
+def loss_fn(params, x, y):
+    y = jax.nn.one_hot(y, 65)
+    pred = apply_fn(params, x)
+    loss = -jnp.mean(jnp.sum(pred * y, axis=-1))
+    return loss
 
 
 @jit
@@ -29,23 +27,30 @@ def update_fn(params, grads, opt_state):
     return params, opt_state
 
 
+def grad_fn(params, x, y):
+    return value_and_grad(loss_fn)(params, x, y)
+
+
+def est_loss(params, data):
+    return jnp.mean(jnp.array([loss_fn(params, *next(data)) for _ in range(100)]))
+
+
 # testing
 if __name__ == "__main__":
     from param import init_fn
-    from model import apply_fn
+    from model import apply_fn, generate_fn
     from utils import load_conf
-    from datum import conrad_fn
+    from datum import text_fn
 
-    data, c2i, i2c = conrad_fn(random.PRNGKey(0), 128)
-    conf = load_conf(len(c2i))
+    data, encode, decode, vocab = text_fn(random.PRNGKey(0), 8, 2)
     rng = random.PRNGKey(0)
-    params = init_fn(rng, conf)
+    params = init_fn(rng, load_conf(len(vocab)))
     opt = optax.adam(1e-3)
     opt_state = opt.init(params)
-
-    for i in range(8):
-        for j in tqdm(range(data.shape[1] - 1)):
-            x, y = data[:, : j + 1], data[:, j + 1]
-            pred = apply_fn(params, x)
-            loss, grads = grad_fn(params, x, y)
-            params, opt_state = update_fn(params, grads, opt_state)
+    for i in (pbar := tqdm(range(10000))):
+        x, y = next(data)
+        loss, grads = grad_fn(params, x, y)
+        params, opt_state = update_fn(params, grads, opt_state)
+        if i % (pbar.total // 10) == 0:
+            pbar.set_description(f"loss: {est_loss(params, data):.3f}")
+    x = generate_fn(params, x, rng, 100, decode)

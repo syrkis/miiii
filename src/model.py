@@ -17,11 +17,11 @@ from typing import Any, Callable, Dict, Optional, Tuple, Union
 @partial(vmap, in_axes=(None, 0))
 def apply_fn(params, x):  # x: seq_len
     z = embed_fn(x, params["tok_emb"], params["pos_emb"])  # z: seq_len x emb_dim
-    for block in params["blocks"]:
-        z += head_fn(z, *block["head"])  # <- this the hardcore stuff
-        z += ffwd_fn(z, *block["ffwd"])
+    # for block in params["blocks"]:
+    #     z += head_fn(z, *block["head"])  # <- this the hardcore stuff
+    #     z += ffwd_fn(z, *block["ffwd"])
     logits = z @ params["lm_head"]  # logits: seq_len x vocab
-    return logits
+    return jax.nn.log_softmax(logits)
 
 
 # ((x @ w_key) @ w_query.T @ x.T / sqrt(d)  * beta + alpha * I) @ X
@@ -50,9 +50,10 @@ def head_fn(x, w_key, w_query, alpha, beta):  # x: seq_len x emb_dim
     # multiply by x (probably CORRECT)
     z @= x  # z: heads x seq_len x emb_dim
 
-    z = z.mean(axis=0)  # z: seq_len x emb_dim
+    # concat  # TODO: this is wrong, cos it makes the dim 4 times bigger
+    z = rearrange(z, "h s d -> s (h d)")
 
-    return z  # z: seq_len x emb_dim  (probably WRONG)
+    return z
 
 
 # CORRECT
@@ -70,14 +71,22 @@ def embed_fn(x, tok_emb, pos_emb):  # x: seq_len
     return z
 
 
+def generate_fn(params, x, rng, max_len=None, decode=None):
+    while x.shape[1] < max_len:
+        rng, key = random.split(rng)
+        pred = random.categorical(key, apply_fn(params, x)[:, -1])
+        x = jnp.concatenate([x, pred[:, None]], axis=1)
+        None if decode is None else print(decode(x[0]))
+    return x
+
+
 if __name__ == "__main__":
     from utils import load_conf
     from param import init_fn
-    from datum import conrad_fn
+    from datum import text_fn
 
     rng, data_key, param_key = random.split(random.PRNGKey(0), 3)
-    data, c2i, i2c = conrad_fn(data_key, 128)
-    params = init_fn(param_key, load_conf(len(c2i)))
-    x, y = data[:, :-1], data[:, 1:]
-    pred = apply_fn(params, x)
-    print(pred.shape)
+    data, encode, decode, vocab = text_fn(data_key, 8, 4)
+    params = init_fn(param_key, load_conf(len(vocab)))
+    x, y = next(data)
+    x = generate_fn(params, x, rng, 100)

@@ -9,6 +9,11 @@ import jax.numpy as jnp
 import yaml
 
 
+# functions
+encode = lambda d, x: jnp.array([d[c] for c in x])
+decode = lambda d, x: "".join([d[i] for i in x])
+
+
 def load_conf(vocab: int):
     parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     with open(os.path.join(parent_dir, "conf.yaml"), "r") as file:
