@@ -18,6 +18,7 @@ darkdetect = "^0.8.0"
 matplotlib = "^3.9.0"
 streamlit = "^1.35.0"
 pyyaml = "^6.0.1"
+numpy-hilbert-curve = "^1.0.1"
 
 
 [build-system]

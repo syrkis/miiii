@@ -18,9 +18,11 @@ from tqdm import tqdm
 @partial(vmap, in_axes=(None, 0))
 def apply_fn(params, x):  # x: seq_len
     z = embed_fn(x, params["tok_emb"], params["pos_emb"])  # z: seq_len x emb_dim
+    activations = [z]
     for block in params["blocks"]:
-        #     z += head_fn(z, *block["head"])  # <- this the hardcore stuff
+        # z += head_fn(z, *block["head"])  # <- this the hardcore stuff
         z += ffwd_fn(z, *block["ffwd"])
+        activations.append(z)
     logits = z @ params["lm_head"]  # logits: seq_len x vocab
     return jax.nn.log_softmax(logits)
 
@@ -58,11 +60,11 @@ def head_fn(x, w_key, w_query, alpha, beta):  # x: seq_len x emb_dim
 
 
 # CORRECT
-def ffwd_fn(x, w1, b1, w2, b2):
+def ffwd_fn(x, w1, b1, w2, b2, alpha):
     z = x @ w1 + b1  # z: seq_len x emb_dim
     z = jax.nn.relu(z)  # TODO: maybe switch activation
     z = z @ w2 + b2
-    return z
+    return alpha * z
 
 
 # CORRECT
@@ -73,7 +75,7 @@ def embed_fn(x, tok_emb, pos_emb):  # x: seq_len
 
 
 # @partial(jit, static_argnums=(3,))
-def generate_fn(params, x, rng, length=100):
+def generate_fn(params, x, rng, length=42):
     for _ in tqdm(range(length)):
         rng, key = random.split(rng)
         prob = apply_fn(params, x)[:, -1]
@@ -85,12 +87,12 @@ def generate_fn(params, x, rng, length=100):
 if __name__ == "__main__":
     from utils import load_conf
     from param import init_fn
-    from datum import text_fn
+    from datum import data_fn
+    from numbs import base_n
+    from oeis import oeis
 
-    rng, data_key, param_key = random.split(random.PRNGKey(0), 3)
-    data, encode, decode, vocab = text_fn(data_key, 8, 4)
-    params = init_fn(param_key, load_conf(len(vocab)))
-    x, y = next(data)
-    x = generate_fn(params, x, rng)
-    # print(decode(x[0].tolist()))
-    print(x)
+    # rng, data_key, param_key = random.split(random.PRNGKey(0), 3)
+    rng, key = random.split(random.PRNGKey(0))
+    x, y = data_fn(oeis["A000040"], 2**10)
+    params = init_fn(key, load_conf(2))
+    pred = apply_fn(params, x)

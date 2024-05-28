@@ -936,6 +936,16 @@ files = [
 ]
 
 [[package]]
+name = "numpy-hilbert-curve"
+version = "1.0.1"
+description = "Implements Hilbert space-filling curves for Python with numpy"
+optional = false
+python-versions = "*"
+files = [
+    {file = "numpy-hilbert-curve-1.0.1.tar.gz", hash = "sha256:0745dbd4c16b258c180342d6df57dfa99110b9d98c86a84d920f29af5cc0707b"},
+]
+
+[[package]]
 name = "oeis"
 version = "2023.3.10"
 description = "Implementation of a few integer sequences from the OEIS."
@@ -1818,4 +1828,4 @@ watchmedo = ["PyYAML (>=3.10)"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "57b1efda58146c8cfa0d2497089b5adc984778e6828aaa22f245451417d79137"
+content-hash = "35384b07f47ed34b062ed0c309d806cd0d7053963ed5f79c4b3135b5c288d1e1"

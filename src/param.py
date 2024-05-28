@@ -25,6 +25,7 @@ def init_ffwd_fn(rng, conf):
         jnp.zeros((emb_dim * 4)),
         random.normal(key2, shape=(4 * emb_dim, emb_dim)) * scale,
         jnp.zeros((emb_dim)),
+        jnp.array(0.0),
     )
     return params
 

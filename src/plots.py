@@ -10,6 +10,7 @@ import numpy as np
 import darkdetect
 import matplotlib.pyplot as plt
 from oeis import A000040
+from hilbert import encode, decode
 
 
 def polar_fn(v):  # maps v to a polar plot
@@ -37,10 +38,9 @@ def polar_fn(v):  # maps v to a polar plot
     plt.savefig("figs/polar.pdf", dpi=300)
 
 
-def hilbert_fn(v):  # maps v to a hilbert curve
-    n = int(jnp.sqrt(v.size))
-
-
 if __name__ == "__main__":
-    v = jnp.arange(2**16)
-    polar_fn(v)
+    # v = jnp.arange(2**16)
+    # polar_fn(v)
+    locs = decode(np.array([1, 2, 3]), 2, 3)
+    H = encode(locs, 2, 3)
+    print(H)

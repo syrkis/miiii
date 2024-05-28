@@ -53,5 +53,5 @@ if __name__ == "__main__":
         params, opt_state = update_fn(params, grads, opt_state)
         if i % (pbar.total // 10) == 0:
             pbar.set_description(f"loss: {est_loss(params, data):.3f}")
-    x = generate_fn(params, x, rng)
-    print(decode(x[0].tolist()))
+    # x = generate_fn(params, x, rng)
+    # print(decode(x[0].tolist()))
