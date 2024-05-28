@@ -20,7 +20,7 @@ SPECIAL_TOKENS = {"[PAD]": 0, "[EOS]": 1, "[BOS]": 2}
 
 
 # classification related functions
-def data_fn(seq, n: int, ns: Callable = lambda x: x) -> Tuple[jnp.array, jnp.array]:
+def data_fn(seq, n: int, ns: Callable) -> Tuple[jnp.array, jnp.array]:
     limit = (n / jnp.log(n)).astype(int)  # num primes less than n is n / ln(n)
     primes = jnp.array(seq[1 : limit * 2])
     assert max(primes) > n, "not enough primes"  # make sure there are enough primes
@@ -73,8 +73,11 @@ def text_fn(rng, block_size, batch_size):
 
 # testing
 if __name__ == "__main__":
-    x, y = data_fn(oeis["A000040"], 2**20)
-    print(x.shape, y.shape)
+    from numbs import base_n
+
+    ns = partial(base_n, n=256)
+    x, y = data_fn(oeis["A000040"], 2**16 - 2, ns)
+    print(x[-10:])
     # data, encode, decode, vocab = text_fn(rng, 64, 4)
     # for i in range(10):
     #     x, y = next(data)

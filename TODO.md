@@ -1,9 +1,11 @@
 # TODO
 
-- [ ] confirm transformer model works with nostromo
+- [x] add base-n number system suppport
+- [ ] fix multi head attention
 - [ ] use `jax.lax.{scan,while_loop}` instead of loops
 - [ ] train for prime detection
 - [ ] hilbert plot
+- [ ] polar plot/gif of classification error.
 
 # DONE
 

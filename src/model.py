@@ -18,45 +18,25 @@ from tqdm import tqdm
 @partial(vmap, in_axes=(None, 0))
 def apply_fn(params, x):  # x: seq_len
     z = embed_fn(x, params["tok_emb"], params["pos_emb"])  # z: seq_len x emb_dim
-    activations = [z]
+    # activations = [z]  # [h, z, h, ..., z, h]  like patern
     for block in params["blocks"]:
-        # z += head_fn(z, *block["head"])  # <- this the hardcore stuff
+        z += head_fn(z, *block["head"])  # <- this the hardcore stuff
         z += ffwd_fn(z, *block["ffwd"])
-        activations.append(z)
-    logits = z @ params["lm_head"]  # logits: seq_len x vocab
-    return jax.nn.log_softmax(logits)
+        # activations += [h, z]
+    logit = (z @ params["lm_head"]).squeeze()[-1]  # logits: seq_len x vocab
+    return jax.nn.sigmoid(logit)
 
 
-# ((x @ w_key) @ w_query.T @ x.T / sqrt(d)  * beta + alpha * I) @ X
 def head_fn(x, w_key, w_query, alpha, beta):  # x: seq_len x emb_dim
-    # copy x
     z = x  # z: seq_len x emb_dim
-
-    # mulitply by w_query (probably CORRECT)
     z @= w_query  # z: heads x seq_len x emb_dim // heads
-
-    # multiply by w_key (also probably CORRECT, but strange with head dim)
     z @= w_key.transpose(0, 2, 1)  # z: heads x seq_len x emb_dim
-
-    # multiply by x transpose (probably CORRECT)
     z @= x.T  # z: heads x seq_len x seq_len
-
-    # scale by sqrt (probably CORRECT)
     z /= jnp.sqrt(w_key.shape[1])
-
-    # scale by beta which is 0 initially (probably CORRECT)
     z *= beta
-
-    # add identity matrix scaled by alpha which is 1 initually (probably CORRECT)
     z += alpha * jnp.eye(x.shape[0])
-
-    # multiply by x (probably CORRECT)
     z @= x  # z: heads x seq_len x emb_dim
-
-    # concat  # TODO: this is wrong, cos it makes the dim 4 times bigger
-    z = rearrange(z, "h s d -> s (h d)")
-
-    return z
+    return z.mean(axis=0)  # TODO: this is wrong!
 
 
 # CORRECT
@@ -93,6 +73,7 @@ if __name__ == "__main__":
 
     # rng, data_key, param_key = random.split(random.PRNGKey(0), 3)
     rng, key = random.split(random.PRNGKey(0))
-    x, y = data_fn(oeis["A000040"], 2**10)
-    params = init_fn(key, load_conf(2))
+    ns = partial(base_n, n=2)
+    x, y = data_fn(oeis["A000040"], 2**10, ns)
+    params = init_fn(key, load_conf(1))
     pred = apply_fn(params, x)
