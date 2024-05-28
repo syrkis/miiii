@@ -1,0 +1,25 @@
+[tool.poetry]
+name = "miiii"
+version = "0.1.0"
+description = "mechanistic interpretability of irriducible integer identifiers"
+authors = ["Noah Syrkis <noah@syrkis.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+jax = "^0.4.28"
+optax = "^0.2.2"
+oeis = "^2023.3.10"
+tqdm = "^4.66.4"
+requests = "^2.32.2"
+einops = "^0.8.0"
+plotly = "^5.22.0"
+darkdetect = "^0.8.0"
+matplotlib = "^3.9.0"
+streamlit = "^1.35.0"
+pyyaml = "^6.0.1"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

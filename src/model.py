@@ -11,15 +11,16 @@ from jax.tree_util import tree_flatten, tree_unflatten
 from functools import partial
 from einops import rearrange
 from typing import Any, Callable, Dict, Optional, Tuple, Union
+from tqdm import tqdm
 
 
 # CORRECT
 @partial(vmap, in_axes=(None, 0))
 def apply_fn(params, x):  # x: seq_len
     z = embed_fn(x, params["tok_emb"], params["pos_emb"])  # z: seq_len x emb_dim
-    # for block in params["blocks"]:
-    #     z += head_fn(z, *block["head"])  # <- this the hardcore stuff
-    #     z += ffwd_fn(z, *block["ffwd"])
+    for block in params["blocks"]:
+        #     z += head_fn(z, *block["head"])  # <- this the hardcore stuff
+        z += ffwd_fn(z, *block["ffwd"])
     logits = z @ params["lm_head"]  # logits: seq_len x vocab
     return jax.nn.log_softmax(logits)
 
@@ -71,12 +72,13 @@ def embed_fn(x, tok_emb, pos_emb):  # x: seq_len
     return z
 
 
-def generate_fn(params, x, rng, max_len=None, decode=None):
-    while x.shape[1] < max_len:
+# @partial(jit, static_argnums=(3,))
+def generate_fn(params, x, rng, length=100):
+    for _ in tqdm(range(length)):
         rng, key = random.split(rng)
-        pred = random.categorical(key, apply_fn(params, x)[:, -1])
+        prob = apply_fn(params, x)[:, -1]
+        pred = random.categorical(key, prob)
         x = jnp.concatenate([x, pred[:, None]], axis=1)
-        None if decode is None else print(decode(x[0]))
     return x
 
 
@@ -89,4 +91,6 @@ if __name__ == "__main__":
     data, encode, decode, vocab = text_fn(data_key, 8, 4)
     params = init_fn(param_key, load_conf(len(vocab)))
     x, y = next(data)
-    x = generate_fn(params, x, rng, 100)
+    x = generate_fn(params, x, rng)
+    # print(decode(x[0].tolist()))
+    print(x)

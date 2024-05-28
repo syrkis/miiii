@@ -14,7 +14,7 @@ from typing import List, Set, Tuple
 # functions
 @jit
 def loss_fn(params, x, y):
-    y = jax.nn.one_hot(y, 65)
+    y = jax.nn.one_hot(y, 121)  # TODO: don't hardcode vocab size
     pred = apply_fn(params, x)
     loss = -jnp.mean(jnp.sum(pred * y, axis=-1))
     return loss
@@ -42,7 +42,7 @@ if __name__ == "__main__":
     from utils import load_conf
     from datum import text_fn
 
-    data, encode, decode, vocab = text_fn(random.PRNGKey(0), 8, 2)
+    data, encode, decode, vocab = text_fn(random.PRNGKey(0), 32, 2)
     rng = random.PRNGKey(0)
     params = init_fn(rng, load_conf(len(vocab)))
     opt = optax.adam(1e-3)
@@ -53,4 +53,5 @@ if __name__ == "__main__":
         params, opt_state = update_fn(params, grads, opt_state)
         if i % (pbar.total // 10) == 0:
             pbar.set_description(f"loss: {est_loss(params, data):.3f}")
-    x = generate_fn(params, x, rng, 100, decode)
+    x = generate_fn(params, x, rng)
+    print(decode(x[0].tolist()))

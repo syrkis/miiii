@@ -14,6 +14,10 @@ from typing import List, Set, Tuple, Callable
 from oeis import oeis
 
 
+# Constants
+SPECIAL_TOKENS = {"[PAD]": 0, "[EOS]": 1, "[BOS]": 2}
+
+
 # operator related functions
 def operator_fn(operator: Callable, n: int) -> jnp.array:
     a, b = jnp.arange(n), n - jnp.arange(n)  # TODO: all combinations
@@ -61,17 +65,17 @@ def continue_fn(rng: jnp.array, seq_id: str, n: int) -> jnp.array:
 # conrad data function
 def text_fn(rng, block_size, batch_size):
     parent_dir = os.path.dirname(os.path.dirname(__file__))
-    f_name = os.path.join(parent_dir, "data", "input.txt")
+    f_name = os.path.join(parent_dir, "data", "ficciones.txt")
 
     with open(f_name, "r") as f:
         text = f.read()
-    vocab = sorted(list(set(text)))
+    vocab = list(SPECIAL_TOKENS.keys()) + sorted(list(set(text)))
 
     stoi = {c: idx for idx, c in enumerate(vocab)}
     itos = {idx: c for c, idx in stoi.items()}
 
     encode = lambda x: jnp.array([stoi[c] for c in x])
-    decode = lambda x: "".join([itos[idx] for idx in x.tolist()])
+    decode = lambda x: "".join([itos[idx] for idx in x])
 
     def aux(rng, toks):
         while True:
@@ -89,7 +93,7 @@ def text_fn(rng, block_size, batch_size):
 # testing
 if __name__ == "__main__":
     rng = random.PRNGKey(0)
-    data, encode, decode, vocab = text_fn(rng, 8, 4)
+    data, encode, decode, vocab = text_fn(rng, 64, 4)
     for i in range(10):
         x, y = next(data)
-        print(x.shape, y.shape)
+        print(decode(x[0].tolist()))

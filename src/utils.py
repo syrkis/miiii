@@ -8,7 +8,6 @@ import os
 import jax.numpy as jnp
 import yaml
 
-
 # functions
 encode = lambda d, x: jnp.array([d[c] for c in x])
 decode = lambda d, x: "".join([d[i] for i in x])

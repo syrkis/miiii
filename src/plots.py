@@ -38,7 +38,7 @@ def polar_fn(v):  # maps v to a polar plot
 
 
 def hilbert_fn(v):  # maps v to a hilbert curve
-    pass
+    n = int(jnp.sqrt(v.size))
 
 
 if __name__ == "__main__":
