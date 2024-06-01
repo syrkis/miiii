@@ -10,8 +10,9 @@ from functools import partial
 
 # functions
 def base_n(x, n):  # TODO: fix for base > 10
-    nits = jnp.ceil(jnp.log(x.max() + 1) / jnp.log(n)).astype(int)  # TODO: ln or log(n)
-    return jnp.array([x[:, None] // n**i % n for i in range(nits)][::-1]).T.squeeze()
+    nits = jnp.ceil(jnp.log(x.max() + 1) / jnp.log(n)).astype(int)
+    numb = jnp.array([x // n**i % n for i in range(nits)][::-1]).T
+    return numb
 
 
 def fibo(x):

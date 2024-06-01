@@ -16,16 +16,21 @@ from functools import partial
 
 
 # Constants
-SPECIAL_TOKENS = {"[PAD]": 0, "[EOS]": 1, "[BOS]": 2}
+SPECIAL_TOKENS = {}  # {"[PAD]": 0, "[EOS]": 1, "[BOS]": 2}
+
+
+# get data
+def data_fn(dataset, *args):
+    return text_fn(*args) if dataset == "ficciones" else prime_fn(*args)
 
 
 # classification related functions
-def data_fn(seq, n: int, ns: Callable) -> Tuple[jnp.array, jnp.array]:
+def prime_fn(seq, n: int, ns: Callable) -> Tuple[jnp.array, jnp.array]:
     limit = (n / jnp.log(n)).astype(int)  # num primes less than n is n / ln(n)
     primes = jnp.array(seq[1 : limit * 2])
     assert max(primes) > n, "not enough primes"  # make sure there are enough primes
     x = jnp.arange(2, n + 2)[:n]  # all numbers up to n
-    y = jnp.zeros_like(x).at[primes - 2].set(1).astype(bool)[:n]
+    y = jnp.zeros_like(x).at[primes - 2].set(1)[:n]
     return ns(x), y  # ns is number system
 
 
@@ -44,12 +49,12 @@ exponentiation_fn = lambda a, b: a**b
 
 
 # borges data function
-def text_fn(rng, block_size, batch_size):
+def text_fn(rng, block_size=8, batch_size=64):
     parent_dir = os.path.dirname(os.path.dirname(__file__))
     f_name = os.path.join(parent_dir, "data", "ficciones.txt")
 
-    with open(f_name, "r") as f:
-        text = f.read()
+    with open(f_name, "r", encoding="utf-8") as f:
+        text = "".join([c for c in f.read() if c.isalnum() or c in " .,;:!?-()\n"])
     vocab = list(SPECIAL_TOKENS.keys()) + sorted(list(set(text)))
 
     stoi = {c: idx for idx, c in enumerate(vocab)}
@@ -75,10 +80,8 @@ def text_fn(rng, block_size, batch_size):
 if __name__ == "__main__":
     from numbs import base_n
 
-    ns = partial(base_n, n=256)
-    x, y = data_fn(oeis["A000040"], 2**16 - 2, ns)
-    print(x[-10:])
-    # data, encode, decode, vocab = text_fn(rng, 64, 4)
-    # for i in range(10):
-    #     x, y = next(data)
-    #    print(decode(x[0].tolist()))
+    """     ns = partial(base_n, n=16)
+    x, y = data_fn(oeis["A000040"], 2**4 - 2, ns)
+    print(x, y, sep="\n") """
+    data, encode, decode, vocab = text_fn(random.PRNGKey(0), 64, 4)
+    print(len(vocab))

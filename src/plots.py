@@ -10,37 +10,44 @@ import numpy as np
 import darkdetect
 import matplotlib.pyplot as plt
 from oeis import A000040
+from functools import partial
 from hilbert import encode, decode
 
 
-def polar_fn(v):  # maps v to a polar plot
-    # there are three groups of dots. dots from train set. test set that are correctly classified. test set that are incorrectly classified
-    # test set dots are round, and filled if correct, and empty if not.
-    # train set dots are triangles, and filled if correct, and empty if not.
-    primes = jnp.array(A000040[1 : v.size + 1])
-    primes = primes[primes < v.max()]
-    col = {True: "black", False: "white"}
-    fig, ax = plt.subplots(subplot_kw={"projection": "polar"}, figsize=(14, 14))
-    ax.scatter(
-        v[primes],
-        v[primes],
-        color=col[darkdetect.isLight()],
-        s=jnp.sqrt(v[primes]) / jnp.log(v.size),
-        marker="o",
-    )
+# constants
+cols = {True: "black", False: "white"}
+ink = "black" if darkdetect.isLight() else "white"
+bg = "white" if darkdetect.isLight() else "black"
+marks = ["o", "."]
+
+
+# functions
+def polar_fn(vector, fname):  # maps v to a polar plot
+    fig, ax = init_polar_plot()
+    cats = jnp.unique(vector)[jnp.unique(vector) > 0]
+    for cat in cats:
+        idxs = jnp.where(vector == cat)[0] + 2
+        size = jnp.sqrt(idxs) / jnp.log(idxs)
+        ax.scatter(idxs, idxs, s=size, c=ink)
+    plt.savefig(f"figs/{fname}.pdf", dpi=300)
+
+
+def init_polar_plot():
+    fig, ax = plt.subplots(subplot_kw={"projection": "polar"}, figsize=(18, 18))
+    fig.patch.set_facecolor(bg)
     ax.grid(False)
     ax.set_yticklabels([])
     ax.set_xticklabels([])
-    ax.set_facecolor(col[darkdetect.isDark()])
-    fig.patch.set_facecolor(col[darkdetect.isDark()])
-    [spine.set_edgecolor(col[darkdetect.isLight()]) for spine in ax.spines.values()]
+    # set scatter colors to black
+    ax.set_facecolor(bg)
+    [spine.set_edgecolor(ink) for spine in ax.spines.values()]
     plt.tight_layout()
-    plt.savefig("figs/polar.pdf", dpi=300)
+    return fig, ax
 
 
 if __name__ == "__main__":
-    # v = jnp.arange(2**16)
-    # polar_fn(v)
-    locs = decode(np.array([1, 2, 3]), 2, 3)
-    H = encode(locs, 2, 3)
-    print(H)
+    from datum import data_fn
+    from numbs import base_n
+
+    y = data_fn(A000040, 2**16, partial(base_n, n=2))[1]
+    polar_fn(y, "primes")  # plot of primes

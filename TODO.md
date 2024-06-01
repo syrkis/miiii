@@ -1,11 +1,12 @@
 # TODO
 
+- [ ] make setup attention agnostic (different versions of transformer)
+- [ ] run RASP successfully.
 - [x] add base-n number system suppport
-- [ ] fix multi head attention
-- [ ] use `jax.lax.{scan,while_loop}` instead of loops
-- [ ] train for prime detection
-- [ ] hilbert plot
-- [ ] polar plot/gif of classification error.
+- [x] fix multi head attention to not take mean
+- [x] train for prime detection
+- [ ] hilbert / hinton plot of weights
+- [x] polar plot/gif of classification error.
 
 # DONE
 

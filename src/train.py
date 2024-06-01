@@ -11,14 +11,16 @@ import jax.numpy as jnp
 from typing import List, Set, Tuple
 from functools import partial
 from oeis import oeis
+from einops import rearrange
 
 
 # functions
 @jit
-def loss_fn(params, x, y):  #  bce
-    pred = apply_fn(params, x)
-    loss = -jnp.mean(y * jnp.log(pred) + (1 - y) * jnp.log(1 - pred))
-    return loss
+def loss_fn(params, x, y):  #  cross entropy loss
+    logits = rearrange(apply_fn(params, x), "b t c -> (b t) c")
+    labels = rearrange(y, "b t -> (b t)")
+    loss = optax.softmax_cross_entropy_with_integer_labels(logits, labels)
+    return loss.mean()
 
 
 @jit
@@ -28,29 +30,42 @@ def update_fn(params, grads, opt_state):
     return params, opt_state
 
 
+@jit
 def grad_fn(params, x, y):
-    return value_and_grad(loss_fn)(params, x, y)
-
-
-def est_loss(params, data):
-    return jnp.mean(jnp.array([loss_fn(params, *next(data)) for _ in range(100)]))
+    loss, grads = value_and_grad(loss_fn)(params, x, y)
+    return loss, grads
 
 
 # testing
 if __name__ == "__main__":
     from param import init_fn
-    from model import apply_fn, generate_fn
-    from utils import load_conf
+    from model import apply_fn
+    from utils import get_conf
     from datum import data_fn
     from numbs import base_n
 
-    x, y = data_fn(oeis["A000040"], 2**10 - 2, partial(base_n, n=16))
+    # x, y = data_fn(oeis["A000040"], conf["n_samples"], partial(base_n, n=conf["base"]))
     rng, key = random.split(random.PRNGKey(0))
-    params = init_fn(key, load_conf(1))
+    data, encode, decode, vocab = data_fn("ficciones", key, 16, 64)
+    rng, key = random.split(rng)
+    config = get_conf(in_d=len(vocab), out_d=len(vocab), len=next(data)[0].shape[1])
+    params = init_fn(key, config)
     opt = optax.adam(1e-3)
     opt_state = opt.init(params)
-    for i in range(1000):
-        pred = apply_fn(params, x)
+
+    for i, (x, y) in zip(range(2500), data):
         loss, grads = grad_fn(params, x, y)
         params, opt_state = update_fn(params, grads, opt_state)
-        print(loss.item())
+        print(i, loss)
+
+    apply = jit(apply_fn)
+
+    rng, key = random.split(rng)
+    state = next(data)[0]
+    for i in range(100):
+        rng, key = random.split(rng)
+        logits = apply(params, state[:, -8:])[:, -1, :]
+        word = random.categorical(key, logits)[:, None]
+        state = jnp.concatenate([state, word], axis=-1)
+
+    print(decode(state[0].tolist()))

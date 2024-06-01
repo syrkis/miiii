@@ -9,50 +9,53 @@ import jax.numpy as jnp
 
 # init functions
 def init_head_fn(rng, conf):
-    rng, key = random.split(rng)
-    h, d, scale = conf["n_heads"], conf["emb_dim"], conf["scale"]
-    keys = random.normal(key, shape=(h, d, d // h)) * scale  # head size is d // h
-    values = jnp.zeros((h, d, d // h))
-    alpha, beta = jnp.array(1.0), jnp.array(0.0)
-    return (keys, values, alpha, beta)
+    h, d, scale = conf["n_heads"], conf["emb"], conf["scale"]
+    head_size = conf["emb"] // conf["n_heads"]
+
+    rng, key1, key2, key3 = random.split(rng, 4)
+    key = random.normal(key1, shape=(h, d, head_size)) * scale
+    query = random.normal(key2, shape=(h, d, head_size)) * scale
+    value = random.normal(key3, shape=(h, d, head_size)) * scale
+    return (query, key, value)
 
 
 def init_ffwd_fn(rng, conf):
     rng, key1, key2 = random.split(rng, 3)
-    emb_dim, scale = conf["emb_dim"], conf["scale"]
+    emb_dim, scale = conf["emb"], conf["scale"]
     params = (  # multiply by 4 for cos thats what people do
-        random.normal(key1, shape=(emb_dim, emb_dim * 4)) * scale,
-        jnp.zeros((emb_dim * 4)),
-        random.normal(key2, shape=(4 * emb_dim, emb_dim)) * scale,
+        random.uniform(key1, shape=(emb_dim, emb_dim), minval=-0.1, maxval=0.1),
         jnp.zeros((emb_dim)),
-        jnp.array(0.0),
+        random.uniform(key2, shape=(emb_dim, emb_dim), minval=-0.1, maxval=0.1),
+        jnp.zeros((emb_dim)),
     )
     return params
 
 
 def init_block_fn(rng, conf):
     rng, key1, key2 = random.split(rng, 3)
-    params = {"head": init_head_fn(key1, conf), "ffwd": init_ffwd_fn(key2, conf)}
+    params = {
+        "head": init_head_fn(key1, conf),
+        "ffwd": init_ffwd_fn(key2, conf),
+    }
     return params
 
 
 def init_fn(rng, conf):
     rng, key1, key2, key3 = random.split(rng, 4)
-    base, d, block_size = conf["base"], conf["emb_dim"], conf["block_size"]
-    base = base if "vocab" not in conf else conf["vocab"]
-    params = {
-        "tok_emb": random.normal(key1, shape=(base, d)) * conf["scale"],
-        "pos_emb": random.normal(key2, shape=(block_size, d)) * conf["scale"],
-        "lm_head": random.normal(key3, shape=(d, base)) * conf["scale"],
-        "blocks": [init_block_fn(key1, conf) for _ in range(conf["n_layers"])],
-    }
+    in_d, out_d, emb_d, len_d = conf["in_d"], conf["out_d"], conf["emb"], conf["len"]
+    params = dict(
+        tok_emb=random.uniform(key1, shape=(in_d, emb_d), minval=-0.1, maxval=0.1),
+        pos_emb=random.uniform(key2, shape=(len_d, emb_d), minval=-0.1, maxval=0.1),
+        blocks=[init_block_fn(key1, conf) for _ in range(conf["n_layers"])],
+        lm_head=random.uniform(key3, shape=(emb_d, out_d), minval=-0.1, maxval=0.1),
+    )
     return params
 
 
 if __name__ == "__main__":
     from utils import load_conf
 
-    conf = load_conf(128)
+    conf = load_conf()
     rng = random.PRNGKey(0)
     params = init_fn(rng, conf)
     print(params)
