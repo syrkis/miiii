@@ -38,7 +38,7 @@ def make_update_fn(opt):
 def make_grad_fn(loss_fn):
     @jit
     def grad_fn(params, x, y):
-        loss, grads = value_and_grad(loss_fn)(params, x, y)
+        loss, grads = value_and_grad(loss_fn, allow_int=True)(params, x, y)
         return loss, grads
 
     return grad_fn
@@ -46,12 +46,23 @@ def make_grad_fn(loss_fn):
 
 def make_step_fn(grad_fn, update_fn, train_x, train_y):
     @jit  # TODO: append losses during scan.
-    def step_fn(params, opt_state):
+    def step_fn(carry, _=None):
+        params, opt_state = carry
         loss, grads = grad_fn(params, train_x, train_y)
         params, opt_state = update_fn(params, grads, opt_state)
-        return params, opt_state, loss
+        return (params, opt_state), loss
 
     return step_fn
+
+
+def make_train_fn(grad_fn, update_fn, train_x, train_y):
+    step_fn = make_step_fn(grad_fn, update_fn, train_x, train_y)
+
+    def train_fn(params, opt_state, steps):
+        state, losses = jax.lax.scan(step_fn, (params, opt_state), None, length=steps)
+        return state, losses
+
+    return train_fn
 
 
 # testing
@@ -64,12 +75,12 @@ if __name__ == "__main__":
 
     rng, key = random.split(random.PRNGKey(0))
     base, seq = 2, oeis["A000040"]
-    number_system = partial(base_n, n=base)
+    number_system = partial(base_n, base)
 
     (train_x, train_y), (valid_x, valid_y) = prime_fn(seq, 2**14, number_system)
-    config = dict(in_d=base, out_d=2, len=train_x.shape[1], **load_conf())
+    data_conf, model_conf = load_conf()
 
-    params = init_fn(key, config)
+    params = init_fn(key, dict(**model_conf, len=train_x.shape[1]))
     opt = optax.adam(1e-3)
     opt_state = opt.init(params)
 
@@ -81,4 +92,7 @@ if __name__ == "__main__":
     update_fn = make_update_fn(opt)
 
     step_fn = make_step_fn(grad_fn, update_fn, train_x, train_y)
-    state = jax.lax.scan(step_fn, params, init=opt_state, length=1000)
+    for i in range(1000):
+        params, opt_state, loss = step_fn(params, opt_state)
+        print(loss)
+    # state = jax.lax.scan(step_fn, params, init=opt_state, length=1000)

@@ -26,13 +26,3 @@ The goal is to gain insights into these fundamental building blocks of mathemati
 3. Install the required dependencies using Poetry: `poetry install`
 4. Explore the various scripts and the Jupyter notebook to understand the project's workings
 5. Run analyses and extend the project's capabilities as desired
-
-## Contributing 
-
-Contributions to extend MIIII's scope and enhance its analytical abilities are welcome. Please submit a pull request with any proposed changes.
-
-## License
-
-This project is licensed under the [insert license here].
-
-Let me know if you would like me to modify or expand the README in any way. The key elements are the project overview, structure breakdown, basic setup instructions, and guidance for contributing and licensing.

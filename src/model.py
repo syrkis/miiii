@@ -14,18 +14,16 @@ from typing import Any, Callable, Dict, Optional, Tuple, Union
 from tqdm import tqdm
 
 # constants
-dropout = 0.1
 dataset = "primes"
 
 
 def make_apply_fn(transformer_fn):  # x: seq_len
     @partial(vmap, in_axes=(None, 0))
-    def apply_fn(params, x, rng=None):  # set dropout_rate to 0.1 when training
+    def apply_fn(params, x):  # set dropout_rate to 0.1 when training
         z = embed_fn(x, params["tok_emb"], params["pos_emb"])  # z: seq_len x emb_dim
         # z = lax.scan(transformer_fn, z, params["blocks"])  # z: seq_len x emb_dim
         for block in params["blocks"]:  # use fori_loop maybe
-            rng, key = random.split(rng) if rng is not None else (None, None)
-            z = transformer_fn(z, block, key)  # use different transformers
+            z = transformer_fn(z, block)  # use different transformers
         logits = z @ params["lm_head"]  # logits: seq_len x vocab
         return logits[-1]
 
@@ -39,8 +37,9 @@ def layer_norm(x, eps=1e-6):  # i think this is wrong
     return (x - mean) / (std + eps)
 
 
-def dropout_fn(rng, x, rate=0.1):
-    return x * random.bernoulli(rng, rate, x.shape) / rate
+def dropout_fn(rng, x):
+    rate = 0.1
+    return random.bernoulli(rng, 1 - rate, x.shape) / (1 - rate)
 
 
 def embed_fn(x, tok_emb_w, pos_emb_w):  # x: seq_len
@@ -49,12 +48,11 @@ def embed_fn(x, tok_emb_w, pos_emb_w):  # x: seq_len
     return tok_emb + pos_emb  # z: seq_len x emb_dim
 
 
-def ffwd_fn(x, w1, b1, w2, b2, rng):
+def ffwd_fn(x, params):
+    w1, b1, w2, b2 = params
     z = x @ w1 + b1  # z: seq_len x emb_dim
     z = jax.nn.relu(z)  # TODO: maybe switch activation
     z = z @ w2 + b2
-    if rng is not None:
-        z = dropout_fn(rng, z, dropout)
     return z
 
 
@@ -65,24 +63,21 @@ def ffwd_fn(x, w1, b1, w2, b2, rng):
 vaswani_ffwd_fn = ffwd_fn
 
 
-def vaswani_fn(z, block, rng=None):
-    keys = random.split(rng, 3) if rng is not None else [None] * 3
-    z += vaswani_head_fn(layer_norm(z), *block["head"], keys[0])
-    if rng is not None:
-        z = dropout_fn(rng, z, dropout, keys[1])
-    z += vaswani_ffwd_fn(layer_norm(z), *block["ffwd"], keys[2])
+def vaswani_fn(z, block):
+    z += vaswani_head_fn(layer_norm(z), block["head"])
+    z += vaswani_ffwd_fn(layer_norm(z), block["ffwd"])
     return z
 
 
-def vaswani_head_fn(x, query, key, value, projection, rng):  # x: seq_len x emb_dim
+def vaswani_head_fn(x, params):
+    query, key, value, projection = params
+
     mask = jnp.triu(jnp.full((x.shape[0], x.shape[0]), -jnp.inf), 1)
     q, k, v = x @ query, x @ key, x @ value  # q, k, v: seq_len x d_k
     z = q @ rearrange(k, "b t c -> b c t")  # z: seq_len x seq_len
     z /= jnp.sqrt(k.shape[-1])
     wei = jnp.where(dataset == "ficciones", z + mask, z)
     wei = jax.nn.softmax(wei, axis=-1)
-    if rng is not None:
-        wei = dropout_fn(rng, wei, dropout)
     z = wei @ v  # z: head x seq_len x d_v
     z = rearrange(z, "h t d -> t (h d)")
     z = z @ projection
@@ -106,11 +101,3 @@ if __name__ == "__main__":
     from datum import data_fn, text_fn
     from numbs import base_n
     from oeis import oeis
-
-    rng, key = random.split(random.PRNGKey(0))
-    base = 2
-    x, y = data_fn("primes", oeis["A000040"], 2**10, partial(base_n, n=base))
-    config = dict(in_d=base, out_d=1, len=x.shape[1], **load_conf())
-    params = init_fn(key, config)
-    apply_fn = make_apply_fn(vaswani_fn)
-    pred = apply_fn(params, x)
