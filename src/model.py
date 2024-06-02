@@ -13,72 +13,92 @@ from einops import rearrange
 from typing import Any, Callable, Dict, Optional, Tuple, Union
 from tqdm import tqdm
 
+# constants
+dropout = 0.1
+
 
 def make_apply_fn(transformer_fn):  # x: seq_len
     @partial(vmap, in_axes=(None, 0))
-    def apply_fn(params, x):
+    def apply_fn(params, x, rng=None):  # set dropout_rate to 0.1 when training
         z = embed_fn(x, params["tok_emb"], params["pos_emb"])  # z: seq_len x emb_dim
         # z = lax.scan(transformer_fn, z, params["blocks"])  # z: seq_len x emb_dim
         for block in params["blocks"]:  # use fori_loop maybe
-            z = transformer_fn(z, block)  # use different transformers
+            rng, key = random.split(rng) if rng is not None else (None, None)
+            z = transformer_fn(z, block, key)  # use different transformers
         logits = z @ params["lm_head"]  # logits: seq_len x vocab
         return logits
 
     return apply_fn
 
 
-def ln_fn(x, axis=-1, epsilon=1e-5):
-    mean = jnp.mean(x, axis=axis, keepdims=True)
-    std = jnp.std(x, axis=axis, keepdims=True)
-    return (x - mean) / (std + epsilon)
+def layer_norm(x, eps=1e-6):  # i think this is wrong
+    return x
+    mean = x.mean(-1, keepdims=True)
+    std = x.std(-1, keepdims=True)
+    return (x - mean) / (std + eps)
 
 
-# CORRECT
+def dropout_fn(rng, x, rate=0.1):
+    return x * random.bernoulli(rng, rate, x.shape) / rate
+
+
 def embed_fn(x, tok_emb_w, pos_emb_w):  # x: seq_len
     tok_emb = tok_emb_w[x]  # tok_emb: seq_len x emb_dim
     pos_emb = pos_emb_w[jnp.arange(x.shape[0])]  # pos_emb: seq_len x emb_dim
     return tok_emb + pos_emb  # z: seq_len x emb_dim
 
 
+def ffwd_fn(x, w1, b1, w2, b2, rng):
+    z = x @ w1 + b1  # z: seq_len x emb_dim
+    z = jax.nn.relu(z)  # TODO: maybe switch activation
+    z = z @ w2 + b2
+    if rng is not None:
+        z = dropout_fn(rng, z, dropout)
+    return z
+
+
 ######################################
 # Vaswani Transformer
 ######################################
 
+vaswani_ffwd_fn = ffwd_fn
 
-def vaswani_fn(z, block):
-    z += vaswani_head_fn(ln_fn(z), *block["head"])
-    z += vaswani_ffwd_fn(ln_fn(z), *block["ffwd"])
+
+def vaswani_fn(z, block, rng=None):
+    keys = random.split(rng, 3) if rng is not None else [None] * 3
+    z += vaswani_head_fn(layer_norm(z), *block["head"], keys[0])
+    if rng is not None:
+        z = dropout_fn(rng, z, dropout, keys[1])
+    z += vaswani_ffwd_fn(layer_norm(z), *block["ffwd"], keys[2])
     return z
 
 
-def vaswani_head_fn(x, query, key, value, projection):  # x: seq_len x emb_dim
+def vaswani_head_fn(x, query, key, value, projection, rng):  # x: seq_len x emb_dim
     mask = jnp.triu(jnp.full((x.shape[0], x.shape[0]), -jnp.inf), 1)
-    q = x @ query  # q: seq_len x d_k
-    k = x @ key  # k: seq_len x d_k
-    v = x @ value  # v: seq_len x d_v
+    q, k, v = x @ query, x @ key, x @ value  # q, k, v: seq_len x d_k
     z = q @ rearrange(k, "b t c -> b c t")  # z: seq_len x seq_len
     z /= jnp.sqrt(k.shape[-1])
-    wei = z + mask  # wei: seq_len x seq_len  # for decoder only
+    wei = (z + mask) if True else z  # wei: seq_len x seq_len  # for decoder only
     wei = jax.nn.softmax(wei, axis=-1)
+    if rng is not None:
+        wei = dropout_fn(rng, wei, dropout)
     z = wei @ v  # z: head x seq_len x d_v
     z = rearrange(z, "h t d -> t (h d)")
     z = z @ projection
     return z
 
 
-# CORRECT
-def vaswani_ffwd_fn(x, w1, b1, w2, b2):
-    z = x @ w1 + b1  # z: seq_len x emb_dim
-    z = jax.nn.relu(z)  # TODO: maybe switch activation
-    z = z @ w2 + b2
-    return z
-
-
 ######################################
-# GPT Transformer
+# Hosseini Transformer
 ######################################
 
 
+######################################
+# He transformer
+######################################
+
+
+# testing
 if __name__ == "__main__":
     from utils import load_conf
     from param import init_fn

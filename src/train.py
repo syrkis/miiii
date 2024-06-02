@@ -46,15 +46,14 @@ def make_grad_fn(loss_fn):
 
 
 def make_estimate_loss_fn(loss_fn):
-    @jit
     def estimate_loss(params, train_data, valid_data):
-        train_loss = jax.lax.scan(
-            lambda l, xy: l + loss_fn(params, *xy), 0.0, train_data
-        )
-        valid_loss = jax.lax.scan(
-            lambda l, xy: l + loss_fn(params, *xy), 0.0, valid_data
-        )
-        return train_loss / 100, valid_loss / 100
+        train_loss = 0
+        valid_loss = 0
+        for i in range(10):
+            train_loss += loss_fn(params, *next(train_data))
+        for i in range(10):
+            valid_loss += loss_fn(params, *next(valid_data))
+        return train_loss / 10, valid_loss / 10
 
     return estimate_loss
 
@@ -69,33 +68,38 @@ if __name__ == "__main__":
 
     # x, y = data_fn(oeis["A000040"], conf["n_samples"], partial(base_n, n=conf["base"]))
     rng, key = random.split(random.PRNGKey(0))
-    train_data, valid_data, encode, decode, vocab = data_fn("ficciones", key, 256, 64)
+    train_data, valid_data, encode, decode, vocab = data_fn("ficciones", key, 16, 64)
     rng, key = random.split(rng)
     config = get_conf(
         in_d=len(vocab), out_d=len(vocab), len=next(train_data)[0].shape[1]
     )
     params = init_fn(key, config)
-    opt = optax.adam(3e-4)
+    opt = optax.adam(1e-3)
     opt_state = opt.init(params)
 
-    # functions
+    # train functions
     apply_fn = make_apply_fn(vaswani_fn)
     loss_fn = make_loss_fn(apply_fn)
     grad_fn = make_grad_fn(loss_fn)
     update_fn = make_update_fn(opt)
 
-    for i, (x, y) in zip(range(4000), train_data):
+    # eval functions
+    eval_apply_fn = jit(make_apply_fn(vaswani_fn))
+    eval_loss_fn = make_loss_fn(eval_apply_fn)
+    estimate_loss = make_estimate_loss_fn(eval_loss_fn)
+
+    for i, (x, y) in zip(pbar := tqdm(range(10000)), train_data):
         loss, grads = grad_fn(params, x, y)
         params, opt_state = update_fn(params, grads, opt_state)
-        print(i, loss)
-
-    apply = jit(apply_fn)
+        if i % 500 == 0:
+            train_loss, valid_loss = estimate_loss(params, train_data, valid_data)
+            pbar.set_description(f"{train_loss:.3f} {valid_loss:.3f}")
 
     rng, key = random.split(rng)
     state = next(train_data)[0]
     for i in range(100):
         rng, key = random.split(rng)
-        logits = apply(params, state[:, -256:])[:, -1, :]
+        logits = eval_apply_fn(params, state[:, -32:])[:, -1, :]
         word = random.categorical(key, logits)[:, None]
         state = jnp.concatenate([state, word], axis=-1)
 
