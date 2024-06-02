@@ -15,6 +15,7 @@ from tqdm import tqdm
 
 # constants
 dropout = 0.1
+dataset = "primes"
 
 
 def make_apply_fn(transformer_fn):  # x: seq_len
@@ -26,7 +27,7 @@ def make_apply_fn(transformer_fn):  # x: seq_len
             rng, key = random.split(rng) if rng is not None else (None, None)
             z = transformer_fn(z, block, key)  # use different transformers
         logits = z @ params["lm_head"]  # logits: seq_len x vocab
-        return logits
+        return logits[-1]
 
     return apply_fn
 
@@ -78,7 +79,7 @@ def vaswani_head_fn(x, query, key, value, projection, rng):  # x: seq_len x emb_
     q, k, v = x @ query, x @ key, x @ value  # q, k, v: seq_len x d_k
     z = q @ rearrange(k, "b t c -> b c t")  # z: seq_len x seq_len
     z /= jnp.sqrt(k.shape[-1])
-    wei = (z + mask) if True else z  # wei: seq_len x seq_len  # for decoder only
+    wei = jnp.where(dataset == "ficciones", z + mask, z)
     wei = jax.nn.softmax(wei, axis=-1)
     if rng is not None:
         wei = dropout_fn(rng, wei, dropout)
@@ -107,11 +108,9 @@ if __name__ == "__main__":
     from oeis import oeis
 
     rng, key = random.split(random.PRNGKey(0))
-    # ns = partial(base_n, n=2)
-    # x, y = data_fn(oeis["A000040"], 2**10, ns)
-    train_data, _, encode, decode, vocab = text_fn(key, 64, 4)  # block_size, batch_size
-    config = dict(in_d=len(vocab), out_d=len(vocab), len=64, **load_conf())
+    base = 2
+    x, y = data_fn("primes", oeis["A000040"], 2**10, partial(base_n, n=base))
+    config = dict(in_d=base, out_d=1, len=x.shape[1], **load_conf())
     params = init_fn(key, config)
     apply_fn = make_apply_fn(vaswani_fn)
-    pred = apply_fn(params, next(train_data)[0])
-    print(pred)
+    pred = apply_fn(params, x)

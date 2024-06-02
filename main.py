@@ -3,12 +3,7 @@
 # by: Noah Syrkis
 
 # imports
-from oeis import oeis
-import jax.numpy as jnp
-from jax import random, jit
-from typing import List, Set, Tuple
-
-from src import args_fn, operator_fn, modulus_fn
+from src import 
 # functions
 
 

@@ -18,9 +18,8 @@ from einops import rearrange
 def make_loss_fn(apply_fn):
     @jit
     def loss_fn(params, x, y):  #  cross entropy loss
-        logits = rearrange(apply_fn(params, x), "b t c -> (b t) c")
-        labels = rearrange(y, "b t -> (b t)")
-        loss = optax.softmax_cross_entropy_with_integer_labels(logits, labels)
+        logits = apply_fn(params, x)
+        loss = optax.softmax_cross_entropy_with_integer_labels(logits, y)
         return loss.mean()
 
     return loss_fn
@@ -62,17 +61,14 @@ def make_estimate_loss_fn(loss_fn):
 if __name__ == "__main__":
     from param import init_fn
     from model import make_apply_fn, vaswani_fn
-    from utils import get_conf
+    from utils import load_conf
     from datum import data_fn
     from numbs import base_n
 
-    # x, y = data_fn(oeis["A000040"], conf["n_samples"], partial(base_n, n=conf["base"]))
+    base = 2
+    x, y = data_fn("primes", oeis["A000040"], 2**10, partial(base_n, n=base))
     rng, key = random.split(random.PRNGKey(0))
-    train_data, valid_data, encode, decode, vocab = data_fn("ficciones", key, 16, 64)
-    rng, key = random.split(rng)
-    config = get_conf(
-        in_d=len(vocab), out_d=len(vocab), len=next(train_data)[0].shape[1]
-    )
+    config = dict(in_d=base, out_d=2, len=x.shape[1], **load_conf())
     params = init_fn(key, config)
     opt = optax.adam(1e-3)
     opt_state = opt.init(params)
@@ -88,19 +84,7 @@ if __name__ == "__main__":
     eval_loss_fn = make_loss_fn(eval_apply_fn)
     estimate_loss = make_estimate_loss_fn(eval_loss_fn)
 
-    for i, (x, y) in zip(pbar := tqdm(range(10000)), train_data):
+    for i in range(10000):
         loss, grads = grad_fn(params, x, y)
         params, opt_state = update_fn(params, grads, opt_state)
-        if i % 500 == 0:
-            train_loss, valid_loss = estimate_loss(params, train_data, valid_data)
-            pbar.set_description(f"{train_loss:.3f} {valid_loss:.3f}")
-
-    rng, key = random.split(rng)
-    state = next(train_data)[0]
-    for i in range(100):
-        rng, key = random.split(rng)
-        logits = eval_apply_fn(params, state[:, -32:])[:, -1, :]
-        word = random.categorical(key, logits)[:, None]
-        state = jnp.concatenate([state, word], axis=-1)
-
-    print(decode(state[0].tolist()))
+        print(i, f"{loss:.4f}")

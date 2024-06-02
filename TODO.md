@@ -1,7 +1,8 @@
 # TODO
 
-- [ ] make switch between prime and ficciones trivial
+- [ ] setup hpc
 - [ ] visualize prime task performace and compare to SOTA
+- [x] make switch between prime and ficciones trivial
 - [x] write on paper
 - [x] add dropout
 - [x] split and evaluate tasks into test, train and eval
