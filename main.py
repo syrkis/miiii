@@ -3,15 +3,16 @@
 # by: Noah Syrkis
 
 # imports
-from src import 
+from jax import random
+import jax.numpy as jnp
+import src
+
+
 # functions
-
-
 def main():
-    args = args_fn()
-    operator = modulus_fn
-    data = operator_fn(operator, 100000)
-    print(data)
+    rng, key = random.split(random.PRNGKey(0))
+    config = src.get_conf()
+    print(config)
 
 
 if __name__ == "__main__":

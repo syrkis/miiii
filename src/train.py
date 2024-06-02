@@ -44,17 +44,14 @@ def make_grad_fn(loss_fn):
     return grad_fn
 
 
-def make_estimate_loss_fn(loss_fn):
-    def estimate_loss(params, train_data, valid_data):
-        train_loss = 0
-        valid_loss = 0
-        for i in range(10):
-            train_loss += loss_fn(params, *next(train_data))
-        for i in range(10):
-            valid_loss += loss_fn(params, *next(valid_data))
-        return train_loss / 10, valid_loss / 10
+def make_step_fn(grad_fn, update_fn, train_x, train_y):
+    @jit  # TODO: append losses during scan.
+    def step_fn(params, opt_state):
+        loss, grads = grad_fn(params, train_x, train_y)
+        params, opt_state = update_fn(params, grads, opt_state)
+        return params, opt_state, loss
 
-    return estimate_loss
+    return step_fn
 
 
 # testing
@@ -62,13 +59,16 @@ if __name__ == "__main__":
     from param import init_fn
     from model import make_apply_fn, vaswani_fn
     from utils import load_conf
-    from datum import data_fn
+    from datum import prime_fn
     from numbs import base_n
 
-    base = 2
-    x, y = data_fn("primes", oeis["A000040"], 2**10, partial(base_n, n=base))
     rng, key = random.split(random.PRNGKey(0))
-    config = dict(in_d=base, out_d=2, len=x.shape[1], **load_conf())
+    base, seq = 2, oeis["A000040"]
+    number_system = partial(base_n, n=base)
+
+    (train_x, train_y), (valid_x, valid_y) = prime_fn(seq, 2**14, number_system)
+    config = dict(in_d=base, out_d=2, len=train_x.shape[1], **load_conf())
+
     params = init_fn(key, config)
     opt = optax.adam(1e-3)
     opt_state = opt.init(params)
@@ -77,14 +77,8 @@ if __name__ == "__main__":
     apply_fn = make_apply_fn(vaswani_fn)
     loss_fn = make_loss_fn(apply_fn)
     grad_fn = make_grad_fn(loss_fn)
+
     update_fn = make_update_fn(opt)
 
-    # eval functions
-    eval_apply_fn = jit(make_apply_fn(vaswani_fn))
-    eval_loss_fn = make_loss_fn(eval_apply_fn)
-    estimate_loss = make_estimate_loss_fn(eval_loss_fn)
-
-    for i in range(10000):
-        loss, grads = grad_fn(params, x, y)
-        params, opt_state = update_fn(params, grads, opt_state)
-        print(i, f"{loss:.4f}")
+    step_fn = make_step_fn(grad_fn, update_fn, train_x, train_y)
+    state = jax.lax.scan(step_fn, params, init=opt_state, length=1000)

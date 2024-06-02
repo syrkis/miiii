@@ -29,9 +29,11 @@ def prime_fn(seq, n: int, ns: Callable) -> Tuple[jnp.array, jnp.array]:
     limit = (n / jnp.log(n)).astype(int)  # num primes less than n is n / ln(n)
     primes = jnp.array(seq[1 : limit * 2])
     assert max(primes) > n, "not enough primes"  # make sure there are enough primes
-    x = jnp.arange(2, n + 2)[:n]  # all numbers up to n
-    y = jnp.zeros_like(x).at[primes - 2].set(1)[:n]
-    return ns(x), y  # ns is number system
+    x = ns(jnp.arange(2, n + 2)[:n])  # all numbers up to n
+    y = jnp.zeros_like(x[:, 0]).at[primes - 2].set(1)[:n]
+    train_data = x[: len(x) // 2], y[: len(y) // 2]
+    valid_data = x[len(x) // 2 :], y[len(y) // 2 :]
+    return train_data, valid_data
 
 
 # operator related functions
@@ -81,8 +83,6 @@ def text_fn(rng, block_size=8, batch_size=64):
 if __name__ == "__main__":
     from numbs import base_n
 
-    """     ns = partial(base_n, n=16)
-    x, y = data_fn(oeis["A000040"], 2**4 - 2, ns)
-    print(x, y, sep="\n") """
-    data, encode, decode, vocab = text_fn(random.PRNGKey(0), 64, 4)
-    print(len(vocab))
+    ns = partial(base_n, n=16)
+    x, y = data_fn("primes", oeis["A000040"], 2**4 - 2, ns)
+    print(x, y, sep="\n")
