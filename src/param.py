@@ -9,23 +9,24 @@ import jax.numpy as jnp
 
 # init functions
 def init_head_fn(rng, conf):
-    h, d, scale = conf["n_heads"], conf["emb"], conf["scale"]
+    h, d = conf["n_heads"], conf["emb"]
     head_size = conf["emb"] // conf["n_heads"]
 
     rng, key1, key2, key3 = random.split(rng, 4)
-    key = random.normal(key1, shape=(h, d, head_size)) * scale
-    query = random.normal(key2, shape=(h, d, head_size)) * scale
-    value = random.normal(key3, shape=(h, d, head_size)) * scale
-    return (query, key, value)
+    key = random.uniform(key1, shape=(h, d, head_size), minval=-0.1, maxval=0.1)
+    query = random.uniform(key2, shape=(h, d, head_size), minval=-0.1, maxval=0.1)
+    value = random.uniform(key3, shape=(h, d, head_size), minval=-0.1, maxval=0.1)
+    projection = random.uniform(rng, shape=(h * head_size, d), minval=-0.1, maxval=0.1)
+    return (query, key, value, projection)
 
 
 def init_ffwd_fn(rng, conf):
     rng, key1, key2 = random.split(rng, 3)
-    emb_dim, scale = conf["emb"], conf["scale"]
+    emb_dim = conf["emb"]
     params = (  # multiply by 4 for cos thats what people do
-        random.uniform(key1, shape=(emb_dim, emb_dim), minval=-0.1, maxval=0.1),
-        jnp.zeros((emb_dim)),
-        random.uniform(key2, shape=(emb_dim, emb_dim), minval=-0.1, maxval=0.1),
+        random.uniform(key1, shape=(emb_dim, 4 * emb_dim), minval=-0.1, maxval=0.1),
+        jnp.zeros((4 * emb_dim)),
+        random.uniform(key2, shape=(4 * emb_dim, emb_dim), minval=-0.1, maxval=0.1),
         jnp.zeros((emb_dim)),
     )
     return params

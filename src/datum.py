@@ -71,9 +71,10 @@ def text_fn(rng, block_size=8, batch_size=64):
             y = jnp.stack([toks[idx + 1 : idx + block_size + 1] for idx in idxs])
             yield x, y
 
-    data = aux(rng, encode(text))
+    train_data = aux(rng, encode(text[: int(len(text) * 0.8)]))
+    valid_data = aux(rng, encode(text[int(len(text) * 0.8) :]))
 
-    return data, encode, decode, vocab
+    return train_data, valid_data, encode, decode, vocab
 
 
 # testing
