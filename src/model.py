@@ -25,7 +25,7 @@ def make_apply_fn(transformer_fn):  # x: seq_len
         for block in params["blocks"]:  # use fori_loop maybe
             z = transformer_fn(z, block)  # use different transformers
         logits = z @ params["lm_head"]  # logits: seq_len x vocab
-        return logits[-1]
+        return logits[-1].squeeze()  # logits: vocab
 
     return apply_fn
 

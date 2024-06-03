@@ -30,7 +30,7 @@ def prime_fn(seq, n: int, ns: Callable) -> Tuple[jnp.array, jnp.array]:
     primes = jnp.array(seq[1 : limit * 2])
     assert max(primes) > n, "not enough primes"  # make sure there are enough primes
     x = ns(jnp.arange(2, n + 2)[:n])  # all numbers up to n
-    y = jnp.zeros_like(x[:, 0]).at[primes - 2].set(1)[:n]
+    y = jnp.zeros_like(x[:, 0]).at[primes - 2].set(1)
     train_data = x[: len(x) // 2], y[: len(y) // 2]
     valid_data = x[len(x) // 2 :], y[len(y) // 2 :]
     return train_data, valid_data

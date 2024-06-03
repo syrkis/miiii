@@ -16,11 +16,11 @@ import esch
 
 
 # functions
-def make_loss_fn(apply_fn):
+def make_loss_fn(apply_fn, alpha):
     @jit
     def loss_fn(params, x, y):  #  cross entropy loss
         logits = apply_fn(params, x)
-        loss = optax.softmax_cross_entropy_with_integer_labels(logits, y)
+        loss = optax.sigmoid_focal_loss(logits, y, alpha=alpha)
         return loss.mean()
 
     return loss_fn
@@ -72,6 +72,7 @@ if __name__ == "__main__":
 
     seq = oeis["A000040"]  # "A000040" is the sequence of prime numbers
     data_conf, model_conf = get_conf()
+    alpha = (data_conf["n"] / jnp.log(data_conf["n"])) / data_conf["n"]
     rng, key = random.split(random.PRNGKey(0))
 
     number_system = partial(base_n, data_conf["base"])
@@ -80,7 +81,7 @@ if __name__ == "__main__":
     params = init_fn(key, dict(**model_conf, len=train_data[0].shape[1]))
 
     apply_fn = make_apply_fn(vaswani_fn)
-    loss_fn = make_loss_fn(apply_fn)
+    loss_fn = make_loss_fn(apply_fn, alpha)
     grad_fn = make_grad_fn(loss_fn)
 
     opt = optax.adam(1e-3)
@@ -89,4 +90,8 @@ if __name__ == "__main__":
 
     # train the model
     step_fn = make_step_fn(grad_fn, update_fn, loss_fn, train_data, valid_data)
-    state, losses = train_fn(step_fn, params, opt_state, 1000)
+    state, losses = train_fn(step_fn, params, opt_state, 5000)
+
+    preds = apply_fn(state[0], train_data[0])
+    print((jax.nn.softmax(preds[:10]) > 0.5).astype(int))
+    print(train_data[1][:10])

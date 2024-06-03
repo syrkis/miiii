@@ -1,4 +1,4 @@
-from .utils import get_conf
+from .utils import get_conf, alpha_fn
 from .datum import data_fn
 from .param import init_fn
 from .plots import polar_fn
@@ -14,6 +14,7 @@ from .numbs import base_n
 
 __all__ = [
     "get_conf",
+    "alpha_fn",
     "data_fn",
     "init_fn",
     "polar_fn",
