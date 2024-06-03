@@ -18,17 +18,17 @@ from hilbert import encode, decode
 cols = {True: "black", False: "white"}
 ink = "black" if darkdetect.isLight() else "white"
 bg = "white" if darkdetect.isLight() else "black"
-marks = ["o", "."]
+marks = ["x", "o", "o", "s", "D", "v", "^", "<", ">", "1", "2", "3", "4"]
 
 
 # functions
-def polar_fn(vector, fname):  # maps v to a polar plot
+def polar_fn(vector, fname, offset=0):  # maps v to a polar plot
     fig, ax = init_polar_plot()
     cats = jnp.unique(vector)[jnp.unique(vector) > 0]
-    for cat in cats:
-        idxs = jnp.where(vector == cat)[0] + 2
+    for cat, m in zip(cats, marks):
+        idxs = jnp.where(vector == cat)[0] + 2 + offset
         size = jnp.sqrt(idxs) / jnp.log(idxs)
-        ax.scatter(idxs, idxs, s=size, c=ink)
+        ax.scatter(idxs, idxs, c=ink, marker=m)
     plt.savefig(f"figs/{fname}.pdf", dpi=300)
 
 

@@ -7,7 +7,7 @@ from .train import (
     make_grad_fn,
     make_update_fn,
     make_loss_fn,
-    make_train_fn,
+    train_fn,
 )
 from .model import make_apply_fn, vaswani_fn
 from .numbs import base_n
@@ -21,7 +21,7 @@ __all__ = [
     "make_grad_fn",
     "make_update_fn",
     "make_loss_fn",
-    "make_train_fn",
+    "train_fn",
     "make_apply_fn",
     "vaswani_fn",
     "base_n",
