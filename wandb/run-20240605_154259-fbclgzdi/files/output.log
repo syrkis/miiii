@@ -1,0 +1,39 @@
+Traceback (most recent call last):
+  File "/Users/syrkis/code/miiii/main.py", line 25, in log_run
+    wandb.log({"structure": structure})
+  File "/Users/syrkis/Library/Caches/pypoetry/virtualenvs/miiii-tvzdJIej-py3.11/lib/python3.11/site-packages/wandb/sdk/wandb_run.py", line 449, in wrapper
+    return func(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/syrkis/Library/Caches/pypoetry/virtualenvs/miiii-tvzdJIej-py3.11/lib/python3.11/site-packages/wandb/sdk/wandb_run.py", line 400, in wrapper_fn
+    return func(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/syrkis/Library/Caches/pypoetry/virtualenvs/miiii-tvzdJIej-py3.11/lib/python3.11/site-packages/wandb/sdk/wandb_run.py", line 390, in wrapper
+    return func(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/syrkis/Library/Caches/pypoetry/virtualenvs/miiii-tvzdJIej-py3.11/lib/python3.11/site-packages/wandb/sdk/wandb_run.py", line 1871, in log
+    self._log(data=data, step=step, commit=commit)
+  File "/Users/syrkis/Library/Caches/pypoetry/virtualenvs/miiii-tvzdJIej-py3.11/lib/python3.11/site-packages/wandb/sdk/wandb_run.py", line 1635, in _log
+    self._partial_history_callback(data, step, commit)
+  File "/Users/syrkis/Library/Caches/pypoetry/virtualenvs/miiii-tvzdJIej-py3.11/lib/python3.11/site-packages/wandb/sdk/wandb_run.py", line 1507, in _partial_history_callback
+    self._backend.interface.publish_partial_history(
+  File "/Users/syrkis/Library/Caches/pypoetry/virtualenvs/miiii-tvzdJIej-py3.11/lib/python3.11/site-packages/wandb/sdk/interface/interface.py", line 612, in publish_partial_history
+    item.value_json = json_dumps_safer_history(v)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/syrkis/Library/Caches/pypoetry/virtualenvs/miiii-tvzdJIej-py3.11/lib/python3.11/site-packages/wandb/util.py", line 839, in json_dumps_safer_history
+    return dumps(obj, cls=WandBHistoryJSONEncoder, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/syrkis/.pyenv/versions/3.11.7/lib/python3.11/json/__init__.py", line 238, in dumps
+    **kw).encode(obj)
+          ^^^^^^^^^^^
+  File "/Users/syrkis/.pyenv/versions/3.11.7/lib/python3.11/json/encoder.py", line 200, in encode
+    chunks = self.iterencode(o, _one_shot=True)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/syrkis/.pyenv/versions/3.11.7/lib/python3.11/json/encoder.py", line 258, in iterencode
+    return _iterencode(o, 0)
+           ^^^^^^^^^^^^^^^^^
+  File "/Users/syrkis/Library/Caches/pypoetry/virtualenvs/miiii-tvzdJIej-py3.11/lib/python3.11/site-packages/wandb/util.py", line 804, in default
+    return json.JSONEncoder.default(self, obj)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/syrkis/.pyenv/versions/3.11.7/lib/python3.11/json/encoder.py", line 180, in default
+    raise TypeError(f'Object of type {o.__class__.__name__} '
+TypeError: Object of type PyTreeDef is not JSON serializable

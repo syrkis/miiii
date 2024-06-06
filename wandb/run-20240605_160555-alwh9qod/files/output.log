@@ -1,0 +1,5 @@
+Traceback (most recent call last):
+  File "/Users/syrkis/code/miiii/main.py", line 15, in <module>
+    wandb.run._set_console()
+    ^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'Run' object has no attribute '_set_console'

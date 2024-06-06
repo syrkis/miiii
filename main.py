@@ -6,34 +6,35 @@
 from jax import random
 import jax.numpy as jnp
 from functools import partial
-import argparse
-import optax
-from oeis import oeis
+from jax.tree_util import tree_flatten
+import wandb
 import src
 
 
 # functions
+def log_run(params, conf, losses):
+    train_losses, valid_losses = losses.T  # shape (100,)
+    with wandb.init(project="miiii", config=conf):
+        for i, (t, v) in enumerate(zip(train_losses, valid_losses)):
+            wandb.log({"train_loss": t, "valid_loss": v})
+
+
 def main():
-    seq = oeis["A000040"]  # "A000040" is the sequence of prime numbers
-    data_conf, model_conf = src.get_conf()
-    rng, key = random.split(random.PRNGKey(0))
+    # config and init
+    conf, (rng, key) = src.get_conf(), random.split(random.PRNGKey(0))
+    data = src.prime_fn(conf["n"], partial(src.base_n, conf["base"]))
+    params = src.init_fn(key, dict(**conf, len=data[0][0].shape[1]))
 
-    number_system = partial(src.base_n, data_conf["base"])
-    (train_x, train_y), _ = src.data_fn("primes", seq, data_conf["n"], number_system)
-
-    params = src.init_fn(key, dict(**model_conf, len=train_x.shape[1]))
-
+    # train
     apply_fn = src.make_apply_fn(src.vaswani_fn)
-    loss_fn = src.make_loss_fn(apply_fn)
-    grad_fn = src.make_grad_fn(loss_fn)
+    loss_fn, train_fn, opt_state = src.init_train(apply_fn, params, conf, *data)
+    state, losses = train_fn(params, opt_state, conf["epochs"])
 
-    opt = optax.adam(1e-3)
-    opt_state = opt.init(params)
-    update_fn = src.make_update_fn(opt)
-
-    train_fn = src.make_train_fn(grad_fn, update_fn, train_x, train_y)
-    state, losses = train_fn(params, opt_state, 5000)
-    print(losses)
+    # evaluate
+    src.curve_plot(losses, conf, params)
+    train_pred, valid_pred = apply_fn(params, data[0][0]), apply_fn(params, data[1][0])
+    src.polar_plot((data[0][1] + train_pred == 0).astype(int), "train")
+    # log_run(params, conf, losses)
 
 
 if __name__ == "__main__":

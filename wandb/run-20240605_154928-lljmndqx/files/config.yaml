@@ -1,0 +1,67 @@
+wandb_version: 1
+
+base:
+  desc: null
+  value: 10
+n:
+  desc: null
+  value: 4096
+emb:
+  desc: null
+  value: 16
+lr:
+  desc: null
+  value: 0.0001
+n_layers:
+  desc: null
+  value: 3
+n_heads:
+  desc: null
+  value: 8
+epochs:
+  desc: null
+  value: 100
+block:
+  desc: null
+  value: vaswani
+in_d:
+  desc: null
+  value: 10
+out_d:
+  desc: null
+  value: 1
+n_params:
+  desc: null
+  value: 9696
+_wandb:
+  desc: null
+  value:
+    python_version: 3.11.7
+    cli_version: 0.17.0
+    framework: sklearn
+    is_jupyter_run: false
+    is_kaggle_kernel: true
+    start_time: 1717613368
+    t:
+      1:
+      - 5
+      - 12
+      - 53
+      - 55
+      2:
+      - 5
+      - 12
+      - 53
+      - 55
+      3:
+      - 2
+      - 16
+      - 23
+      - 61
+      4: 3.11.7
+      5: 0.17.0
+      8:
+      - 2
+      - 4
+      - 5
+      13: darwin-arm64

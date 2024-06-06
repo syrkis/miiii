@@ -12,15 +12,18 @@ from typing import List, Set, Tuple
 from functools import partial
 from oeis import oeis
 from einops import rearrange
-import esch
+import seaborn as sns
+import matplotlib.pyplot as plt
+from sklearn.metrics import confusion_matrix
 
 
 # functions
-def make_loss_fn(apply_fn, alpha):
+def make_loss_fn(apply_fn):
     @jit
     def loss_fn(params, x, y):  #  cross entropy loss
+        alpha = 1 - ((x.shape[0] / jnp.log(x.shape[0])) / x.shape[0])
         logits = apply_fn(params, x)
-        loss = optax.sigmoid_focal_loss(logits, y, alpha=alpha)
+        loss = optax.sigmoid_focal_loss(logits, y, alpha)
         return loss.mean()
 
     return loss_fn
@@ -57,9 +60,23 @@ def make_step_fn(grad_fn, update_fn, loss_fn, train_data, valid_data):
     return step_fn
 
 
-def train_fn(step_fn, params, opt_state, steps):
-    state, losses = jax.lax.scan(step_fn, (params, opt_state), None, length=steps)
-    return state, losses
+def make_train_fn(step_fn):
+    def train_fn(params, opt_state, steps):
+        state, losses = jax.lax.scan(step_fn, (params, opt_state), None, length=steps)
+        return state, losses
+
+    return train_fn
+
+
+def init_train(apply_fn, params, config, train_data, valid_data):
+    opt = optax.adam(config["lr"])
+    loss_fn = make_loss_fn(apply_fn)
+    grad_fn = make_grad_fn(loss_fn)
+    update_fn = make_update_fn(opt)
+    opt_state = opt.init(params)
+    step_fn = make_step_fn(grad_fn, update_fn, loss_fn, train_data, valid_data)
+    train_fn = make_train_fn(step_fn)
+    return loss_fn, train_fn, opt_state
 
 
 # testing
@@ -90,8 +107,4 @@ if __name__ == "__main__":
 
     # train the model
     step_fn = make_step_fn(grad_fn, update_fn, loss_fn, train_data, valid_data)
-    state, losses = train_fn(step_fn, params, opt_state, 5000)
-
-    preds = apply_fn(state[0], train_data[0])
-    print((jax.nn.softmax(preds[:10]) > 0.5).astype(int))
-    print(train_data[1][:10])
+    state, losses = train_fn(step_fn, params, opt_state, model_conf["epochs"])

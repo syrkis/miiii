@@ -24,17 +24,11 @@ def make_apply_fn(transformer_fn):  # x: seq_len
         # z = lax.scan(transformer_fn, z, params["blocks"])  # z: seq_len x emb_dim
         for block in params["blocks"]:  # use fori_loop maybe
             z = transformer_fn(z, block)  # use different transformers
+        z = jnp.mean(z, axis=0)  # pool: emb_dim
         logits = z @ params["lm_head"]  # logits: seq_len x vocab
-        return logits[-1].squeeze()  # logits: vocab
+        return logits.squeeze()  # logits: vocab
 
     return apply_fn
-
-
-def layer_norm(x, eps=1e-6):  # i think this is wrong
-    return x
-    mean = x.mean(-1, keepdims=True)
-    std = x.std(-1, keepdims=True)
-    return (x - mean) / (std + eps)
 
 
 def dropout_fn(rng, x):
@@ -56,6 +50,11 @@ def ffwd_fn(x, params):
     return z
 
 
+# function for actually classifyinf (use sigmoid)
+def classify_fn(logits):
+    return (jax.nn.sigmoid(logits) > 0.5).astype(int)
+
+
 ######################################
 # Vaswani Transformer
 ######################################
@@ -64,8 +63,8 @@ vaswani_ffwd_fn = ffwd_fn
 
 
 def vaswani_fn(z, block):
-    z += vaswani_head_fn(layer_norm(z), block["head"])
-    z += vaswani_ffwd_fn(layer_norm(z), block["ffwd"])
+    z += vaswani_head_fn(z, block["head"])
+    z += vaswani_ffwd_fn(z, block["ffwd"])
     return z
 
 
@@ -96,8 +95,21 @@ def vaswani_head_fn(x, params):
 
 # testing
 if __name__ == "__main__":
-    from utils import load_conf
+    from utils import get_conf
     from param import init_fn
     from datum import data_fn, text_fn
     from numbs import base_n
     from oeis import oeis
+
+    seq = oeis["A000040"]  # "A000040" is the sequence of prime numbers
+    data_conf, model_conf = get_conf()
+    alpha = (data_conf["n"] / jnp.log(data_conf["n"])) / data_conf["n"]
+    rng, key = random.split(random.PRNGKey(0))
+
+    number_system = partial(base_n, data_conf["base"])
+    train_data, valid_data = data_fn("primes", seq, data_conf["n"], number_system)
+
+    params = init_fn(key, dict(**model_conf, len=train_data[0].shape[1]))
+    apply_fn = make_apply_fn(vaswani_fn)
+    pred = apply_fn(params, train_data[0])
+    print(pred.shape, pred)
