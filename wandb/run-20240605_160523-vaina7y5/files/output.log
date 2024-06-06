@@ -1,6 +1,0 @@
-Traceback (most recent call last):
-  File "/Users/syrkis/code/miiii/main.py", line 43, in <module>
-    main()
-  File "/Users/syrkis/code/miiii/main.py", line 38, in main
-    src.polar_plot(apply_fn, params, conf, *data)
-TypeError: polar_plot() takes from 2 to 3 positional arguments but 5 were given
