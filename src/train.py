@@ -56,14 +56,13 @@ def make_grad_fn(loss_fn):
     return grad_fn
 
 
-def make_step_fn(grad_fn, update_fn, loss_fn, train_data, valid_data):
+def make_step_fn(grad_fn, update_fn, valid_loss_fn, train_data, valid_data):
     @jit
     def step_fn(carry, rng):
-        params, opt_state = carry
-        rng, key = random.split(rng)
+        (params, opt_state), (rng, key) = carry, random.split(rng)
         train_loss, grads = grad_fn(params, key, *train_data)
         params, opt_state = update_fn(params, grads, opt_state)
-        loss = jnp.array([train_loss, loss_fn(params, rng, *valid_data)])  # dropout=0.0
+        loss = jnp.array([train_loss, valid_loss_fn(params, rng, *valid_data)])
         return (params, opt_state), loss
 
     return step_fn
