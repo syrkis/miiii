@@ -19,9 +19,11 @@ COPY requirements.txt .
 
 RUN python3.11 -m pip install -r requirements.txt
 
-RUN python3.11 -m pip install --upgrade "jax[cuda11]"
+RUN python3.11 -m pip uninstall optax jaxlib jax
 
-RUN python3.11 -m pip jaxlib install tensorflow_datasets opencv-python pycocotools
+RUN python3.11 -m pip install "jax[cuda11_pip]" jaxlib==0.1.70+cuda111 -f https://storage.googleapis.com/jax-releases/jax_releases.html optax
+
+RUN python3.11 -m pip install tensorflow_datasets opencv-python pycocotools
 
 ENV PYGLFW_PREVIEW=1
 
