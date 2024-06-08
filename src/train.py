@@ -16,15 +16,22 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 from sklearn.metrics import confusion_matrix
 
+if __name__ == "__main__":
+    from utils import alpha_fn
+else:
+    from .utils import alpha_fn
+
 
 # functions
-def make_loss_fn(apply_fn):
+def make_loss_fn(apply_fn, conf, dropout=0.0):
+    alpha = alpha_fn(conf.n // 2)
+
     @jit
-    def loss_fn(params, x, y):  #  cross entropy loss
-        alpha = 1 - ((x.shape[0] / jnp.log(x.shape[0])) / x.shape[0])
-        logits = apply_fn(params, x)
-        loss = optax.sigmoid_focal_loss(logits, y, alpha)
-        return loss.mean()
+    def loss_fn(params, rng, x, y):  #  cross entropy loss
+        logits = apply_fn(params, rng, x, dropout)
+        loss = optax.sigmoid_focal_loss(logits, y, alpha).mean()
+        l2 = sum(jnp.sum(jnp.square(p)) for p in jax.tree_leaves(params)) / 2
+        return loss + conf.l2 * l2
 
     return loss_fn
 
@@ -41,8 +48,8 @@ def make_update_fn(opt):
 
 def make_grad_fn(loss_fn):
     @jit
-    def grad_fn(params, x, y):
-        loss, grads = value_and_grad(loss_fn, allow_int=True)(params, x, y)
+    def grad_fn(params, rng, x, y):
+        loss, grads = value_and_grad(loss_fn, allow_int=True)(params, rng, x, y)
         return loss, grads
 
     return grad_fn
@@ -51,32 +58,36 @@ def make_grad_fn(loss_fn):
 def make_step_fn(grad_fn, update_fn, loss_fn, train_data, valid_data):
     @jit  # TODO: append losses during scan.
     def step_fn(carry, _=None):
-        params, opt_state = carry
-        train_loss, grads = grad_fn(params, *train_data)
+        params, opt_state, rng = carry
+        rng, key = random.split(rng)
+        train_loss, grads = grad_fn(params, key, *train_data)
         params, opt_state = update_fn(params, grads, opt_state)
-        loss = jnp.array([train_loss, loss_fn(params, *valid_data)])
-        return (params, opt_state), loss
+        loss = jnp.array([train_loss, loss_fn(params, rng, *valid_data)])  # dropout=0.0
+        return (params, opt_state, rng), loss
 
     return step_fn
 
 
 def make_train_fn(step_fn):
-    def train_fn(params, opt_state, steps):
-        state, losses = jax.lax.scan(step_fn, (params, opt_state), None, length=steps)
+    def train_fn(params, opt_state, rng, steps):
+        state, losses = jax.lax.scan(
+            step_fn, (params, opt_state, rng), None, length=steps
+        )
         return state, losses
 
     return train_fn
 
 
 def init_train(apply_fn, params, config, train_data, valid_data):
-    opt = optax.adam(config["lr"])
-    loss_fn = make_loss_fn(apply_fn)
-    grad_fn = make_grad_fn(loss_fn)
+    opt = optax.adam(config.lr)
+    train_loss_fn = make_loss_fn(apply_fn, config, dropout=config.dropout)
+    valid_loss_fn = make_loss_fn(apply_fn, config, dropout=0.0)
+    grad_fn = make_grad_fn(train_loss_fn)
     update_fn = make_update_fn(opt)
     opt_state = opt.init(params)
-    step_fn = make_step_fn(grad_fn, update_fn, loss_fn, train_data, valid_data)
+    step_fn = make_step_fn(grad_fn, update_fn, valid_loss_fn, train_data, valid_data)
     train_fn = make_train_fn(step_fn)
-    return loss_fn, train_fn, opt_state
+    return train_fn, opt_state
 
 
 # testing
@@ -86,25 +97,3 @@ if __name__ == "__main__":
     from utils import get_conf
     from datum import data_fn
     from numbs import base_n
-
-    seq = oeis["A000040"]  # "A000040" is the sequence of prime numbers
-    data_conf, model_conf = get_conf()
-    alpha = (data_conf["n"] / jnp.log(data_conf["n"])) / data_conf["n"]
-    rng, key = random.split(random.PRNGKey(0))
-
-    number_system = partial(base_n, data_conf["base"])
-    train_data, valid_data = data_fn("primes", seq, data_conf["n"], number_system)
-
-    params = init_fn(key, dict(**model_conf, len=train_data[0].shape[1]))
-
-    apply_fn = make_apply_fn(vaswani_fn)
-    loss_fn = make_loss_fn(apply_fn, alpha)
-    grad_fn = make_grad_fn(loss_fn)
-
-    opt = optax.adam(1e-3)
-    opt_state = opt.init(params)
-    update_fn = make_update_fn(opt)
-
-    # train the model
-    step_fn = make_step_fn(grad_fn, update_fn, loss_fn, train_data, valid_data)
-    state, losses = train_fn(step_fn, params, opt_state, model_conf["epochs"])

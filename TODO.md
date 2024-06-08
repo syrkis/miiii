@@ -1,7 +1,8 @@
 # TODO
 
 - [ ] setup hpc
-- [ ] visualize prime task performace and compare to SOTA
+- [ ] Regularize with dropout and layernorm.
+- [ ] Grok (research of grokking is possible for prime numbers)
 - [x] make switch between prime and ficciones trivial
 - [x] write on paper
 - [x] add dropout
@@ -10,6 +11,7 @@
 - [ ] add paper and notes to repo
 - [ ] hilbert / hinton plot of weights
 - [ ] run RASP successfully.
+- [ ] Replace learned circuit with RASP implementation
 
 ## Paper
 

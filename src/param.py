@@ -9,20 +9,20 @@ import jax.numpy as jnp
 
 # init functions
 def init_head_fn(rng, conf):
-    h, d = conf["n_heads"], conf["emb"]
-    head_size = conf["emb"] // conf["n_heads"]
-
+    h, d = conf.heads, conf.emb
     rng, key1, key2, key3 = random.split(rng, 4)
-    key = random.uniform(key1, shape=(h, d, head_size), minval=-0.1, maxval=0.1)
-    query = random.uniform(key2, shape=(h, d, head_size), minval=-0.1, maxval=0.1)
-    value = random.uniform(key3, shape=(h, d, head_size), minval=-0.1, maxval=0.1)
-    projection = random.uniform(rng, shape=(h * head_size, d), minval=-0.1, maxval=0.1)
+
+    key = random.uniform(key1, shape=(h, d, d // h), minval=-0.1, maxval=0.1)
+    query = random.uniform(key2, shape=(h, d, d // h), minval=-0.1, maxval=0.1)
+    value = random.uniform(key3, shape=(h, d, d // h), minval=-0.1, maxval=0.1)
+    projection = random.uniform(rng, shape=(h * d // h, d), minval=-0.1, maxval=0.1)
+
     return (query, key, value, projection)
 
 
 def init_ffwd_fn(rng, conf):
     rng, key1, key2 = random.split(rng, 3)
-    emb_dim = conf["emb"]
+    emb_dim = conf.emb
     params = (  # multiply by 4 for cos thats what people do
         random.uniform(key1, shape=(emb_dim, 4 * emb_dim), minval=-0.1, maxval=0.1),
         jnp.zeros((4 * emb_dim)),
@@ -43,11 +43,11 @@ def init_block_fn(rng, conf):
 
 def init_fn(rng, conf):
     rng, key1, key2, key3 = random.split(rng, 4)
-    in_d, out_d, emb_d, len_d = conf["in_d"], conf["out_d"], conf["emb"], conf["len"]
+    in_d, out_d, emb_d, len_d = conf.base, 1, conf.emb, conf.digits
     params = dict(
         tok_emb=random.uniform(key1, shape=(in_d, emb_d), minval=-0.1, maxval=0.1),
         pos_emb=random.uniform(key2, shape=(len_d, emb_d), minval=-0.1, maxval=0.1),
-        blocks=[init_block_fn(key1, conf) for _ in range(conf["n_layers"])],
+        blocks=[init_block_fn(key1, conf) for _ in range(conf.depth)],
         lm_head=random.uniform(key3, shape=(emb_d, out_d), minval=-0.1, maxval=0.1),
     )
     return params

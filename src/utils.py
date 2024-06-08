@@ -8,6 +8,7 @@ import os
 import jax.numpy as jnp
 import yaml
 import pickle
+from chex import dataclass
 
 
 # functions
@@ -16,14 +17,30 @@ decode = lambda d, x: "".join([d[i] for i in x])
 
 # prime to composite ratio
 alpha_fn = lambda n: 1 - ((n / jnp.log(n)) / n)
+digit_fn = lambda n, base: jnp.ceil(jnp.log(n + 1) / jnp.log(base)).astype(int)
+
+
+@dataclass
+class DataConf:
+    base: int = 2
+    n: int = 2**12
+    emb: int = 128
+    depth: int = 2
+    heads: int = 4
+    epochs: int = 100
+    l2: float = 1e-4  # lambda
+    lr: float = 1e-3
+    block: str = "vaswani"
+    digits: int = None
+    dropout: float = 0.1
 
 
 def load_conf():
     parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     with open(os.path.join(parent_dir, "config.yaml"), "r") as file:
         conf = yaml.safe_load(file)
-        conf["in_d"] = conf["base"]
-        conf["out_d"] = 1
+    conf = DataConf(**conf)
+    conf.digits = digit_fn(conf.n, conf.base)
     return conf
 
 

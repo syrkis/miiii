@@ -13,34 +13,58 @@ from oeis import A000040
 from functools import partial
 from hilbert import encode, decode
 from jax.tree_util import tree_flatten
+from sklearn.metrics import f1_score, confusion_matrix
 
 
 # constants
 cols = {True: "black", False: "white"}
 ink = "black" if darkdetect.isLight() else "white"
 bg = "white" if darkdetect.isLight() else "black"
-marks = ["o", ".", "s", "D", "v", "^", "<", ">", "1", "2", "3", "4"]
+marks = ["o", "o", " ", "o"]
 plt.rcParams["font.family"] = "Monospace"
 
 
 # functions
-def polar_plot(vector, conf, info, fname, offset=0):  # maps v to a polar plot
+def polar_plot(gold, pred, conf, fname, offset=0):  # maps v to a polar plot
+    conf = conf.__dict__
     _, ax = init_polar_plot()
-    cats = jnp.unique(vector)[jnp.unique(vector) > 0]
+    tp, tn = gold + pred == 2, gold + pred == 0
+    fp, fn = gold - pred == -1, gold - pred == 1
+    f1 = f1_score(gold, pred)
+    con = confusion_matrix(gold, pred)
+    tp_rate = con[0, 0] / (con[0, 0] + con[0, 1])
+    tn_rate = con[1, 1] / (con[1, 0] + con[1, 1])
+    fp_rate = con[0, 1] / (con[0, 0] + con[0, 1])
+    fn_rate = con[1, 0] / (con[1, 0] + con[1, 1])
+    info = {"f1": f1, "tp": tp_rate, "tn": tn_rate, "fp": fp_rate, "fn": fn_rate}
+    vectors = {"tp": tp, "fn": fn}
     conf = {
         k[2:] if k.startswith("n_") else k: v
         for k, v in conf.items()
         if k not in ["in_d", "out_d", "block"]
     }
-    ax.set_title(" | ".join([f"{k} : {v}" for k, v in conf.items()]), color=ink, pad=25)
     # add padding to tile
-    for cat, m in zip(cats, marks):
-        idxs = jnp.where(vector == cat)[0] + 2 + offset
-        # size = jnp.sqrt(idxs) / jnp.log(idxs)
-        ax.scatter(idxs, idxs, c=ink, marker=m)
+    for idx, (cat, vector) in enumerate(vectors.items()):
+        # if cat == fn Make it an empty circle
+        idxs = jnp.where(vector)[0] + 2 + offset
+        ax.scatter(
+            idxs,
+            idxs,
+            marker=marks[idx],
+            # s=10 + 4 * idx,
+            label=cat,
+            facecolors=bg if cat == "fn" else ink,
+            edgecolors=ink,
+        )
     fname = fname if fname.endswith(".pdf") else f"{fname}.pdf"
-    ax.set_xlabel("    ".join([f"{k} : {v:.3f}" for k, v in info.items()]), color=ink)
-    plt.savefig(f"figs/{fname}", dpi=100)
+    ax.set_xlabel(
+        "    ".join([f"{k} : {v:.3f}" for k, v in info.items()])
+        + "\n\n———\n\n"
+        + "    ".join([f"{k} : {v}" for k, v in conf.items()]),
+        color=ink,  # pad=25,
+    )
+    if darkdetect.isLight():
+        plt.savefig(f"figs/{fname}", dpi=100)
 
 
 def curve_plot(
@@ -54,6 +78,7 @@ def curve_plot(
         legend=["Training", "Validation"],
     ),
 ):
+    conf = conf.__dict__
     conf["n_params"] = sum([p.size for p in tree_flatten(params)[0]])
     fig, ax = init_curve_plot(info, conf)
     for i, curve in enumerate(curves.T):  # transpose bcs of jax.lax.scan
@@ -67,12 +92,13 @@ def curve_plot(
             1.01,
             0.93 - i / (len(conf)),
             # if v is a number use scientific notation
-            f"{k}: {v}",
+            f"{k} : {v}",
             transform=ax.transAxes,
             color=ink,
         )
     ax.legend(info["legend"], frameon=False, labelcolor=ink)
-    plt.savefig(f"figs/curves.pdf")
+    if darkdetect.isLight():
+        plt.savefig(f"figs/curves.pdf")
 
 
 ############################################

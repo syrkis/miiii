@@ -17,13 +17,15 @@ from tqdm import tqdm
 dataset = "primes"
 
 
+# optional rng
 def make_apply_fn(transformer_fn):  # x: seq_len
-    @partial(vmap, in_axes=(None, 0))
-    def apply_fn(params, x):  # set dropout_rate to 0.1 when training
+    @partial(vmap, in_axes=(None, None, 0, None))
+    def apply_fn(params, rng, x, dropout):  # set dropout_rate to 0.1 when training
         z = embed_fn(x, params["tok_emb"], params["pos_emb"])  # z: seq_len x emb_dim
-        # z = lax.scan(transformer_fn, z, params["blocks"])  # z: seq_len x emb_dim
+        z, rng = dropout_fn(rng, z, dropout)
         for block in params["blocks"]:  # use fori_loop maybe
             z = transformer_fn(z, block)  # use different transformers
+            z, rng = dropout_fn(rng, z, dropout)
         z = jnp.mean(z, axis=0)  # pool: emb_dim
         logits = z @ params["lm_head"]  # logits: seq_len x vocab
         return logits.squeeze()  # logits: vocab
@@ -31,9 +33,9 @@ def make_apply_fn(transformer_fn):  # x: seq_len
     return apply_fn
 
 
-def dropout_fn(rng, x):
-    rate = 0.1
-    return random.bernoulli(rng, 1 - rate, x.shape) / (1 - rate)
+def dropout_fn(rng, x, rate):
+    rng, key = random.split(rng)
+    return random.bernoulli(key, 1 - rate, x.shape) / (1 - rate) * x, rng
 
 
 def embed_fn(x, tok_emb_w, pos_emb_w):  # x: seq_len

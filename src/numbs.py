@@ -8,10 +8,16 @@ from jax import vmap, jit
 from functools import partial
 
 
+if __name__ == "__main__":
+    from utils import digit_fn
+else:
+    from .utils import digit_fn
+
+
 # functions
-def base_n(n, x):  # TODO: fix for base > 10
-    nits = jnp.ceil(jnp.log(x.max() + 1) / jnp.log(n)).astype(int)
-    numb = jnp.array([x // n**i % n for i in range(nits)][::-1]).T
+def base_n(base, x):
+    digits = digit_fn(x.max(), base)
+    numb = jnp.array([x // base**i % base for i in range(digits)][::-1]).T
     return numb
 
 
