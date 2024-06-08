@@ -26,7 +26,6 @@ else:
 def make_loss_fn(apply_fn, conf, dropout=0.0):
     alpha = alpha_fn(conf.n // 2)
     gamma = conf.gamma
-    print("alpha", alpha)
 
     @jit
     def loss_fn(params, rng, x, y):  #  cross entropy loss
@@ -58,21 +57,22 @@ def make_grad_fn(loss_fn):
 
 
 def make_step_fn(grad_fn, update_fn, loss_fn, train_data, valid_data):
-    @jit  # TODO: append losses during scan.
-    def step_fn(carry, _=None):
-        params, opt_state, rng = carry
+    @jit
+    def step_fn(carry, rng):
+        params, opt_state = carry
         rng, key = random.split(rng)
         train_loss, grads = grad_fn(params, key, *train_data)
         params, opt_state = update_fn(params, grads, opt_state)
         loss = jnp.array([train_loss, loss_fn(params, rng, *valid_data)])  # dropout=0.0
-        return (params, opt_state, rng), loss
+        return (params, opt_state), loss
 
     return step_fn
 
 
 def make_train_fn(step_fn):
-    def train_fn(steps, state):
-        state, losses = jax.lax.scan(step_fn, state, None, length=steps)
+    def train_fn(steps, rng, state):
+        rngs = random.split(rng, steps)
+        state, losses = jax.lax.scan(step_fn, state, rngs, length=steps)
         return state, losses
 
     return train_fn

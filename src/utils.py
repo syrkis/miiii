@@ -16,7 +16,7 @@ encode = lambda d, x: jnp.array([d[c] for c in x])
 decode = lambda d, x: "".join([d[i] for i in x])
 
 # prime to composite ratio
-alpha_fn = lambda n: (1 - ((n / jnp.log(n)) / n)) ** 2
+alpha_fn = lambda n: (1 - ((n / jnp.log(n)) / n))
 digit_fn = lambda n, base: jnp.ceil(jnp.log(n + 1) / jnp.log(base)).astype(int)
 
 
@@ -28,12 +28,14 @@ class DataConf:
     depth: int = 2
     heads: int = 4
     epochs: int = 100
+    gamma: int = 2
+    digits: int = None
+
     l2: float = 1e-4  # lambda
     lr: float = 1e-3
-    block: str = "vaswani"
-    digits: int = None
     dropout: float = 0.1
-    gamma: float = 2.0
+
+    block: str = "vaswani"
 
 
 def load_conf():

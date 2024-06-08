@@ -63,11 +63,11 @@ def polar_plot(gold, pred, conf, fname, offset=0):  # maps v to a polar plot
         )
     fname = fname if fname.endswith(".pdf") else f"{fname}.pdf"
     xlabel = dict(**info, **conf)
-    xlabel["alpha"] = alpha_fn(conf["n"] // 2).item()
+    # mxlabel["alpha"] = alpha_fn(conf["n"] // 2).item()
     # delete digits from xlabel
     xlabel.pop("digits")
     # join every fifth element with a newline
-    v_fn = lambda v: f"{v:.3f}" if isinstance(v, float) else v
+    v_fn = lambda v: f"{v:.4f}" if isinstance(v, float) else v
     xlabel = "\n\n\n\n".join(
         [
             "    ".join([f"{k} : {v_fn(v)}" for k, v in xlabel.items()][i : i + 5])

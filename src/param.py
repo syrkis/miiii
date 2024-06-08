@@ -16,18 +16,22 @@ def init_head_fn(rng, conf):
     query = random.uniform(key2, shape=(h, d, d // h), minval=-0.1, maxval=0.1)
     value = random.uniform(key3, shape=(h, d, d // h), minval=-0.1, maxval=0.1)
     projection = random.uniform(rng, shape=(h * d // h, d), minval=-0.1, maxval=0.1)
+    gamma, beta = jnp.ones((d)), jnp.zeros((d))
 
-    return (query, key, value, projection)
+    return (query, key, value, projection, gamma, beta)
 
 
 def init_ffwd_fn(rng, conf):
     rng, key1, key2 = random.split(rng, 3)
     emb_dim = conf.emb
+    gamma, beta = jnp.ones((emb_dim)), jnp.zeros((emb_dim))
     params = (  # multiply by 4 for cos thats what people do
         random.uniform(key1, shape=(emb_dim, 4 * emb_dim), minval=-0.1, maxval=0.1),
         jnp.zeros((4 * emb_dim)),
         random.uniform(key2, shape=(4 * emb_dim, emb_dim), minval=-0.1, maxval=0.1),
         jnp.zeros((emb_dim)),
+        gamma,
+        beta,
     )
     return params
 
