@@ -31,12 +31,14 @@ def main():
     (params, opt_state), losses = train_fn(conf.epochs, rng, (params, opt_state))
 
     # evaluate
-    train_pred = src.predict(params, data[0][0])
-    valid_pred = src.predict(params, data[1][0])
-
-    src.curve_plot(losses, conf, params)
-    src.polar_plot(train_pred, valid_pred, conf)
     log_run(params, conf, losses)
+    train_pred = src.predict(apply_fn, params, data[0][0])
+    valid_pred = src.predict(apply_fn, params, data[1][0])
+
+    # plot
+    src.curve_plot(losses, conf, params)
+    src.polar_plot(data[0][1], train_pred, conf, "train")
+    src.polar_plot(data[1][1], valid_pred, conf, "valid", offset=conf.n // 2)
 
 
 if __name__ == "__main__":
