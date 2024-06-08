@@ -19,9 +19,9 @@ COPY requirements.txt .
 
 RUN python3.11 -m pip install -r requirements.txt
 
-RUN python3.11 -m pip install --upgrade "jax[cuda11_pip]" -f https://storage.googleapis.com/jax-releases/jax_cuda_releases.html
+RUN python3.11 -m pip install --upgrade "jax[cuda11]"
 
-RUN python3.11 -m pip install tensorflow_datasets opencv-python pycocotools
+RUN python3.11 -m pip jaxlib install tensorflow_datasets opencv-python pycocotools
 
 ENV PYGLFW_PREVIEW=1
 

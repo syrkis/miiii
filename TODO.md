@@ -1,7 +1,8 @@
 # TODO
 
-- [ ] setup hpc   <-  working on this
-- [ ] Grok (research of grokking is possible for prime numbers)
+- [ ] compare to baseline, and other models / papers (decide metrics)
+- [ ] Grokking (research of grokking is possible for prime numbers)
+- [x] setup hpc   <-  working on this
 - [x] extensive logging (wandb)   <- work on this now
 - [x] add layernorm.  <-  working on this
 - [x] add dropout to model
