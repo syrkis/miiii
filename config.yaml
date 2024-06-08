@@ -1,10 +1,10 @@
 base: 16
 n: 16384
 emb: 32
-lr: 0.0001
+lr: 0.001
 depth: 3
 heads: 4
-epochs: 2000
+epochs: 1000
 l2: 0.00001  # lambda
 block: vaswani
 dropout: 0.15

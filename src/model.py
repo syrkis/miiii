@@ -17,6 +17,10 @@ from tqdm import tqdm
 dataset = "primes"
 
 
+def predict(apply_fn, params, x, _=random.PRNGKey(0)):
+    return (jax.nn.sigmoid(apply_fn(params, _, x, 0.0)) > 0.5).astype(jnp.int32)
+
+
 # optional rng
 def make_apply_fn(transformer_fn):  # x: seq_len
     @partial(vmap, in_axes=(None, None, 0, None))

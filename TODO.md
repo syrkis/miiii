@@ -1,8 +1,8 @@
 # TODO
 
 - [ ] setup hpc   <-  working on this
-- [ ] extensive logging (wandb)
 - [ ] Grok (research of grokking is possible for prime numbers)
+- [x] extensive logging (wandb)   <- work on this now
 - [x] add layernorm.  <-  working on this
 - [x] add dropout to model
 - [x] make switch between prime and ficciones trivial
@@ -12,8 +12,8 @@
 
 - [ ] add paper and notes to repo
 - [ ] hilbert / hinton plot of weights
-- [ ] run RASP successfully.
-- [ ] Replace learned circuit with RASP implementation
+- [x] run RASP successfully.
+- [ ] Replace learned circuit with RASP implementation?
 
 ## Paper
 

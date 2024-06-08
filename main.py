@@ -22,19 +22,21 @@ def log_run(params, conf, losses):
 def main():
     # config and init
     conf, (rng, key) = src.get_conf(), random.split(random.PRNGKey(0))
-    data = src.prime_fn(conf["n"], partial(src.base_n, conf["base"]))
-    params = src.init_fn(key, dict(**conf, len=data[0][0].shape[1]))
+    data = src.prime_fn(conf.n, partial(src.base_n, conf.base))
+    params = src.init_fn(key, conf)
 
     # train
     apply_fn = src.make_apply_fn(src.vaswani_fn)
-    loss_fn, train_fn, opt_state = src.init_train(apply_fn, params, conf, *data)
-    state, losses = train_fn(params, opt_state, conf["epochs"])
+    train_fn, opt_state = src.init_train(apply_fn, params, conf, *data)
+    (params, opt_state), losses = train_fn(conf.epochs, rng, (params, opt_state))
 
     # evaluate
+    train_pred = src.predict(params, data[0][0])
+    valid_pred = src.predict(params, data[1][0])
+
     src.curve_plot(losses, conf, params)
-    train_pred, valid_pred = apply_fn(params, data[0][0]), apply_fn(params, data[1][0])
-    src.polar_plot((data[0][1] + train_pred == 0).astype(int), "train")
-    # log_run(params, conf, losses)
+    src.polar_plot(train_pred, valid_pred, conf)
+    log_run(params, conf, losses)
 
 
 if __name__ == "__main__":
