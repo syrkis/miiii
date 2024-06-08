@@ -69,10 +69,8 @@ def make_step_fn(grad_fn, update_fn, loss_fn, train_data, valid_data):
 
 
 def make_train_fn(step_fn):
-    def train_fn(params, opt_state, rng, steps):
-        state, losses = jax.lax.scan(
-            step_fn, (params, opt_state, rng), None, length=steps
-        )
+    def train_fn(steps, state):
+        state, losses = jax.lax.scan(step_fn, state, None, length=steps)
         return state, losses
 
     return train_fn

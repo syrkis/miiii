@@ -57,12 +57,18 @@ def polar_plot(gold, pred, conf, fname, offset=0):  # maps v to a polar plot
             edgecolors=ink,
         )
     fname = fname if fname.endswith(".pdf") else f"{fname}.pdf"
-    ax.set_xlabel(
-        "    ".join([f"{k} : {v:.3f}" for k, v in info.items()])
-        + "\n\n———\n\n"
-        + "    ".join([f"{k} : {v}" for k, v in conf.items()]),
-        color=ink,  # pad=25,
+    xlabel = dict(**info, **conf)
+    # delete digits from xlabel
+    xlabel.pop("digits")
+    # join every fifth element with a newline
+    v_fn = lambda v: f"{v:.3f}" if isinstance(v, float) else v
+    xlabel = "\n\n\n\n".join(
+        [
+            "    ".join([f"{k} : {v_fn(v)}" for k, v in xlabel.items()][i : i + 5])
+            for i in range(0, len(xlabel), 5)
+        ]
     )
+    ax.set_xlabel(xlabel, color=ink)
     if darkdetect.isLight():
         plt.savefig(f"figs/{fname}", dpi=100)
 
