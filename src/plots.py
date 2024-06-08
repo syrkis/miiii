@@ -15,6 +15,11 @@ from hilbert import encode, decode
 from jax.tree_util import tree_flatten
 from sklearn.metrics import f1_score, confusion_matrix
 
+if __name__ == "__main__":
+    from utils import alpha_fn
+else:
+    from .utils import alpha_fn
+
 
 # constants
 cols = {True: "black", False: "white"}
@@ -58,6 +63,7 @@ def polar_plot(gold, pred, conf, fname, offset=0):  # maps v to a polar plot
         )
     fname = fname if fname.endswith(".pdf") else f"{fname}.pdf"
     xlabel = dict(**info, **conf)
+    xlabel["alpha"] = alpha_fn(conf["n"] // 2).item()
     # delete digits from xlabel
     xlabel.pop("digits")
     # join every fifth element with a newline
@@ -71,6 +77,9 @@ def polar_plot(gold, pred, conf, fname, offset=0):  # maps v to a polar plot
     ax.set_xlabel(xlabel, color=ink)
     if darkdetect.isLight():
         plt.savefig(f"figs/{fname}", dpi=100)
+    else:
+        # invert image and svae
+        plt.savefig(f"figs/{fname}", dpi=100, facecolor=bg, edgecolor=ink)
 
 
 def curve_plot(

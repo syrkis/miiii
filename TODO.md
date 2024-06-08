@@ -1,8 +1,10 @@
 # TODO
 
-- [ ] setup hpc
-- [ ] Regularize with dropout and layernorm.
+- [ ] add layernorm.  <-  working on this
+- [ ] setup hpc   <-  working on this
+- [ ] extensive logging (wandb)
 - [ ] Grok (research of grokking is possible for prime numbers)
+- [x] add dropout to model
 - [x] make switch between prime and ficciones trivial
 - [x] write on paper
 - [x] add dropout

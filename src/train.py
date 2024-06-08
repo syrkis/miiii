@@ -25,11 +25,13 @@ else:
 # functions
 def make_loss_fn(apply_fn, conf, dropout=0.0):
     alpha = alpha_fn(conf.n // 2)
+    gamma = conf.gamma
+    print("alpha", alpha)
 
     @jit
     def loss_fn(params, rng, x, y):  #  cross entropy loss
         logits = apply_fn(params, rng, x, dropout)
-        loss = optax.sigmoid_focal_loss(logits, y, alpha).mean()
+        loss = optax.sigmoid_focal_loss(logits, y, alpha, gamma).mean()
         l2 = sum(jnp.sum(jnp.square(p)) for p in jax.tree_leaves(params)) / 2
         return loss + conf.l2 * l2
 
