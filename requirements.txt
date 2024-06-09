@@ -19,6 +19,7 @@ idna==3.7
 jax==0.4.28
 jaxlib==0.4.28
 Jinja2==3.1.4
+joblib==1.4.2
 jsonschema==4.22.0
 jsonschema-specifications==2023.12.1
 kiwisolver==1.4.5
@@ -50,6 +51,7 @@ referencing==0.35.1
 requests==2.32.2
 rich==13.7.1
 rpds-py==0.18.1
+scikit-learn==1.5.0
 scipy==1.13.1
 seaborn==0.13.2
 sentry-sdk==2.4.0
@@ -59,6 +61,7 @@ smmap==5.0.1
 streamlit==1.35.0
 sympy==1.12
 tenacity==8.3.0
+threadpoolctl==3.5.0
 toml==0.10.2
 toolz==0.12.1
 tornado==6.4

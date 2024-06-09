@@ -3,7 +3,6 @@
 # by: Noah Syrkis
 
 # imports
-import plotly as py
 import pandas as pd
 import jax.numpy as jnp
 import numpy as np

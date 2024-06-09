@@ -20,9 +20,9 @@ COPY requirements.txt .
 RUN python3.11 -m pip install -r requirements.txt
 
 RUN python3.11 -m pip install \
-    jaxlib==0.3.25+cuda11.cudnn82 -f https://storage.googleapis.com/jax-releases/jax_cuda_releases.html \
-    jax==0.3.25 \
-    optax==0.1.5
+    jaxlib==0.4.25+cuda11.cudnn86 -f https://storage.googleapis.com/jax-releases/jax_cuda_releases.html \
+    jax==0.4.25 \
+    optax==0.2.2
 
 ENV PYGLFW_PREVIEW=1
 
