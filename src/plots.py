@@ -94,6 +94,8 @@ def curve_plot(
     fig, ax = init_curve_plot(info, conf)
     for i, curve in enumerate(curves.T):  # transpose bcs of jax.lax.scan
         ax.plot(curve, c=ink, lw=2, ls="--" if i > 0 else "-")
+    # make x-axis log
+    ax.set_xscale("log")
     # add info key, val pairs to right side of plot (centered verticall on right axis) (relative to len(info))
     ignore = ["in_d", "out_d", "block"]
     conf = {k: v for k, v in conf.items() if k not in ignore}
