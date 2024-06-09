@@ -19,9 +19,8 @@ numpy-hilbert-curve = "^1.0.1"
 wandb = "^0.17.0"
 seaborn = "^0.13.2"
 scikit-learn = "^1.5.0"
-jax = "0.4.10"
-jaxlib = "0.4.10"
-optax = "0.1.5"
+jax = {extras = ["cuda11"], version = "^0.4.28"}
+optax = "^0.2.2"
 
 
 [build-system]

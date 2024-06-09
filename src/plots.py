@@ -76,9 +76,6 @@ def polar_plot(gold, pred, conf, fname, offset=0):  # maps v to a polar plot
     ax.set_xlabel(xlabel, color=ink)
     if darkdetect.isLight():
         plt.savefig(f"figs/{fname}", dpi=100)
-    else:
-        # invert image and svae
-        plt.savefig(f"figs/{fname}", dpi=100, facecolor=bg, edgecolor=ink)
 
 
 def curve_plot(
