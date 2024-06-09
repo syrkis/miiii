@@ -18,8 +18,6 @@ pyyaml = "^6.0.1"
 numpy-hilbert-curve = "^1.0.1"
 wandb = "^0.17.0"
 seaborn = "^0.13.2"
-jax = "^0.4.28"
-optax = "^0.2.2"
 scikit-learn = "^1.5.0"
 
 
