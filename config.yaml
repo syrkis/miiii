@@ -7,5 +7,5 @@ heads: 8
 epochs: 10000
 l2: 0.00001  # lambda
 block: vaswani
-dropout: 0.2
+dropout: 0.5
 gamma: 2
