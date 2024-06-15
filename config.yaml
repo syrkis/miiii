@@ -1,11 +1,11 @@
 base: 12
-n: 1024
-emb: 32
+n: 16384
+emb: 64
 lr: 0.001
-depth: 3
-heads: 4
-epochs: 400
+depth: 2
+heads: 8
+epochs: 10000
 l2: 0.00001  # lambda
 block: vaswani
-dropout: 0.15
+dropout: 0.2
 gamma: 2

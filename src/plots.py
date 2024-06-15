@@ -28,6 +28,13 @@ marks = ["o", "o", " ", "o"]
 plt.rcParams["font.family"] = "Monospace"
 
 
+def fname_fn(conf, fname):
+    return (
+        "_".join([f"{k}_{v}" for k, v in conf.items() if k not in ["in_d", "out_d"]])
+        + f"_{fname}"
+    )
+
+
 # functions
 def polar_plot(gold, pred, conf, fname, offset=0):  # maps v to a polar plot
     conf = conf.__dict__
@@ -74,8 +81,8 @@ def polar_plot(gold, pred, conf, fname, offset=0):  # maps v to a polar plot
         ]
     )
     ax.set_xlabel(xlabel, color=ink)
-    if darkdetect.isLight():
-        plt.savefig(f"figs/{fname}", dpi=100)
+    fname = fname_fn(conf, fname)
+    plt.savefig(f"figs/{fname}", dpi=100)
 
 
 def curve_plot(
@@ -110,8 +117,10 @@ def curve_plot(
             color=ink,
         )
     ax.legend(info["legend"], frameon=False, labelcolor=ink)
+    # make fname contain conf
+    fname = fname_fn(conf, "curves")
     if darkdetect.isLight():
-        plt.savefig(f"figs/curves.pdf")
+        plt.savefig(f"figs/{fname}.pdf", dpi=100)
 
 
 ############################################
