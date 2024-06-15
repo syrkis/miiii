@@ -9,9 +9,6 @@
 #SBATCH --mem=30G                  # memory
 #SBATCH --account=students         # account
 
-
 module --ignore-cache load singularity/3.4.1
-module --ignore-cache load CUDA/11.7.0
-module --ignore-cache load cuDNN/8.4.1.50-CUDA-11.7.0
 
 srun singularity exec --nv container.sif python3.11 main.py
