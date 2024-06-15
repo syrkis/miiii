@@ -74,7 +74,9 @@ def polar_plot(gold, pred, conf, fname, offset=0):  # maps v to a polar plot
     xlabel.pop("digits")
     # join every fifth element with a newline
     v_fn = lambda v: f"{v:.4f}" if isinstance(v, float) else v
-    xlabel = "\n\n\n\n".join(
+    # remove gamma from dict
+    xlabel.pop("gamma")
+    xlabel = "\n\n\n".join(
         [
             "    ".join([f"{k} : {v_fn(v)}" for k, v in xlabel.items()][i : i + 5])
             for i in range(0, len(xlabel), 5)

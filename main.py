@@ -38,7 +38,7 @@ def main():
     # plot
     src.curve_plot(losses, conf, params)
     src.polar_plot(data[0][1], train_pred, conf, "train")
-    src.polar_plot(data[1][1], valid_pred, conf, "valid", offset=conf.n // 2)
+    src.polar_plot(data[1][1], valid_pred, conf, "valid")
 
 
 if __name__ == "__main__":

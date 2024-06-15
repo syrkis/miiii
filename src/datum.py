@@ -31,6 +31,8 @@ def prime_fn(n: int, ns: Callable) -> Tuple[jnp.array, jnp.array]:
     assert max(primes) > n, "not enough primes"  # make sure there are enough primes
     x = ns(jnp.arange(2, n + 2)[:n])  # all numbers up to n
     y = jnp.zeros_like(x[:, 0]).at[primes - 2].set(1)
+    idxs = random.permutation(random.PRNGKey(0), len(x))
+    x, y = x[idxs], y[idxs]
     train_data = x[: len(x) // 2], y[: len(y) // 2]
     valid_data = x[len(x) // 2 :], y[len(y) // 2 :]
     return train_data, valid_data
