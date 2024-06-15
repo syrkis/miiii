@@ -1,0 +1,10 @@
+2024-06-15 22:26:11.201724: W external/xla/xla/service/gpu/nvptx_compiler.cc:763] The NVIDIA driver's CUDA version is 12.0 which is older than the ptxas CUDA version (12.5.40). Because the driver is older than the ptxas version, XLA is disabling parallel compilation, which may slow down compilation. You should update your NVIDIA driver or use the NVIDIA-provided CUDA forward compatibility packages.
+wandb: Currently logged in as: syrkis. Use `wandb login --relogin` to force relogin
+wandb: wandb version 0.17.1 is available!  To upgrade, please run:
+wandb:  $ pip install wandb --upgrade
+wandb: Tracking run with wandb version 0.17.0
+wandb: Run data is saved locally in /home/nobr/miiii/wandb/run-20240615_222835-f4pwmzy1
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run dashing-sun-37
+wandb: ⭐️ View project at https://wandb.ai/syrkis/miiii
+wandb: 🚀 View run at https://wandb.ai/syrkis/miiii/runs/f4pwmzy1
