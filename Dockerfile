@@ -30,6 +30,7 @@ RUN python3.11 -m pip install -r requirements.txt
 # Install JAX with CUDA support. HPC is on CUDA 11, and JAX 0.2.25 is the latest version for that
 RUN python3.11 -m pip install --upgrade \
     "jax[cuda11_pip]==0.4.26" -f https://storage.googleapis.com/jax-releases/jax_cuda_releases.html \
+    "jaxlib==0.4.26" -f https://storage.googleapis.com/jax-releases/jax_cuda_releases.html \
     optax
 
 # Set the environment variables
