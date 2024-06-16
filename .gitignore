@@ -5,3 +5,7 @@ logs/
 .DS_Store
 docs/
 wandb/
+**/*.log
+log
+wandb/
+data/

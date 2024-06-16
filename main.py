@@ -15,8 +15,16 @@ import src
 def log_run(params, conf, losses):
     train_losses, valid_losses = losses.T  # shape (100,)
     with wandb.init(project="miiii", config=conf):
-        for i, (t, v) in enumerate(zip(train_losses, valid_losses)):
-            wandb.log({"train_loss": t, "valid_loss": v})
+        wandb.log(
+            {
+                # plot the training and validation loss curves (x-axis is epoch)
+                "loss": wandb.Image(src.curve_plot(losses, conf, params)),
+                # log the final training and validation losses
+                "train_loss": train_losses[-1],
+                "valid_loss": valid_losses[-1],
+                # log the final training and validation accuracies
+            }
+        )
 
 
 def main():
