@@ -1,11 +1,11 @@
 base: 16
-n: 1024   # 16384
+n: 2048   # 16384
 emb: 128
 lr: 0.001
 depth: 2
 heads: 4
-epochs: 1000
+epochs: 2000
 block: vaswani
 dropout: 0.5
-l2: 0.3  # weight decay
+l2: 1.0  # weight decay
 gamma: 2
