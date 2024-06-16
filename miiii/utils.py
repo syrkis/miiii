@@ -30,6 +30,7 @@ class DataConf:
     epochs: int = 100
     gamma: int = 2
     digits: int = None
+    n_params: int = None
 
     l2: float = 1e-4  # lambda
     lr: float = 1e-3

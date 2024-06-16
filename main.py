@@ -15,7 +15,7 @@ import miiii
 def log_run(cfg, metrics, params):
     # long loss and epoch
     n_params = sum([x.size for x in tree_flatten(params)[0]])
-    cfg = {**cfg, "n_params": n_params}
+    cfg.n_params = n_params
     log_fn = lambda x: {
         "train_loss": x[0],
         "valid_loss": x[1],
@@ -35,7 +35,7 @@ def log_run(cfg, metrics, params):
 def main():
     # config and init
     cfg, (rng, key) = miiii.get_conf(), random.split(random.PRNGKey(0))
-    data = miiii.prime_fn(cfg.n, partial(miiii.base_n, cfg.base))
+    data = miiii.prime_fn(cfg.n, partial(miiii.base_n, cfg.base), key)
     params = miiii.init_fn(key, cfg)
 
     # train
