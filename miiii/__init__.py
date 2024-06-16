@@ -3,7 +3,7 @@ from .datum import data_fn, prime_fn
 from .param import init_fn
 from .plots import polar_plot, curve_plot
 from .train import init_train
-from .model import make_apply_fn, vaswani_fn, predict
+from .model import make_apply_fn, vaswani_fn
 from .numbs import base_n
 
 __all__ = [
@@ -17,7 +17,6 @@ __all__ = [
     "curve_plot",
     "init_train",
     "make_apply_fn",
-    "predict",
     "vaswani_fn",
     "base_n",
 ]

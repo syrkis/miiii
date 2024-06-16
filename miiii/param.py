@@ -8,8 +8,8 @@ import jax.numpy as jnp
 
 
 # init functions
-def init_head_fn(rng, conf):
-    h, d = conf.heads, conf.emb
+def init_head_fn(rng, cfg):
+    h, d = cfg.heads, cfg.emb
     rng, key1, key2, key3 = random.split(rng, 4)
 
     key = random.uniform(key1, shape=(h, d, d // h), minval=-0.1, maxval=0.1)
@@ -21,9 +21,9 @@ def init_head_fn(rng, conf):
     return (query, key, value, projection, gamma, beta)
 
 
-def init_ffwd_fn(rng, conf):
+def init_ffwd_fn(rng, cfg):
     rng, key1, key2 = random.split(rng, 3)
-    emb_dim = conf.emb
+    emb_dim = cfg.emb
     gamma, beta = jnp.ones((emb_dim)), jnp.zeros((emb_dim))
     params = (  # multiply by 4 for cos thats what people do
         random.uniform(key1, shape=(emb_dim, 4 * emb_dim), minval=-0.1, maxval=0.1),
@@ -36,33 +36,33 @@ def init_ffwd_fn(rng, conf):
     return params
 
 
-def init_block_fn(rng, conf):
+def init_block_fn(rng, cfg):
     rng, key1, key2 = random.split(rng, 3)
     params = {
-        "head": init_head_fn(key1, conf),
-        "ffwd": init_ffwd_fn(key2, conf),
+        "head": init_head_fn(key1, cfg),
+        "ffwd": init_ffwd_fn(key2, cfg),
     }
     return params
 
 
-def init_fn(rng, conf):
+def init_fn(rng, cfg):
     rng, key1, key2, key3 = random.split(rng, 4)
-    in_d, out_d, emb_d, len_d = conf.base, 1, conf.emb, conf.digits
+    in_d, out_d, emb_d, len_d = cfg.base, 1, cfg.emb, cfg.digits
     params = dict(
         tok_emb=random.uniform(key1, shape=(in_d, emb_d), minval=-0.1, maxval=0.1),
         pos_emb=random.uniform(key2, shape=(len_d, emb_d), minval=-0.1, maxval=0.1),
-        blocks=[init_block_fn(key1, conf) for _ in range(conf.depth)],
+        blocks=[init_block_fn(key1, cfg) for _ in range(cfg.depth)],
         lm_head=random.uniform(key3, shape=(emb_d, out_d), minval=-0.1, maxval=0.1),
     )
     return params
 
 
 if __name__ == "__main__":
-    from utils import load_conf
+    from utils import load_cfg
 
-    conf = load_conf()
+    cfg = load_cfg()
     rng = random.PRNGKey(0)
-    params = init_fn(rng, conf)
+    params = init_fn(rng, cfg)
     print(params)
     print(len(params["blocks"]))
     print(params["blocks"][0]["head"][0].shape)

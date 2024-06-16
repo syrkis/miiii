@@ -17,10 +17,6 @@ from tqdm import tqdm
 dataset = "primes"
 
 
-def predict(apply_fn, params, x, _=random.PRNGKey(0)):
-    return (jax.nn.sigmoid(apply_fn(params, _, x, 0.0)) > 0.5).astype(jnp.int32)
-
-
 # optional rng
 def make_apply_fn(transformer_fn):  # x: seq_len
     @partial(vmap, in_axes=(None, None, 0, None))
@@ -51,9 +47,9 @@ def embed_fn(x, tok_emb_w, pos_emb_w):  # x: seq_len
 def ffwd_fn(x, params):
     w1, b1, w2, b2, gamma, beta = params
     x = layer_norm(x, gamma, beta)
-    z = x @ w1 + b1  # z: seq_len x emb_dim
+    z = x @ w1  # + b1  # z: seq_len x emb_dim
     z = jax.nn.relu(z)  # TODO: maybe switch activation
-    z = z @ w2 + b2
+    z = z @ w2  # + b2  # disable biases as per @nanda2023
     return z
 
 

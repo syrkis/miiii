@@ -33,8 +33,9 @@ def prime_fn(n: int, ns: Callable) -> Tuple[jnp.array, jnp.array]:
     y = jnp.zeros_like(x[:, 0]).at[primes - 2].set(1)
     idxs = random.permutation(random.PRNGKey(0), len(x))
     x, y = x[idxs], y[idxs]
-    train_data = x[: len(x) // 2], y[: len(y) // 2]
-    valid_data = x[len(x) // 2 :], y[len(y) // 2 :]
+    sep = int(len(x) * 0.3)  # as per @nanda2023
+    train_data = x[:sep], y[:sep]
+    valid_data = x[sep:], y[sep:]
     return train_data, valid_data
 
 
