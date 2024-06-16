@@ -15,6 +15,7 @@ from tqdm import tqdm
 
 # constants
 dataset = "primes"
+# mask = jnp.triu(jnp.full((x.shape[0], x.shape[0]), -jnp.inf), 1)
 
 
 # optional rng
@@ -45,11 +46,10 @@ def embed_fn(x, tok_emb_w, pos_emb_w):  # x: seq_len
 
 
 def ffwd_fn(x, params):
-    w1, b1, w2, b2, gamma, beta = params
-    x = layer_norm(x, gamma, beta)
-    z = x @ w1  # + b1  # z: seq_len x emb_dim
+    w1, w2, b1, b2 = params
+    z = x @ w1 + b1  # z: seq_len x emb_dim
     z = jax.nn.relu(z)  # TODO: maybe switch activation
-    z = z @ w2  # + b2  # disable biases as per @nanda2023
+    z = z @ w2 + b2  # disable biases as per @nanda2023
     return z
 
 
@@ -58,10 +58,10 @@ def classify_fn(logits):
     return (jax.nn.sigmoid(logits) > 0.5).astype(int)
 
 
-def layer_norm(x, gamma, beta, eps=1e-5):
+""" def layer_norm(x, gamma, beta, eps=1e-5):
     mean = jnp.mean(x, axis=-1, keepdims=True)
     std = jnp.std(x, axis=-1, keepdims=True)
-    return gamma * (x - mean) / (std + eps) + beta
+    return gamma * (x - mean) / (std + eps) + beta """
 
 
 ######################################
@@ -78,9 +78,7 @@ def vaswani_fn(z, block):
 
 
 def vaswani_head_fn(x, params):
-    query, key, value, projection, gamma, beta = params
-    x = layer_norm(x, gamma, beta)
-    mask = jnp.triu(jnp.full((x.shape[0], x.shape[0]), -jnp.inf), 1)
+    query, key, value, projection = params
     q, k, v = x @ query, x @ key, x @ value  # q, k, v: seq_len x d_k
     z = q @ rearrange(k, "b t c -> b c t")  # z: seq_len x seq_len
     z /= jnp.sqrt(k.shape[-1])

@@ -8,7 +8,7 @@ import jax.numpy as jnp
 
 
 # constant
-theta = 0.01  # for initialization
+theta = 0.1
 
 
 # init functions
@@ -20,24 +20,19 @@ def init_head_fn(rng, cfg):
     query = random.uniform(key2, shape=(h, d, d // h), minval=-theta, maxval=theta)
     value = random.uniform(key3, shape=(h, d, d // h), minval=-theta, maxval=theta)
     projection = random.uniform(rng, shape=(h * d // h, d), minval=-theta, maxval=theta)
-    gamma, beta = jnp.ones((d)), jnp.zeros((d))
 
-    return (query, key, value, projection, gamma, beta)
+    return (query, key, value, projection)
 
 
 def init_ffwd_fn(rng, cfg):
     rng, key1, key2 = random.split(rng, 3)
     emb_dim = cfg.emb
-    gamma, beta = jnp.ones((emb_dim)), jnp.zeros((emb_dim))
-    params = (  # multiply by 4 for cos thats what people do
-        random.uniform(key1, shape=(emb_dim, 4 * emb_dim), minval=-theta, maxval=theta),
-        jnp.zeros((4 * emb_dim)),
-        random.uniform(key2, shape=(4 * emb_dim, emb_dim), minval=-theta, maxval=theta),
-        jnp.zeros((emb_dim)),
-        gamma,
-        beta,
-    )
-    return params
+    shape = (emb_dim, 4 * emb_dim)
+    w1 = random.uniform(key1, shape=shape, minval=-theta, maxval=theta)
+    w2 = random.uniform(key2, shape=shape[::-1], minval=-theta, maxval=theta)
+    b1 = jnp.zeros(emb_dim * 4)
+    b2 = jnp.zeros(emb_dim)
+    return w1, w2, b1, b2
 
 
 def init_block_fn(rng, cfg):
