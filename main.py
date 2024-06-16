@@ -36,8 +36,8 @@ def main():
 
     # train
     apply_fn = miiii.make_apply_fn(miiii.vaswani_fn)
-    train_fn, opt_state = miiii.init_train(apply_fn, params, cfg, *data)
-    (params, opt_state), metrics = train_fn(cfg.epochs, rng, (params, opt_state))
+    train_fn, state = miiii.init_train(apply_fn, params, cfg, *data)
+    state, metrics = train_fn(cfg.epochs, rng, state)
 
     # evaluate
     log_run(cfg, metrics)  # log run

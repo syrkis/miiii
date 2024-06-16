@@ -1,5 +1,5 @@
 # Description: Dockerfile for JAX with CUDA support
-FROM 12.2.2-cudnn8-devel-ubuntu20.04
+FROM nvidia/cuda:12.0.0-cudnn8-devel-ubuntu20.04
 
 # Set the working directory
 WORKDIR /workspace
