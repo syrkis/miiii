@@ -1,7 +1,7 @@
 base: 2
 n: 16384
 emb: 128
-lr: 0.0001
+lr: 0.001
 depth: 4
 heads: 4
 epochs: 1000
