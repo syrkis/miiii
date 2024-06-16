@@ -5,14 +5,17 @@
 # imports
 from jax import random
 import jax.numpy as jnp
+from jax.tree_util import tree_flatten
 from functools import partial
 import wandb
 import miiii
 
 
 # functions
-def log_run(cfg, metrics):
+def log_run(cfg, metrics, params):
     # long loss and epoch
+    n_params = sum([x.size for x in tree_flatten(params)[0]])
+    cfg = {**cfg, "n_params": n_params}
     log_fn = lambda x: {
         "train_loss": x[0],
         "valid_loss": x[1],
@@ -41,7 +44,7 @@ def main():
     state, metrics = train_fn(cfg.epochs, rng, state)
 
     # evaluate
-    log_run(cfg, metrics)  # log run
+    log_run(cfg, metrics, state.params)  # log run
 
 
 if __name__ == "__main__":

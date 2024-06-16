@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #SBATCH --job-name=miiii          # Job name
-#SBATCH --output=stdout.log    # Name of output file
+#SBATCH --output=output.log    # Name of output file
 #SBATCH --cpus-per-task=4          # Schedule one core
 #SBATCH --time=02:00:00            # Run time (hh:mm:ss)
 #SBATCH --partition=red            # Run on either the Red or Brown queue
