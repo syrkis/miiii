@@ -63,6 +63,7 @@ def classify_fn(logits):
 
 
 def layer_norm(x, gamma, beta, eps=1e-5):
+    return x  # don't use layer norm for now like @nanda2023
     mean = jnp.mean(x, axis=-1, keepdims=True)
     std = jnp.std(x, axis=-1, keepdims=True)
     return gamma * (x - mean) / (std + eps) + beta

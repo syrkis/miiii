@@ -1,11 +1,11 @@
 base: 16
-n: 131072
-emb: 64
+n: 1024
+emb: 128
 lr: 0.001
 depth: 2
-heads: 8
+heads: 4
 epochs: 10000
-l2: 0.00001  # lambda
 block: vaswani
-dropout: 0.2
+dropout: 0.5
+l2: 1.0  # weight decay
 gamma: 2

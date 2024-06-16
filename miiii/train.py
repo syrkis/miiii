@@ -40,7 +40,7 @@ def make_loss_fn(apply_fn, conf, dropout=0.0):
 def make_update_fn(opt):
     @jit
     def update_fn(params, grads, opt_state):
-        updates, opt_state = opt.update(grads, opt_state)
+        updates, opt_state = opt.update(grads, opt_state, params)
         params = optax.apply_updates(params, updates)
         return params, opt_state
 
@@ -71,6 +71,7 @@ def make_step_fn(grad_fn, update_fn, valid_loss_fn, train_data, valid_data):
 def make_train_fn(step_fn):
     def train_fn(steps, rng, state):
         rngs = random.split(rng, steps)
+        # TODO: log f1 and accuracy in addition to loss
         state, losses = jax.lax.scan(step_fn, state, rngs, length=steps)
         return state, losses
 
@@ -78,7 +79,7 @@ def make_train_fn(step_fn):
 
 
 def init_train(apply_fn, params, config, train_data, valid_data):
-    opt = optax.adam(config.lr)
+    opt = optax.adamw(config.lr, weight_decay=config.l2)
     train_loss_fn = make_loss_fn(apply_fn, config, dropout=config.dropout)
     valid_loss_fn = make_loss_fn(apply_fn, config, dropout=0.0)
     grad_fn = make_grad_fn(train_loss_fn)
