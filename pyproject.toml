@@ -21,6 +21,7 @@ seaborn = "^0.13.2"
 scikit-learn = "^1.5.0"
 jax = "^0.4.29"
 optax = "^0.2.2"
+jupyterlab = "^4.2.2"
 
 
 [build-system]

@@ -31,10 +31,15 @@ class TrainState(NamedTuple):
 
 
 # functions
-@jit
-def loss_fn(logits, y):  #  cross entropy loss
-    loss = optax.sigmoid_focal_loss(logits, y, 0.7).mean()
-    return loss
+def make_loss_fn(cfg):
+    alpha = alpha_fn(cfg.n)
+
+    @jit
+    def loss_fn(logits, y):  #  cross entropy loss
+        loss = optax.sigmoid_focal_loss(logits, y, alpha=alpha).mean()
+        return loss
+
+    return loss_fn
 
 
 def make_update_fn(opt):
@@ -66,6 +71,7 @@ def make_grad_fn(loss_fn, apply_fn, cfg):
 
 @partial(jit, static_argnums=(2,))
 def gradfilter_ema(grads, state, alpha=0.98, lamb=2.0):
+    # @lee2024b grokfast-like EMA gradient filtering
     def _update_ema(prev_ema, grad):
         return prev_ema * alpha + grad * (1 - alpha)
 
@@ -138,6 +144,7 @@ def make_train_fn(step_fn):
 
 
 def init_train(apply_fn, params, cfg, train_data, valid_data):
+    loss_fn = make_loss_fn(cfg)
     opt = optax.adamw(cfg.lr, weight_decay=cfg.l2, b1=0.9, b2=0.98)  # @nanda2023
     opt_state = opt.init(params)
 

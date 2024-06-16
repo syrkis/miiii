@@ -7,15 +7,19 @@ from jax import random
 import jax.numpy as jnp
 
 
+# constant
+theta = 0.01  # for initialization
+
+
 # init functions
 def init_head_fn(rng, cfg):
     h, d = cfg.heads, cfg.emb
     rng, key1, key2, key3 = random.split(rng, 4)
 
-    key = random.uniform(key1, shape=(h, d, d // h), minval=-0.1, maxval=0.1)
-    query = random.uniform(key2, shape=(h, d, d // h), minval=-0.1, maxval=0.1)
-    value = random.uniform(key3, shape=(h, d, d // h), minval=-0.1, maxval=0.1)
-    projection = random.uniform(rng, shape=(h * d // h, d), minval=-0.1, maxval=0.1)
+    key = random.uniform(key1, shape=(h, d, d // h), minval=-theta, maxval=theta)
+    query = random.uniform(key2, shape=(h, d, d // h), minval=-theta, maxval=theta)
+    value = random.uniform(key3, shape=(h, d, d // h), minval=-theta, maxval=theta)
+    projection = random.uniform(rng, shape=(h * d // h, d), minval=-theta, maxval=theta)
     gamma, beta = jnp.ones((d)), jnp.zeros((d))
 
     return (query, key, value, projection, gamma, beta)
@@ -26,9 +30,9 @@ def init_ffwd_fn(rng, cfg):
     emb_dim = cfg.emb
     gamma, beta = jnp.ones((emb_dim)), jnp.zeros((emb_dim))
     params = (  # multiply by 4 for cos thats what people do
-        random.uniform(key1, shape=(emb_dim, 4 * emb_dim), minval=-0.1, maxval=0.1),
+        random.uniform(key1, shape=(emb_dim, 4 * emb_dim), minval=-theta, maxval=theta),
         jnp.zeros((4 * emb_dim)),
-        random.uniform(key2, shape=(4 * emb_dim, emb_dim), minval=-0.1, maxval=0.1),
+        random.uniform(key2, shape=(4 * emb_dim, emb_dim), minval=-theta, maxval=theta),
         jnp.zeros((emb_dim)),
         gamma,
         beta,
@@ -47,12 +51,13 @@ def init_block_fn(rng, cfg):
 
 def init_fn(rng, cfg):
     rng, key1, key2, key3 = random.split(rng, 4)
+    transformer_keys = random.split(key1, cfg.depth)
     in_d, out_d, emb_d, len_d = cfg.base, 1, cfg.emb, cfg.digits
     params = dict(
-        tok_emb=random.uniform(key1, shape=(in_d, emb_d), minval=-0.1, maxval=0.1),
-        pos_emb=random.uniform(key2, shape=(len_d, emb_d), minval=-0.1, maxval=0.1),
-        blocks=[init_block_fn(key1, cfg) for _ in range(cfg.depth)],
-        lm_head=random.uniform(key3, shape=(emb_d, out_d), minval=-0.1, maxval=0.1),
+        tok_emb=random.uniform(key1, shape=(in_d, emb_d), minval=-theta, maxval=theta),
+        pos_emb=random.uniform(key2, shape=(len_d, emb_d), minval=-theta, maxval=theta),
+        blocks=[init_block_fn(transformer_keys[i], cfg) for i in range(cfg.depth)],
+        lm_head=random.uniform(key3, shape=(emb_d, out_d), minval=-theta, maxval=theta),
     )
     return params
 

@@ -21,11 +21,12 @@ def log_run(cfg, metrics):
         "train_f1": x[4],
         "valid_f1": x[5],
     }
-    with wandb.init(project="miiii", config=cfg):
+    with wandb.init(entity="syrkis", project="miiii", config=cfg):
         for epoch, metric in enumerate(metrics[:-1]):
             wandb.log(log_fn(metric), step=epoch, commit=False)
         wandb.log(log_fn(metrics[-1]), step=cfg.epochs)
         # TODO: log images and model, and maybe more
+    wandb.finish()
 
 
 def main():
