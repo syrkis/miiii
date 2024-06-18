@@ -19,10 +19,12 @@ The goal is to gain insights into these fundamental building blocks of mathemati
 - `README.md`: This readme file
 - `TODO.md`: Todo list
 
-## Getting Started
+## Replicating the Project
 
-1. Ensure you have Python 3.11 installed 
-2. Clone this repository
-3. Install the required dependencies using Poetry: `poetry install`
-4. Explore the various scripts and the Jupyter notebook to understand the project's workings
-5. Run analyses and extend the project's capabilities as desired
+To replicate the project, follow these steps:
+
+```bash
+pip install miiiii  # Install the package
+miiiii run  # replicate the project
+pip uninstall miiiii # Uninstall the package
+```

@@ -6,6 +6,7 @@ from .train import init_train
 from .model import make_apply_fn, vaswani_fn
 from .numbs import base_n
 
+
 __all__ = [
     "get_conf",
     "save_model",
@@ -18,4 +19,5 @@ __all__ = [
     "make_apply_fn",
     "vaswani_fn",
     "base_n",
+    "replicate",
 ]

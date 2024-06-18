@@ -1,5 +1,5 @@
 # main.py
-#   miiii main file
+#   miiiii main file
 # by: Noah Syrkis
 
 # imports
@@ -8,7 +8,7 @@ import jax.numpy as jnp
 from jax.tree_util import tree_flatten
 from functools import partial
 import wandb
-import miiii
+import miiiii
 
 
 # functions
@@ -24,7 +24,7 @@ def log_run(cfg, metrics, params):
         "train_f1": x[4],
         "valid_f1": x[5],
     }
-    with wandb.init(entity="syrkis", project="miiii", config=cfg):
+    with wandb.init(entity="syrkis", project="miiiii", config=cfg):
         for epoch, metric in enumerate(metrics[:-1]):
             wandb.log(log_fn(metric), step=epoch, commit=False)
         wandb.log(log_fn(metrics[-1]), step=cfg.epochs)
@@ -34,13 +34,13 @@ def log_run(cfg, metrics, params):
 
 def main():
     # config and init
-    cfg, (rng, key) = miiii.get_conf(), random.split(random.PRNGKey(0))
-    data = miiii.prime_fn(cfg.n, partial(miiii.base_n, cfg.base), key)
-    params = miiii.init_fn(key, cfg)
+    cfg, (rng, key) = miiiii.get_conf(), random.split(random.PRNGKey(0))
+    data = miiiii.prime_fn(cfg.n, partial(miiiii.base_n, cfg.base), key)
+    params = miiiii.init_fn(key, cfg)
 
     # train
-    apply_fn = miiii.make_apply_fn(miiii.vaswani_fn)
-    train_fn, state = miiii.init_train(apply_fn, params, cfg, *data)
+    apply_fn = miiiii.make_apply_fn(miiiii.vaswani_fn)
+    train_fn, state = miiiii.init_train(apply_fn, params, cfg, *data)
     state, metrics = train_fn(cfg.epochs, rng, state)
 
     # evaluate
