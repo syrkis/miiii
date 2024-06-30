@@ -103,19 +103,19 @@ def vaswani_head_fn(x, params):
 if __name__ == "__main__":
     from utils import get_conf
     from param import init_fn
-    from datum import data_fn, text_fn
-    from numbs import base_n
+    from datum import prime_fn
+    from numbs import base_ns
+
     from oeis import oeis
 
     seq = oeis["A000040"]  # "A000040" is the sequence of prime numbers
-    data_conf, model_conf = get_conf()
-    alpha = (data_conf["n"] / jnp.log(data_conf["n"])) / data_conf["n"]
+    cfg = get_conf()
+    alpha = (cfg["n"] / jnp.log(cfg["n"])) / cfg["n"]
     rng, key = random.split(random.PRNGKey(0))
 
-    number_system = partial(base_n, data_conf["base"])
-    train_data, valid_data = data_fn("primes", seq, data_conf["n"], number_system)
+    (x_train, y_train), _ = prime_fn(cfg["n"], cfg["base"], base_ns, key)
 
-    params = init_fn(key, dict(**model_conf, len=train_data[0].shape[1]))
+    params = init_fn(key, cfg, x_train, y_train)
     apply_fn = make_apply_fn(vaswani_fn)
-    pred = apply_fn(params, train_data[0])
+    pred = apply_fn(params, key, x_train, 0.1)
     print(pred.shape, pred)

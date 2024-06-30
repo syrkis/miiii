@@ -5,6 +5,7 @@
 # imports
 from jax import random
 import jax.numpy as jnp
+from chex import dataclass
 
 
 # constant
@@ -37,17 +38,14 @@ def init_ffwd_fn(rng, cfg):
 
 def init_block_fn(rng, cfg):
     rng, key1, key2 = random.split(rng, 3)
-    params = {
-        "head": init_head_fn(key1, cfg),
-        "ffwd": init_ffwd_fn(key2, cfg),
-    }
+    params = dict(head=init_head_fn(key1, cfg), ffwd=init_ffwd_fn(key2, cfg))
     return params
 
 
-def init_fn(rng, cfg):
+def init_fn(rng, cfg, x, y):
     rng, key1, key2, key3 = random.split(rng, 4)
     transformer_keys = random.split(key1, cfg.depth)
-    in_d, out_d, emb_d, len_d = cfg.base, 1, cfg.emb, cfg.digits
+    in_d, out_d, emb_d, len_d = (cfg.base, y.shape[1], cfg.emb, x.shape[1])
     params = dict(
         tok_emb=random.uniform(key1, shape=(in_d, emb_d), minval=-theta, maxval=theta),
         pos_emb=random.uniform(key2, shape=(len_d, emb_d), minval=-theta, maxval=theta),
@@ -58,15 +56,11 @@ def init_fn(rng, cfg):
 
 
 if __name__ == "__main__":
-    from utils import load_cfg
+    from utils import get_conf
+    from datum import prime_fn
+    from numbs import base_ns
 
-    cfg = load_cfg()
+    cfg = get_conf()
     rng = random.PRNGKey(0)
-    params = init_fn(rng, cfg)
-    print(params)
-    print(len(params["blocks"]))
-    print(params["blocks"][0]["head"][0].shape)
-    print(params["blocks"][0]["ffwd"][0].shape)
-    print(params["tok_emb"].shape)
-    print(params["pos_emb"].shape)
-    print(params["lm_head"].shape)
+    (x_train, y_train), _ = prime_fn(cfg.n, cfg.base, base_ns, rng)
+    params = init_fn(rng, cfg, x_train, y_train)

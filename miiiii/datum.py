@@ -38,10 +38,17 @@ def prime_fn(n: int, base, ns_fn: Callable, key) -> Tuple[jnp.array, jnp.array]:
     x, y = x[idxs], y[idxs]
 
     # split data
-    sep = len(x) // 2
+    sep = len(x) // 2  # TODO: this is a choice
     train_data = x[:sep], y[:sep]
     valid_data = x[sep:], y[sep:]
+
+    # TODO: consider making test data all numbers larger than n but represented by same number of digits
+
     return train_data, valid_data
+
+
+def test_set(n: int, base, ns_fn: Callable, key) -> Tuple[jnp.array, jnp.array]:
+    pass
 
 
 # operator related functions

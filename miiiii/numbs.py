@@ -28,4 +28,4 @@ def prime(x):
 
 if __name__ == "__main__":
     x = jnp.arange(33)
-    print(base_n(x, 16))
+    print(base_ns(x, 16))
