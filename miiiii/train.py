@@ -78,8 +78,8 @@ def gradfilter_ema(grads, state, alpha=0.98, lamb=2.0):
     def _apply_ema(grad, ema):
         return grad + ema * lamb
 
-    ema_grads = jax.tree_map(_update_ema, state.ema_grads, grads)
-    filtered_grads = jax.tree_map(_apply_ema, grads, ema_grads)
+    ema_grads = jax.tree.map(_update_ema, state.ema_grads, grads)
+    filtered_grads = jax.tree.map(_apply_ema, grads, ema_grads)
     state = state._replace(ema_grads=ema_grads)
     return filtered_grads, state
 
@@ -151,7 +151,7 @@ def init_train(apply_fn, params, cfg, train_data, valid_data):
     update_fn = make_update_fn(opt)
     grad_fn = make_grad_fn(loss_fn, apply_fn, cfg)
 
-    ema_grads = jax.tree_map(jnp.zeros_like, params)
+    ema_grads = jax.tree.map(jnp.zeros_like, params)
     state = TrainState(params=params, opt_state=opt_state, ema_grads=ema_grads)
 
     eval_fn = make_eval_fn(apply_fn, loss_fn, train_data, valid_data)
@@ -166,5 +166,17 @@ if __name__ == "__main__":
     from param import init_fn
     from model import make_apply_fn, vaswani_fn
     from utils import get_conf
-    from datum import data_fn
-    from numbs import base_n
+    from datum import prime_fn
+    from numbs import base_ns
+
+    seed = 0
+    cfg = get_conf()
+    rng, key = random.split(random.PRNGKey(seed))
+    (x_train, y_train), _ = prime_fn(cfg.n, cfg.base, base_ns, rng)
+    params = init_fn(rng, cfg, x_train, y_train)
+
+    apply_fn = make_apply_fn(vaswani_fn)
+    train_fn, state = init_train(
+        apply_fn, params, cfg, (x_train, y_train), (x_train, y_train)
+    )
+    state, metrics = train_fn(cfg.epochs, rng, state)

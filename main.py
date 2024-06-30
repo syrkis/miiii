@@ -34,17 +34,19 @@ def log_run(cfg, metrics, params):
 
 def main():
     # config and init
-    cfg, (rng, key) = miiiii.get_conf(), random.split(random.PRNGKey(0))
-    data = miiiii.prime_fn(cfg.n, cfg.base, miiiii.base_n, key)
-    params = miiiii.init_fn(key, cfg)
+    seed = 0
+    cfg, (rng, key) = miiiii.get_conf(), random.split(random.PRNGKey(seed))
+    train_data, valid_data = miiiii.prime_fn(cfg.n, cfg.base, miiiii.base_ns, rng)
+    params = miiiii.init_fn(key, cfg, *train_data)
 
     # train
     apply_fn = miiiii.make_apply_fn(miiiii.vaswani_fn)
-    train_fn, state = miiiii.init_train(apply_fn, params, cfg, *data)
+    train_fn, state = miiiii.init_train(apply_fn, params, cfg, train_data, valid_data)
     state, metrics = train_fn(cfg.epochs, rng, state)
 
     # evaluate
-    log_run(cfg, metrics, state.params)  # log run
+    # log_run(cfg, metrics, state.params)  # log run
+    print(metrics[-1])  # print final metrics
 
 
 if __name__ == "__main__":

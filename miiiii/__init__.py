@@ -1,16 +1,16 @@
-from .utils import get_conf, save_model, load_model
+from .utils import get_conf, save_params, load_params
 from .datum import prime_fn
 from .param import init_fn
 from .plots import polar_plot, curve_plot
 from .train import init_train
 from .model import make_apply_fn, vaswani_fn
-from .numbs import base_n
+from .numbs import base_ns
 
 
 __all__ = [
     "get_conf",
-    "save_model",
-    "load_model",
+    "save_params",
+    "load_params",
     "prime_fn",
     "init_fn",
     "polar_plot",
@@ -18,6 +18,5 @@ __all__ = [
     "init_train",
     "make_apply_fn",
     "vaswani_fn",
-    "base_n",
-    "replicate",
+    "base_ns",
 ]
