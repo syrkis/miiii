@@ -7,6 +7,7 @@ import jax
 from jax import random, grad, jit, value_and_grad
 import optax
 from jax import tree_util
+from chex import dataclass
 from tqdm import tqdm
 import jax.numpy as jnp
 from typing import List, Set, Tuple
@@ -17,11 +18,6 @@ import seaborn as sns
 from typing import NamedTuple
 import matplotlib.pyplot as plt
 
-if __name__ == "__main__":
-    from utils import alpha_fn
-else:
-    from .utils import alpha_fn
-
 
 # constants
 class TrainState(NamedTuple):
@@ -31,7 +27,7 @@ class TrainState(NamedTuple):
 
 
 # functions
-def make_loss_fn(cfg):
+def make_loss_fn(cfg, alpha_fn):
     alpha = alpha_fn(cfg.n)
 
     @jit
@@ -102,17 +98,15 @@ def make_eval_fn(apply_fn, loss_fn, train_data, valid_data):
     @jit
     def eval_fn(params, rng, train_loss, train_logits):
         valid_logits = apply_fn(params, rng, valid_data[0], 0.0)
-        valid_loss = loss_fn(valid_logits, valid_data[1])
-        valid_pred = predict_fn(valid_logits)
-        valid_acc = accuracy(valid_data[1], valid_pred)
-        valid_f1 = f1_score(valid_data[1], valid_pred)
+        valid_loss = loss_fn(valid_logits, valid_data[1])  # number
 
         train_pred = predict_fn(train_logits)
-        train_acc = accuracy(train_data[1], train_pred)
-        train_f1 = f1_score(train_data[1], train_pred)
+        train_metrics = metrics_fn(train_data[1], train_pred)  # tuple of 4 of n
 
-        metrics = [train_loss, valid_loss, train_acc, valid_acc, train_f1, valid_f1]
-        return jnp.array(metrics)
+        valid_pred = predict_fn(valid_logits)
+        valid_metrics = metrics_fn(valid_data[1], valid_pred)
+
+        return train_loss, valid_loss, train_metrics, valid_metrics
 
     return eval_fn
 
@@ -121,17 +115,17 @@ def predict_fn(logits):
     return (jax.nn.sigmoid(logits) > 0.5).astype(jnp.int32)
 
 
-def f1_score(y_true, y_pred):
-    tp = jnp.sum(y_true * y_pred)
-    fp = jnp.sum((1 - y_true) * y_pred)
-    fn = jnp.sum(y_true * (1 - y_pred))
-    precision = tp / (tp + fp + 1e-8)
-    recall = tp / (tp + fn + 1e-8)
-    return 2 * precision * recall / (precision + recall + 1e-8)
-
-
-def accuracy(y_true, y_pred):
-    return jnp.mean(y_true == y_pred)
+def metrics_fn(y_true, y_pred):
+    """returns accuracy, precision, recall, f1"""
+    tp = jnp.sum(y_true * y_pred, axis=0)
+    fp = jnp.sum((1 - y_true) * y_pred, axis=0)
+    fn = jnp.sum(y_true * (1 - y_pred), axis=0)
+    acc = (y_true == y_pred).mean(axis=0)
+    prec = tp / (tp + fp + 1e-8)
+    rec = tp / (tp + fn + 1e-8)
+    f1 = 2 * prec * rec / (prec + rec + 1e-8)
+    # loss = optax.sigmoid_focal_loss(y_pred, y_true, alpha=alpha).mean(axis=0)
+    return acc, prec, rec, f1
 
 
 def make_train_fn(step_fn):
@@ -143,8 +137,8 @@ def make_train_fn(step_fn):
     return train_fn
 
 
-def init_train(apply_fn, params, cfg, train_data, valid_data):
-    loss_fn = make_loss_fn(cfg)
+def init_train(apply_fn, params, cfg, alpha_fn, train_data, valid_data):
+    loss_fn = make_loss_fn(cfg, alpha_fn)
     opt = optax.adamw(cfg.lr, weight_decay=cfg.l2, b1=0.9, b2=0.98)  # @nanda2023
     opt_state = opt.init(params)
 
@@ -165,18 +159,21 @@ def init_train(apply_fn, params, cfg, train_data, valid_data):
 if __name__ == "__main__":
     from param import init_fn
     from model import make_apply_fn, vaswani_fn
-    from utils import get_conf
+    from utils import get_conf, alpha_fn, digit_fn
     from datum import prime_fn
     from numbs import base_ns
 
     seed = 0
     cfg = get_conf()
     rng, key = random.split(random.PRNGKey(seed))
-    (x_train, y_train), _ = prime_fn(cfg.n, cfg.base, base_ns, rng)
+    ns = partial(base_ns, digit_fn)
+    (x_train, y_train), (x_valid, y_valid) = prime_fn(cfg.n, cfg.base, ns, key)
     params = init_fn(rng, cfg, x_train, y_train)
 
     apply_fn = make_apply_fn(vaswani_fn)
     train_fn, state = init_train(
-        apply_fn, params, cfg, (x_train, y_train), (x_train, y_train)
+        apply_fn, params, cfg, alpha_fn, (x_train, y_train), (x_valid, y_valid)
     )
     state, metrics = train_fn(cfg.epochs, rng, state)
+
+    print(metrics)
