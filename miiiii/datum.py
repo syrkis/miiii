@@ -31,7 +31,7 @@ def prime_fn(n: int, base, ns_fn: Callable, key) -> Tuple[jnp.array, jnp.array]:
     # targets
     is_prime = jnp.zeros_like(x[:, 0]).at[primes - 2].set(1)[:, None]  # n x 1
     is_multi = x_range[:, None] % jnp.arange(2, jnp.sqrt(n + 2)) == 0  # n x sqrt(n)
-    y = jnp.concatenate([is_prime, is_multi], axis=-1)  # n x sqrt(n) + 1
+    y = jnp.concatenate([is_multi, is_prime], axis=-1)  # n x sqrt(n) + 1
 
     # shuffle data
     idxs = random.permutation(key, len(x))

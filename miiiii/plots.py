@@ -14,15 +14,10 @@ from hilbert import encode, decode
 from jax.tree_util import tree_flatten
 from sklearn.metrics import f1_score, confusion_matrix
 
-if __name__ == "__main__":
-    from utils import alpha_fn
-else:
-    from .utils import alpha_fn
-
 
 # constants
 cols = {True: "black", False: "white"}
-ink = "black" if darkdetect.isLight() else "white"
+fg = "black" if darkdetect.isLight() else "white"
 bg = "white" if darkdetect.isLight() else "black"
 marks = ["o", "o", " ", "o"]
 plt.rcParams["font.family"] = "Monospace"
@@ -36,6 +31,27 @@ def fname_fn(conf, fname):
 
 
 # functions
+def hinton_plot(matrix, cfg, metric):
+    fig, ax = plt.subplots(figsize=(10, 10), dpi=300)
+    ax.patch.set_facecolor(bg)
+    ax.set_aspect("equal", "box")
+    ax.xaxis.set_major_locator(plt.NullLocator())
+    ax.yaxis.set_major_locator(plt.NullLocator())
+    for (x, y), w in np.ndenumerate(matrix):
+        s = np.sqrt(w)
+        rect = plt.Rectangle([x - s / 2, y - s / 2], s, s, facecolor=fg, edgecolor=fg)
+        ax.add_patch(rect)
+    ax.autoscale_view()
+    ax.invert_yaxis()
+    ax.set_xlabel("epoch")
+    ax.set_ylabel("task")
+    ax.set_title(metric)
+    for spine in ax.spines.values():
+        spine.set_visible(False)
+    ax.set_xticks(np.arange(matrix.shape[0], step=cfg.epochs // 20))
+    plt.show()
+
+
 def polar_plot(gold, pred, conf, fname, offset=0):  # maps v to a polar plot
     conf = conf.__dict__
     _, ax = init_polar_plot()
@@ -64,8 +80,8 @@ def polar_plot(gold, pred, conf, fname, offset=0):  # maps v to a polar plot
             marker=marks[idx],
             # s=10 + 4 * idx,
             label=cat,
-            facecolors=bg if cat == "fn" else ink,
-            edgecolors=ink,
+            facecolors=bg if cat == "fn" else fg,
+            edgecolors=fg,
         )
     fname = fname if fname.endswith(".pdf") else f"{fname}.pdf"
     xlabel = dict(**info, **conf)
@@ -82,7 +98,7 @@ def polar_plot(gold, pred, conf, fname, offset=0):  # maps v to a polar plot
             for i in range(0, len(xlabel), 5)
         ]
     )
-    ax.set_xlabel(xlabel, color=ink)
+    ax.set_xlabel(xlabel, color=fg)
     fname = fname_fn(conf, fname)
     plt.savefig(f"figs/{fname}", dpi=100)
 
@@ -102,7 +118,7 @@ def curve_plot(
     conf["n_params"] = sum([p.size for p in tree_flatten(params)[0]])
     fig, ax = init_curve_plot(info, conf)
     for i, curve in enumerate(curves.T):  # transpose bcs of jax.lax.scan
-        ax.plot(curve, c=ink, lw=2, ls="--" if i > 0 else "-")
+        ax.plot(curve, c=fg, lw=2, ls="--" if i > 0 else "-")
     # make x-axis log
     ax.set_xscale("log")
     # add info key, val pairs to right side of plot (centered verticall on right axis) (relative to len(info))
@@ -116,9 +132,9 @@ def curve_plot(
             # if v is a number use scientific notation
             f"{k} : {v}",
             transform=ax.transAxes,
-            color=ink,
+            color=fg,
         )
-    ax.legend(info["legend"], frameon=False, labelcolor=ink)
+    ax.legend(info["legend"], frameon=False, labelcolor=fg)
     # make fname contain conf
     fname = fname_fn(conf, "curves")
     if darkdetect.isLight():
@@ -135,18 +151,18 @@ def init_curve_plot(info, conf):
     title = conf["block"][0].upper() + conf["block"][1:] + " " + info["title"]
     fig, ax = plt.subplots(figsize=(12, 6))
     fig.patch.set_facecolor(bg)
-    # make ink white
-    ax.tick_params(axis="x", colors=ink)
-    ax.tick_params(axis="y", colors=ink)
+    # make fg white
+    ax.tick_params(axis="x", colors=fg)
+    ax.tick_params(axis="y", colors=fg)
     ax.set_facecolor(bg)
     ax.grid(False)
-    ax.set_title(title, color=ink)
-    ax.set_xlabel(info["xlabel"], color=ink)
-    ax.set_ylabel(info["ylabel"], color=ink)
-    # font color of legend should also be ink
-    ax.xaxis.label.set_color(ink)
-    ax.yaxis.label.set_color(ink)
-    [spine.set_edgecolor(ink) for spine in ax.spines.values()]
+    ax.set_title(title, color=fg)
+    ax.set_xlabel(info["xlabel"], color=fg)
+    ax.set_ylabel(info["ylabel"], color=fg)
+    # font color of legend should also be fg
+    ax.xaxis.label.set_color(fg)
+    ax.yaxis.label.set_color(fg)
+    [spine.set_edgecolor(fg) for spine in ax.spines.values()]
     # ax y range from 0 to what it is
     return fig, ax
 
@@ -158,7 +174,7 @@ def init_polar_plot():
     ax.set_yticklabels([])
     ax.set_xticklabels([])
     ax.set_facecolor(bg)
-    [spine.set_edgecolor(ink) for spine in ax.spines.values()]
+    [spine.set_edgecolor(fg) for spine in ax.spines.values()]
     # plt.tight_layout()
     return fig, ax
 

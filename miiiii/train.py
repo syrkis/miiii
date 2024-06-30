@@ -32,7 +32,7 @@ def make_loss_fn(cfg, alpha_fn):
 
     @jit
     def loss_fn(logits, y):  #  cross entropy loss
-        loss = optax.sigmoid_focal_loss(logits, y, alpha=alpha).mean()
+        loss = optax.sigmoid_focal_loss(logits, y).mean()
         return loss
 
     return loss_fn
@@ -100,11 +100,8 @@ def make_eval_fn(apply_fn, loss_fn, train_data, valid_data):
         valid_logits = apply_fn(params, rng, valid_data[0], 0.0)
         valid_loss = loss_fn(valid_logits, valid_data[1])  # number
 
-        train_pred = predict_fn(train_logits)
-        train_metrics = metrics_fn(train_data[1], train_pred)  # tuple of 4 of n
-
-        valid_pred = predict_fn(valid_logits)
-        valid_metrics = metrics_fn(valid_data[1], valid_pred)
+        train_metrics = metrics_fn(train_data[1], train_logits)
+        valid_metrics = metrics_fn(valid_data[1], valid_logits)
 
         return train_loss, valid_loss, train_metrics, valid_metrics
 
@@ -115,8 +112,9 @@ def predict_fn(logits):
     return (jax.nn.sigmoid(logits) > 0.5).astype(jnp.int32)
 
 
-def metrics_fn(y_true, y_pred):
+def metrics_fn(y_true, logits):
     """returns accuracy, precision, recall, f1"""
+    y_pred = predict_fn(logits)
     tp = jnp.sum(y_true * y_pred, axis=0)
     fp = jnp.sum((1 - y_true) * y_pred, axis=0)
     fn = jnp.sum(y_true * (1 - y_pred), axis=0)
@@ -124,8 +122,8 @@ def metrics_fn(y_true, y_pred):
     prec = tp / (tp + fp + 1e-8)
     rec = tp / (tp + fn + 1e-8)
     f1 = 2 * prec * rec / (prec + rec + 1e-8)
-    # loss = optax.sigmoid_focal_loss(y_pred, y_true, alpha=alpha).mean(axis=0)
-    return acc, prec, rec, f1
+    loss = optax.sigmoid_focal_loss(logits, y_true).mean(axis=0)
+    return loss, f1, prec, rec, acc
 
 
 def make_train_fn(step_fn):
