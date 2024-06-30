@@ -1,12 +1,15 @@
 # TODO
 
+- [ ] modify output layer to indicate divisibility by all sqrt(n) numbers
+- [ ] replicate @nanda2023  <- working on this
+
 - [ ] compare to baseline, and other models / papers (decide metrics)
 - [ ] Grokking (research of grokking is possible for prime numbers)
-- [ ]  use fastgrok
-
 - [ ] add paper and notes to repo
 - [ ] hilbert / hinton plot of weights
 - [ ] Replace learned circuit with RASP implementation?
+
+- [x] use fastgrok
 
 ## Paper
 

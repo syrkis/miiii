@@ -35,7 +35,7 @@ def log_run(cfg, metrics, params):
 def main():
     # config and init
     cfg, (rng, key) = miiiii.get_conf(), random.split(random.PRNGKey(0))
-    data = miiiii.prime_fn(cfg.n, partial(miiiii.base_n, cfg.base), key)
+    data = miiiii.prime_fn(cfg.n, cfg.base, miiiii.base_n, key)
     params = miiiii.init_fn(key, cfg)
 
     # train
