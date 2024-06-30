@@ -1,10 +1,10 @@
 base: 10
-n: 4096
+n: 2048
 emb: 256
 lr: 0.0001
 depth: 2
 heads: 4
-epochs: 200
+epochs: 100
 block: vaswani
 dropout: 0.0
 l2: .01  # weight decay

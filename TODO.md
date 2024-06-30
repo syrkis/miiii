@@ -1,7 +1,7 @@
 # TODO
 
 - [x] modify output layer to indicate divisibility by all sqrt(n) numbers
-- [ ] replicate @nanda2023  <- working on this
+- [ ] test divisibility only for all primes in range 2..sqrt(n)      <- important
 - [ ] make test set with numbers larger than n, but same number of digits
 - [ ] compare to baseline, and other models / papers (decide metrics)
 - [ ] Grokking (research of grokking is possible for prime numbers)
