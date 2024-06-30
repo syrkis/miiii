@@ -1,9 +1,12 @@
 [tool.poetry]
 name = "miiiii"
-version = "0.1.0"
-description = "mechanistic interpretability of irriducible integer identifiers"
-authors = ["Noah Syrkis <noah@syrkis.com>"]
+version = "0.0.0"
+description = "Mechanistic interpretability of irriducible integer identifiers"
+authors = ["Noah Syrkis <desk@syrkis.com>"]
 readme = "README.md"
+
+[tool.poetry.scripts]
+package_command = "main:main"
 
 [tool.poetry.dependencies]
 python = "^3.11"
@@ -22,7 +25,6 @@ scikit-learn = "^1.5.0"
 jax = "^0.4.29"
 optax = "^0.2.2"
 jupyterlab = "^4.2.2"
-
 
 [build-system]
 requires = ["poetry-core"]

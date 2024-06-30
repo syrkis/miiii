@@ -62,12 +62,12 @@ def get_args():
     return parser.parse_args()
 
 
-def save_model(params, path):
+def save_params(params, path):
     with open(path, "wb") as file:
         pickle.dump(params, file)
 
 
-def load_model(path):
+def load_params(path):
     with open(path, "rb") as file:
         return pickle.load(file)
 
