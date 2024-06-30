@@ -17,6 +17,7 @@ decode = lambda d, x: "".join([d[i] for i in x])
 
 # prime to composite ratio
 alpha_fn = lambda n: (1 - ((n / jnp.log(n)) / n))
+digit_fn = lambda n, base: jnp.ceil(jnp.log(n + 1) / jnp.log(base)).astype(jnp.int32)
 
 
 @dataclass

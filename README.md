@@ -1,7 +1,15 @@
 # MIIII - Mechanistic Interpretability of Irreducible Integer Identifiers
 
-MIIII is a project exploring the properties and interpretability of deep prime number (irreducible integer) identifiers.
+MIIII exploring the properties and interpretability of prime number representations in attention-based neural networks.
 The goal is to gain insights into these fundamental building blocks of mathematics through computational analysis and modeling.
+Prime numbers are a fundamental concept in mathematics, and understanding their properties can lead to insights into the nature of computation and intelligence.
+Questions one might ask about prime numbers include:
+
+- [x] Are there an infinite number of prime numbers?
+- [ ] Can every number be expressed as a product of prime numbers?
+- [ ] What is the distribution of prime numbers?
+- [ ] is $p$ a prime number?
+
 
 ## Project Structure
 

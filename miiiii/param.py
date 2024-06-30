@@ -64,3 +64,10 @@ if __name__ == "__main__":
     rng = random.PRNGKey(0)
     (x_train, y_train), _ = prime_fn(cfg.n, cfg.base, base_ns, rng)
     params = init_fn(rng, cfg, x_train, y_train)
+
+    print(params)
+    print(params["blocks"][0]["head"][0].shape)
+    print(params["blocks"][0]["ffwd"][0].shape)
+    print(params["tok_emb"].shape)
+    print(params["pos_emb"].shape)
+    print(params["lm_head"].shape)

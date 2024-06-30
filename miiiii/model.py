@@ -15,13 +15,18 @@ from tqdm import tqdm
 
 # constants
 dataset = "primes"
-# mask = jnp.triu(jnp.full((x.shape[0], x.shape[0]), -jnp.inf), 1)
+# mask = jnp.triu(jnp.full((x.shape[0], x.shape[0]), -jnp.inf), 1
+
+
+def predict_fn(apply_fn, params, x):
+    logits = apply_fn(params, random.PRNGKey(0), x, 0.0)
+    return (jax.nn.sigmoid(logits) > 0.5).astype(jnp.int32)
 
 
 # optional rng
 def make_apply_fn(transformer_fn):  # x: seq_len
     @partial(vmap, in_axes=(None, None, 0, None))
-    def apply_fn(params, rng, x, dropout):  # set dropout_rate to 0.1 when training
+    def apply_fn(params, rng, x, dropout=0.0):  # set dropout_rate to 0.1 when training
         z = embed_fn(x, params["tok_emb"], params["pos_emb"])  # z: seq_len x emb_dim
         z, rng = dropout_fn(rng, z, dropout)
         for block in params["blocks"]:  # use fori_loop maybe

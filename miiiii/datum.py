@@ -68,8 +68,13 @@ exponentiation_fn = lambda a, b: a**b
 # testing
 if __name__ == "__main__":
     from numbs import base_ns
-    from utils import get_conf
+    from utils import digit_fn, get_conf
 
     cfg = get_conf()
     rng = random.PRNGKey(0)
-    data = prime_fn(cfg.n, cfg.base, base_ns, rng)
+    data = prime_fn(cfg.n, cfg.base, partial(base_ns, digit_fn), rng)
+
+    print(base_ns(digit_fn, cfg.base, jnp.array([cfg.n])))
+    digits = digit_fn(jnp.array([cfg.n]), cfg.base).squeeze()
+    cfg.base**digits
+    print(digits, cfg.base**digits)

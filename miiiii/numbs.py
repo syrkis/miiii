@@ -9,10 +9,7 @@ from functools import partial
 
 
 # functions
-digit_fn = lambda n, base: jnp.ceil(jnp.log(n + 1) / jnp.log(base)).astype(int)
-
-
-def base_ns(base, x):
+def base_ns(digit_fn, base, x):
     digits = digit_fn(x.max(), base)
     numb = jnp.array([x // base**i % base for i in range(digits)][::-1]).T
     return numb
@@ -27,5 +24,5 @@ def prime(x):
 
 
 if __name__ == "__main__":
-    x = jnp.arange(33)
+    x = jnp.arange(33).T
     print(base_ns(x, 16))
