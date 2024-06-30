@@ -17,7 +17,6 @@ decode = lambda d, x: "".join([d[i] for i in x])
 
 # prime to composite ratio
 alpha_fn = lambda n: (1 - ((n / jnp.log(n)) / n))
-digit_fn = lambda n, base: jnp.ceil(jnp.log(n + 1) / jnp.log(base)).astype(int)
 
 
 @dataclass
@@ -29,13 +28,9 @@ class DataConf:
     heads: int = 4
     epochs: int = 100
     gamma: int = 2
-    digits: int = None
-    n_params: int = None
-
     l2: float = 1e-4  # lambda
     lr: float = 1e-3
     dropout: float = 0.1
-
     block: str = "vaswani"
 
 
@@ -44,7 +39,6 @@ def load_conf():
     with open(os.path.join(parent_dir, "config.yaml"), "r") as file:
         conf = yaml.safe_load(file)
     conf = DataConf(**conf)
-    conf.digits = digit_fn(conf.n, conf.base)
     return conf
 
 

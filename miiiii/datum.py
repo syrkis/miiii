@@ -25,16 +25,13 @@ def prime_fn(n: int, base, ns_fn: Callable, key) -> Tuple[jnp.array, jnp.array]:
     limit = (n / jnp.log(n)).astype(jnp.int32)  # num primes less than n is n / ln(n)
     primes = jnp.array(oeis["A000040"][1 : limit * 2])
     assert max(primes) > n, "not enough primes"  # make sure there are enough primes
-    x = ns(jnp.arange(2, n + 2)[:n])  # all numbers up to n
+    x_range = jnp.arange(2, n + 2)[:n]  # all numbers up to n
+    x = ns(x_range)  # all numbers up to n  TODO: start at sqrt(n)?
 
     # targets
     is_prime = jnp.zeros_like(x[:, 0]).at[primes - 2].set(1)[:, None]  # n x 1
-    is_multi = (  # one_hot indicating of number is multiple of 2, 3, 4, ..., sqrt(n)
-        jnp.arange(2, n + 2)[:n][:, None] % jnp.arange(2, jnp.sqrt(n) + 2) == 0
-    ).astype(jnp.int32)  # n x sqrt(n)
+    is_multi = x_range[:, None] % jnp.arange(2, jnp.sqrt(n + 2)) == 0  # n x sqrt(n)
     y = jnp.concatenate([is_prime, is_multi], axis=-1)  # n x sqrt(n) + 1
-    print(is_prime.shape, is_multi.shape, y.shape)
-    exit()
 
     # shuffle data
     idxs = random.permutation(key, len(x))
