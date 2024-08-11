@@ -5,6 +5,7 @@
 # %% Imports
 from chex import dataclass, Array
 from typing import List
+import optax
 
 
 # %% Model classes
@@ -36,6 +37,14 @@ class Params:
     pos_emb: Array
     blocks: List[Block]
     lm_head: Array
+
+
+# %% Train classes
+@dataclass
+class State:  # replace with chex and put in types
+    params: Params
+    opt_state: optax.OptState
+    ema_grads: Array
 
 
 # %% Data classes
