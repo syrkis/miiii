@@ -3,18 +3,12 @@
 # by: Noah Syrkis
 
 # Imports
-import miiiii
-import math
+import miiiii as mi
 import jax.numpy as jnp
+from jax import random
 from jax import Array
-import os
-from jax import jit, random, vmap
-import numpy as np
-import requests
-from tqdm import tqdm
-from typing import List, Set, Tuple, Callable
+from typing import Callable
 from oeis import oeis
-from functools import partial
 
 
 # Constants
@@ -22,14 +16,10 @@ SPECIAL_TOKENS = {}  # {"[PAD]": 0, "[EOS]": 1, "[BOS]": 2}
 
 
 # classification related functions
-def data_fn(
-    n: int, base, ns_fn: Callable, key
-) -> Tuple[Tuple[Array, Array], Tuple[Array, Array]]:
-    limit = (n / jnp.log(n)).astype(jnp.int32)  # num primes less than n is n / ln(n)
-    primes = jnp.array(oeis["A000040"][1 : limit * 2])
-    assert max(primes) > n, "not enough primes"  # make sure there are enough primes
+def data_fn(n: int, base, ns_fn: Callable, key) -> mi.types.Dataset:
+    primes = primes_fn(n)
     x_range = jnp.arange(2, n + 2)[:n]  # all numbers up to n
-    x = ns_fn(miiiii.utils.digit_fn, x_range, base)
+    x = ns_fn(mi.utils.digit_fn, x_range, base)
 
     # targets
     is_prime = jnp.zeros_like(x[:, 0]).at[primes - 2].set(1)[:, None]  # n x 1
@@ -38,20 +28,23 @@ def data_fn(
     y = jnp.concatenate([is_multiple, is_prime], axis=-1)  # n x sqrt(n) + 1
 
     # shuffle data
-    idxs = random.permutation(key, len(x))
-    x, y = x[idxs], y[idxs]
+    idxs = random.permutation(key, len(x))  # shuffle indices
+    x, y = x[idxs], y[idxs]  # shuffle data
+    sep = len(x) // 2  # TODO: this a choise (split could be non 50/50
+    tasks = primes_less_than_sqrt_n.tolist() + ["prime"]  # tasks
 
-    # split data
-    sep = len(x) // 2  # TODO: this is a choice
-    train_data = x[:sep], y[:sep]
-    valid_data = x[sep:], y[sep:]
+    # dataset
+    dataset = mi.types.Dataset(
+        train=mi.types.Datasplit(x=x[:sep], y=y[:sep]),
+        valid=mi.types.Datasplit(x=x[sep:], y=y[sep:]),
+        info=mi.types.Datainfo(apriori=y.mean(axis=0), tasks=tasks),
+    )
 
-    # TODO: consider making test data all numbers larger than n but represented by same number of digits
-    tasks = primes_less_than_sqrt_n.tolist() + ["is_prime"]
-    return train_data, valid_data, tasks
+    return dataset
 
 
-# operator related functions
-def operator_fn(operator: Callable, n: int) -> Array:
-    a, b = jnp.arange(n), n - jnp.arange(n)  # TODO: all combinations
-    return jnp.stack([a, b, operator(a, b)], axis=-1)
+def primes_fn(n: int) -> Array:
+    limit = (n / jnp.log(n)).astype(jnp.int32)  # num primes less than n is n / ln(n)
+    primes = jnp.array(oeis["A000040"][1 : limit * 2])
+    assert max(primes) > n, "not enough primes"  # make sure there are enough primes
+    return primes

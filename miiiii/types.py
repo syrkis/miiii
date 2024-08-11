@@ -2,78 +2,57 @@
 #   miiii types and dataclasses
 # by: Noah Syrkis
 
-# imports
-from chex import dataclass
-from typing import List, Set, Tuple
+# %% Imports
+from chex import dataclass, Array
+from typing import List
 
 
-# dataclasses
+# %% Model classes
 @dataclass
-class TrainState:
-    params: dict
-    opt_state: dict
-    ema_grads: dict
-
-
-@dataclass
-class Config:
-    base: int
-    emb: int
-    heads: int
-    depth: int
-    dropout: float
-    n: int
+class Head:
+    key: Array
+    query: Array
+    value: Array
+    proj: Array
 
 
 @dataclass
-class TrainConfig:
-    base: int
-    emb: int
-    heads: int
-    depth: int
-    dropout: float
-    n: int
-    lr: float
-    batch_size: int
-    epochs: int
-    warmup_steps: int
-    decay_steps: int
-    decay_rate: float
-    alpha: float
-    beta: float
-    gamma: float
-    epsilon: float
-    seed: int
-    device: str
-    dtype: str
-    data_dir: str
-    model_dir: str
-    log_dir: str
-    save_dir: str
+class FeedForward:
+    w1: Array
+    b1: Array
+    w2: Array
+    b2: Array
 
 
 @dataclass
-class DataConfig:
-    base: int
-    emb: int
-    heads: int
-    depth: int
-    dropout: float
-    n: int
-    lr: float
-    batch_size: int
-    epochs: int
-    warmup_steps: int
-    decay_steps: int
-    decay_rate: float
-    alpha: float
-    beta: float
-    gamma: float
-    epsilon: float
-    seed: int
-    device: str
-    dtype: str
-    data_dir: str
-    model_dir: str
-    log_dir: str
-    save_dir: str
+class Block:
+    head: Head
+    ffwd: FeedForward
+
+
+@dataclass
+class Params:
+    tok_emb: Array
+    pos_emb: Array
+    blocks: List[Block]
+    lm_head: Array
+
+
+# %% Data classes
+@dataclass
+class Datasplit:
+    x: Array
+    y: Array
+
+
+@dataclass
+class Datainfo:
+    apriori: Array  # for a given tasks, the apriori probabilities of each class
+    tasks: List[str]
+
+
+@dataclass
+class Dataset:
+    train: Datasplit
+    valid: Datasplit
+    info: Datainfo

@@ -3,14 +3,13 @@
 # by: Noah Syrkis
 
 # imports
-import pandas as pd
+import miiiii as mi
 import jax.numpy as jnp
 import numpy as np
 import darkdetect
 import matplotlib.pyplot as plt
 from oeis import A000040
 from functools import partial
-from hilbert import encode, decode
 from jax.tree_util import tree_flatten
 from sklearn.metrics import f1_score, confusion_matrix
 
@@ -35,11 +34,11 @@ def hinton_plot(matrix, cfg, metric):
     fig, ax = plt.subplots(figsize=(10, 10), dpi=300)
     ax.patch.set_facecolor(bg)
     ax.set_aspect("equal", "box")
-    ax.xaxis.set_major_locator(plt.NullLocator())
-    ax.yaxis.set_major_locator(plt.NullLocator())
+    ax.xaxis.set_major_locator(plt.NullLocator())  # type: ignore
+    ax.yaxis.set_major_locator(plt.NullLocator())  # type: ignore
     for (x, y), w in np.ndenumerate(matrix):
         s = np.sqrt(w)
-        rect = plt.Rectangle([x - s / 2, y - s / 2], s, s, facecolor=fg, edgecolor=fg)
+        rect = plt.Rectangle([x - s / 2, y - s / 2], s, s, facecolor=fg, edgecolor=fg)  # type: ignore
         ax.add_patch(rect)
     ax.autoscale_view()
     ax.invert_yaxis()
@@ -48,15 +47,15 @@ def hinton_plot(matrix, cfg, metric):
     ax.set_title(metric)
     for spine in ax.spines.values():
         spine.set_visible(False)
-    ax.set_xticks(np.arange(matrix.shape[0], step=cfg.epochs // 20))
+    ax.set_xticks(np.arange(matrix.shape[0], step=cfg.epochs // 20))  # type: ignore
     plt.show()
 
 
 def polar_plot(gold, pred, conf, fname, offset=0):  # maps v to a polar plot
     conf = conf.__dict__
     _, ax = init_polar_plot()
-    tp, tn = gold + pred == 2, gold + pred == 0
-    fp, fn = gold - pred == -1, gold - pred == 1
+    tp, _ = gold + pred == 2, gold + pred == 0  # type: ignore
+    _, fn = gold - pred == -1, gold - pred == 1  # type: ignore
     f1 = f1_score(gold, pred)
     con = confusion_matrix(gold, pred)
     tp_rate = con[0, 0] / (con[0, 0] + con[0, 1])
@@ -88,8 +87,15 @@ def polar_plot(gold, pred, conf, fname, offset=0):  # maps v to a polar plot
     # mxlabel["alpha"] = alpha_fn(conf["n"] // 2).item()
     # delete digits from xlabel
     xlabel.pop("digits")
+
     # join every fifth element with a newline
-    v_fn = lambda v: f"{v:.4f}" if isinstance(v, float) else v
+    def v_fn(v):
+        if isinstance(v, float):
+            return f"{v:.4f}"
+        if isinstance(v, int):
+            return f"{v}"
+        return v
+
     # remove gamma from dict
     xlabel.pop("gamma")
     xlabel = "\n\n\n".join(
@@ -178,10 +184,5 @@ def init_polar_plot():
     # plt.tight_layout()
     return fig, ax
 
-
-if __name__ == "__main__":
-    from datum import data_fn
-    from numbs import base_n
-
-    y = data_fn(A000040, 2**16, partial(base_n, n=2))[1]
+    y = mi.datum.data_fn(A000040, 2**16, partial(mi.numbs.base_n, n=2))[1]
     polar_plot(y, "primes")  # plot of primes

@@ -3,27 +3,20 @@
 # by: Noah Syrkis
 
 # %% Imports
+import miiiii as mi
 import jax
-from jax import random, grad, jit, value_and_grad
+from jax import random, jit, value_and_grad
 import optax
-from jax import tree_util
-from chex import dataclass
-from tqdm import tqdm
 import jax.numpy as jnp
-from typing import List, Set, Tuple
 from functools import partial
-from oeis import oeis
-from einops import rearrange
-import seaborn as sns
 from typing import NamedTuple
-import matplotlib.pyplot as plt
 
 
 # %% constants
-class TrainState(NamedTuple):
-    params: dict
-    opt_state: dict
-    ema_grads: dict
+class TrainState(NamedTuple):  # replace with chex and put in types
+    params: mi.types.Params
+    opt_state: optax.OptState
+    ema_grads: jnp.ndarray
 
 
 # functions
@@ -32,7 +25,7 @@ def make_loss_fn(cfg, alpha_fn):
 
     @jit
     def loss_fn(logits, y):  #  cross entropy loss
-        loss = optax.sigmoid_focal_loss(logits, y).mean()
+        loss = optax.sigmoid_focal_loss(logits, y, alpha=alpha, gamma=2.0).mean()
         return loss
 
     return loss_fn
@@ -68,11 +61,11 @@ def make_grad_fn(loss_fn, apply_fn, cfg):
 @partial(jit, static_argnums=(2,))
 def gradfilter_ema(grads, state, alpha=0.98, lamb=2.0):
     # @lee2024b grokfast-like EMA gradient filtering
-    def _update_ema(prev_ema, grad):
-        return prev_ema * alpha + grad * (1 - alpha)
+    def _update_ema(prev_ema, gradient):
+        return prev_ema * alpha + gradient * (1 - alpha)
 
-    def _apply_ema(grad, ema):
-        return grad + ema * lamb
+    def _apply_ema(gradient, ema):
+        return gradient + ema * lamb
 
     ema_grads = jax.tree.map(_update_ema, state.ema_grads, grads)
     filtered_grads = jax.tree.map(_apply_ema, grads, ema_grads)
@@ -80,12 +73,12 @@ def gradfilter_ema(grads, state, alpha=0.98, lamb=2.0):
     return filtered_grads, state
 
 
-def make_step_fn(grad_fn, update_fn, train_data, eval_fn):
+def make_step_fn(grad_fn, update_fn, ds: mi.types.Dataset, eval_fn):
     @jit
     def step_fn(state, rng):
         params, opt_state = state.params, state.opt_state
         rng, key = random.split(rng)
-        loss, grads, logits, state = grad_fn(state, key, *train_data)
+        loss, grads, logits, state = grad_fn(state, key, ds.train.x, ds.train.y)
         params, opt_state = update_fn(params, grads, opt_state)
         metrics = eval_fn(params, rng, loss, logits)
         state = state._replace(params=params, opt_state=opt_state)
@@ -94,14 +87,14 @@ def make_step_fn(grad_fn, update_fn, train_data, eval_fn):
     return step_fn
 
 
-def make_eval_fn(apply_fn, loss_fn, train_data, valid_data):
+def make_eval_fn(apply_fn, loss_fn, ds):
     @jit
     def eval_fn(params, rng, train_loss, train_logits):
-        valid_logits = apply_fn(params, rng, valid_data[0], 0.0)
-        valid_loss = loss_fn(valid_logits, valid_data[1])  # number
+        valid_logits = apply_fn(params, rng, ds.valid.x, 0.0)
+        valid_loss = loss_fn(valid_logits, ds.valid.y)  # number
 
-        train_metrics = metrics_fn(train_data[1], train_logits)
-        valid_metrics = metrics_fn(valid_data[1], valid_logits)
+        train_metrics = metrics_fn(ds.train.y, train_logits)
+        valid_metrics = metrics_fn(ds.train.y, valid_logits)
 
         return dict(
             train_loss=train_loss,
@@ -149,7 +142,7 @@ def make_train_fn(step_fn):
     return train_fn
 
 
-def init_train(apply_fn, params, cfg, alpha_fn, train_data, valid_data):
+def init_train(apply_fn, params, cfg, alpha_fn, ds: mi.types.Dataset):
     loss_fn = make_loss_fn(cfg, alpha_fn)
     opt = optax.adamw(cfg.lr, weight_decay=cfg.l2, b1=0.9, b2=0.98)  # @nanda2023
     opt_state = opt.init(params)
@@ -160,8 +153,8 @@ def init_train(apply_fn, params, cfg, alpha_fn, train_data, valid_data):
     ema_grads = jax.tree.map(jnp.zeros_like, params)
     state = TrainState(params=params, opt_state=opt_state, ema_grads=ema_grads)
 
-    eval_fn = make_eval_fn(apply_fn, loss_fn, train_data, valid_data)
-    step_fn = make_step_fn(grad_fn, update_fn, train_data, eval_fn)
+    eval_fn = make_eval_fn(apply_fn, loss_fn, ds)
+    step_fn = make_step_fn(grad_fn, update_fn, ds, eval_fn)
 
     train_fn = make_train_fn(step_fn)
     return train_fn, state

@@ -11,13 +11,30 @@ import pickle
 from chex import dataclass
 
 
+# constants
+red = "#da3527"
+
+
 # functions
-encode = lambda d, x: jnp.array([d[c] for c in x])
-decode = lambda d, x: "".join([d[i] for i in x])
+# encode = lambda d, x: jnp.array([d[c] for c in x])
+# decode = lambda d, x: "".join([d[i] for i in x])
+def encode(d, x):
+    return jnp.array([d[c] for c in x])
+
+
+def decode(d, x):
+    return "".join([d[i] for i in x])
+
 
 # prime to composite ratio
-alpha_fn = lambda n: (1 - ((n / jnp.log(n)) / n))
-digit_fn = lambda n, base: jnp.ceil(jnp.log(n + 1) / jnp.log(base)).astype(jnp.int32)
+# alpha_fn = lambda n: (1 - ((n / jnp.log(n)) / n))
+# digit_fn = lambda n, base: jnp.ceil(jnp.log(n + 1) / jnp.log(base)).astype(jnp.int32)
+def alpha_fn(n):
+    return 1 - ((n / jnp.log(n)) / n)
+
+
+def digit_fn(n, base):
+    return jnp.ceil(jnp.log(n + 1) / jnp.log(base)).astype(jnp.int32)
 
 
 @dataclass
@@ -45,8 +62,6 @@ def load_conf():
 
 def get_conf(**kwargs):
     conf = load_conf()
-    for key, value in kwargs.items():
-        conf[key] = value
     return conf
 
 
@@ -65,8 +80,3 @@ def save_params(params, path):
 def load_params(path):
     with open(path, "rb") as file:
         return pickle.load(file)
-
-
-if __name__ == "__main__":
-    data_conf, model_conf = load_conf()
-    print(data_conf)

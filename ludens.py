@@ -5,37 +5,33 @@
 
 # %% Imports
 import miiiii as mi
-from jax import random, tree, lax
-import jax.numpy as jnp
+from jax import random
 import matplotlib.pyplot as plt
 import seaborn as sns
-import pandas as pd
 
 
 # %% Initialize
-cfg, (rng, key) = mi.get_conf(), random.split(random.PRNGKey(seed := 0))
-train_data, valid_data, tasks = mi.data_fn(cfg.n, cfg.base, mi.base_ns, rng)
-params = mi.init_fn(key, cfg, *train_data)
+cfg, (rng, key) = mi.utils.get_conf(), random.split(random.PRNGKey(seed := 0))
+ds = mi.datum.data_fn(cfg.n, cfg.base, mi.numbs.base_ns, rng)
+params = mi.param.init_fn(key, cfg, ds.train.x, ds.train.y)
 
 
 # %% Functions
-apply_fn = mi.make_apply_fn(mi.vaswani_fn)
-args = (apply_fn, params, cfg, mi.alpha_fn, train_data, valid_data)
-train_fn, state = mi.init_train(*args)
+apply_fn = mi.model.make_apply_fn(mi.model.vaswani_fn)
+train_fn, state = mi.train.init_train(apply_fn, params, cfg, mi.utils.alpha_fn, ds)
 
 
 # %% Train
 state, metrics = train_fn(cfg.epochs, rng, state)
 
 # %% Evaluate
-fig, ax = plt.subplots()
-# colors = plt.cm.get_cmap("Greys", len(tasks))  + red
-colors = sns.color_palette("Greys", len(tasks) - 1) + ["red"]
-# ax.plot(metrics["train_loss"], label=tasks, color=colors)
-sns.lineplot(
-    data=pd.DataFrame(metrics["train_loss"], columns=tasks), ax=ax, palette=colors
-)
+fig, ax = plt.subplots(figsize=(20, 10), dpi=100)
+colors = sns.color_palette("Greys", len(ds.info.tasks) - 1) + [mi.utils.red]
+sns.lineplot(data=metrics["valid_loss"], ax=ax, palette=colors)  # TODO: confirm order
 
 # %%
-# colors is white to black in len(tasks) steps
-colors
+
+# %%
+# fig, ax = plt.subplots(figsize=(100, 4), dpi=100)
+# sns.heatmap(train_data[1].T, ax=ax, cmap="Greys", cbar=False)
+# train_data[1].shape
