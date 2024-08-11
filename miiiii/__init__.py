@@ -1,5 +1,5 @@
 from .utils import get_conf, save_params, load_params, digit_fn, alpha_fn
-from .datum import prime_fn
+from .datum import data_fn
 from .param import init_fn
 from .plots import polar_plot, curve_plot
 from .train import init_train
@@ -13,7 +13,7 @@ __all__ = [
     "load_params",
     "digit_fn",
     "alpha_fn",
-    "prime_fn",
+    "data_fn",
     "init_fn",
     "polar_plot",
     "curve_plot",

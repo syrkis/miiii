@@ -14,18 +14,21 @@ oeis = "^2023.3.10"
 tqdm = "^4.66.4"
 requests = "^2.32.2"
 einops = "^0.8.0"
-darkdetect = "^0.8.0"
+darkdetect = "^0.8.0"          # remove
 matplotlib = "^3.9.0"
-streamlit = "^1.35.0"
+streamlit = "^1.35.0"          # remove maybe
 pyyaml = "^6.0.1"
-numpy-hilbert-curve = "^1.0.1"
-wandb = "^0.17.0"
+numpy-hilbert-curve = "^1.0.1" # remove probably
 seaborn = "^0.13.2"
 scikit-learn = "^1.5.0"
-jax = "^0.4.29"
-optax = "^0.2.2"
 jupyterlab = "^4.2.2"
+jax = "^0.4.31"
+optax = "^0.2.3"
 
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.pyright]
+venvPath = "."
+venv = ".venv"

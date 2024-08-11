@@ -9,7 +9,7 @@ from functools import partial
 
 
 # functions
-def base_ns(digit_fn, base, x):
+def base_ns(digit_fn, x, base):
     digits = digit_fn(x.max(), base)
     numb = jnp.array([x // base**i % base for i in range(digits)][::-1]).T
     return numb

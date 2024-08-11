@@ -7,5 +7,5 @@ heads: 4
 epochs: 100
 block: vaswani
 dropout: 0.0
-l2: .01  # weight decay
+l2: 0.01  # weight decay
 gamma: 2

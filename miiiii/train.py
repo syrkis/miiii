@@ -2,7 +2,7 @@
 #   miiii train
 # by: Noah Syrkis
 
-# imports
+# %% Imports
 import jax
 from jax import random, grad, jit, value_and_grad
 import optax
@@ -19,7 +19,7 @@ from typing import NamedTuple
 import matplotlib.pyplot as plt
 
 
-# constants
+# %% constants
 class TrainState(NamedTuple):
     params: dict
     opt_state: dict
@@ -103,7 +103,12 @@ def make_eval_fn(apply_fn, loss_fn, train_data, valid_data):
         train_metrics = metrics_fn(train_data[1], train_logits)
         valid_metrics = metrics_fn(valid_data[1], valid_logits)
 
-        return train_loss, valid_loss, train_metrics, valid_metrics
+        return dict(
+            train_loss=train_loss,
+            valid_loss=valid_loss,
+            train_metrics=train_metrics,
+            valid_metrics=valid_metrics,
+        )
 
     return eval_fn
 
@@ -123,14 +128,23 @@ def metrics_fn(y_true, logits):
     rec = tp / (tp + fn + 1e-8)
     f1 = 2 * prec * rec / (prec + rec + 1e-8)
     loss = optax.sigmoid_focal_loss(logits, y_true).mean(axis=0)
-    return loss, f1, prec, rec, acc
+    return dict(loss=loss, f1=f1, prec=prec, rec=rec, acc=acc)
 
 
 def make_train_fn(step_fn):
     def train_fn(steps, rng, state):
         rngs = random.split(rng, steps)
         state, metrics = jax.lax.scan(step_fn, state, rngs, length=steps)
-        return state, metrics
+        return state, flatten_metrics(metrics)
+
+    def flatten_metrics(metrics):
+        """make metrics into flate table"""
+        valid_metrics = {f"valid_{k}": v for k, v in metrics["valid_metrics"].items()}
+        train_metrics = {f"train_{k}": v for k, v in metrics["train_metrics"].items()}
+        metrics = {**metrics, **train_metrics, **valid_metrics}
+        metrics.pop("train_metrics")
+        metrics.pop("valid_metrics")
+        return metrics
 
     return train_fn
 
@@ -151,27 +165,3 @@ def init_train(apply_fn, params, cfg, alpha_fn, train_data, valid_data):
 
     train_fn = make_train_fn(step_fn)
     return train_fn, state
-
-
-# testing
-if __name__ == "__main__":
-    from param import init_fn
-    from model import make_apply_fn, vaswani_fn
-    from utils import get_conf, alpha_fn, digit_fn
-    from datum import prime_fn
-    from numbs import base_ns
-
-    seed = 0
-    cfg = get_conf()
-    rng, key = random.split(random.PRNGKey(seed))
-    ns = partial(base_ns, digit_fn)
-    (x_train, y_train), (x_valid, y_valid) = prime_fn(cfg.n, cfg.base, ns, key)
-    params = init_fn(rng, cfg, x_train, y_train)
-
-    apply_fn = make_apply_fn(vaswani_fn)
-    train_fn, state = init_train(
-        apply_fn, params, cfg, alpha_fn, (x_train, y_train), (x_valid, y_valid)
-    )
-    state, metrics = train_fn(cfg.epochs, rng, state)
-
-    print(metrics)
