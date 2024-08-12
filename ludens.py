@@ -25,9 +25,9 @@ train_fn, state = mi.train.init_train(apply_fn, params, cfg, mi.utils.alpha_fn, 
 state, metrics = train_fn(cfg.epochs, rng, state)
 
 # %% Evaluate
-fig, ax = plt.subplots(figsize=(20, 10), dpi=100)
-colors = sns.color_palette("Greys", len(ds.info.tasks) - 1) + [mi.utils.red]
-sns.lineplot(data=metrics["valid_loss"], ax=ax, palette=colors)  # TODO: confirm order
+# fig, ax = plt.subplots(figsize=(20, 10), dpi=100)
+# colors = sns.color_palette("Greys", len(ds.info.tasks) - 1) + [mi.utils.red]
+# sns.lineplot(data=metrics["valid_loss"], ax=ax, palette=colors)  # TODO: confirm order
 
 # %%
 

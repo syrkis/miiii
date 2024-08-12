@@ -16,8 +16,6 @@ red = "#da3527"
 
 
 # functions
-# encode = lambda d, x: jnp.array([d[c] for c in x])
-# decode = lambda d, x: "".join([d[i] for i in x])
 def encode(d, x):
     return jnp.array([d[c] for c in x])
 
@@ -27,8 +25,6 @@ def decode(d, x):
 
 
 # prime to composite ratio
-# alpha_fn = lambda n: (1 - ((n / jnp.log(n)) / n))
-# digit_fn = lambda n, base: jnp.ceil(jnp.log(n + 1) / jnp.log(base)).astype(jnp.int32)
 def alpha_fn(n):
     return 1 - ((n / jnp.log(n)) / n)
 
