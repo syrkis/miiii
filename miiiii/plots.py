@@ -4,109 +4,97 @@
 
 # imports
 import miiiii as mi
-import jax.numpy as jnp
 import numpy as np
-import darkdetect
 import matplotlib.pyplot as plt
-from oeis import A000040
-from functools import partial
+from typing import Sequence
 from jax.tree_util import tree_flatten
-from sklearn.metrics import f1_score, confusion_matrix
 
 
 # constants
 cols = {True: "black", False: "white"}
-fg = "black" if darkdetect.isLight() else "white"
-bg = "white" if darkdetect.isLight() else "black"
+fg = "black"
+bg = "white"
 marks = ["o", "o", " ", "o"]
 plt.rcParams["font.family"] = "Monospace"
 
 
 def fname_fn(conf, fname):
     return (
-        "_".join([f"{k}_{v}" for k, v in conf.items() if k not in ["in_d", "out_d"]])
-        + f"_{fname}"
+        "-".join([f"{k}_{v}" for k, v in conf.items() if k not in ["in_d", "out_d"]])
+        + f"_{fname}".replace(" ", "_").lower()
     )
 
 
 # functions
-def hinton_plot(matrix, cfg, metric):
-    fig, ax = plt.subplots(figsize=(10, 10), dpi=300)
+def syrkis_plot(matrix, cfg, metric, x_scale="linear"):
+    one, two = matrix.shape
+    shape = (one / min(one, two), two / min(one, two))
+    fig, ax = plt.subplots(figsize=(shape[0] * 6, shape[1] * 12), dpi=100)
     ax.patch.set_facecolor(bg)
     ax.set_aspect("equal", "box")
     ax.xaxis.set_major_locator(plt.NullLocator())  # type: ignore
     ax.yaxis.set_major_locator(plt.NullLocator())  # type: ignore
     for (x, y), w in np.ndenumerate(matrix):
         s = np.sqrt(w)
-        rect = plt.Rectangle([x - s / 2, y - s / 2], s, s, facecolor=fg, edgecolor=fg)  # type: ignore
+        # is last fg is blue
+        # c = mi.utils.blue if y == 0 else fg
+        c = fg
+        rect = plt.Rectangle([x - s / 2, y - s / 2], s, s, facecolor=c, edgecolor=c)  # type: ignore
         ax.add_patch(rect)
     ax.autoscale_view()
     ax.invert_yaxis()
-    ax.set_xlabel("epoch")
-    ax.set_ylabel("task")
-    ax.set_title(metric)
+    # ax.set_title(metric)
     for spine in ax.spines.values():
         spine.set_visible(False)
     ax.set_xticks(np.arange(matrix.shape[0], step=cfg.epochs // 20))  # type: ignore
-    plt.show()
+    # set first and last y ticks to 0 and 1
+    # ax.set_yticks(["is even", "is prime"])
+    plt.tight_layout()
+    fname = "syrkis_" + fname_fn(cfg, metric)
+    plt.savefig(f"paper/figs/{fname}.svg")
 
 
-def polar_plot(gold, pred, conf, fname, offset=0):  # maps v to a polar plot
-    conf = conf.__dict__
-    _, ax = init_polar_plot()
-    tp, _ = gold + pred == 2, gold + pred == 0  # type: ignore
-    _, fn = gold - pred == -1, gold - pred == 1  # type: ignore
-    f1 = f1_score(gold, pred)
-    con = confusion_matrix(gold, pred)
-    tp_rate = con[0, 0] / (con[0, 0] + con[0, 1])
-    tn_rate = con[1, 1] / (con[1, 0] + con[1, 1])
-    fp_rate = con[0, 1] / (con[0, 0] + con[0, 1])
-    fn_rate = con[1, 0] / (con[1, 0] + con[1, 1])
-    info = {"f1": f1, "tp": tp_rate, "tn": tn_rate, "fp": fp_rate, "fn": fn_rate}
-    vectors = {"tp": tp, "fn": fn}
-    conf = {
-        k[2:] if k.startswith("n_") else k: v
-        for k, v in conf.items()
-        if k not in ["in_d", "out_d", "block"]
-    }
-    # add padding to tile
-    for idx, (cat, vector) in enumerate(vectors.items()):
-        # if cat == fn Make it an empty circle
-        idxs = jnp.where(vector)[0] + 2 + offset
-        ax.scatter(
-            idxs,
-            idxs,
-            marker=marks[idx],
-            # s=10 + 4 * idx,
-            label=cat,
-            facecolors=bg if cat == "fn" else fg,
-            edgecolors=fg,
-        )
-    fname = fname if fname.endswith(".pdf") else f"{fname}.pdf"
-    xlabel = dict(**info, **conf)
-    # mxlabel["alpha"] = alpha_fn(conf["n"] // 2).item()
-    # delete digits from xlabel
-    xlabel.pop("digits")
+def polar_plot(
+    ps: Sequence[Sequence] | Sequence | np.ndarray,
+    f_name: Sequence[str] | str | None = None,
+    ax=None,
+):
+    # init and config
+    ax_was_none = ax is None
+    if ax is None:
+        fig, ax = plt.subplots(subplot_kw=dict(polar=True), figsize=(10, 10), dpi=100)
+    # limit should be from 0 to max of all ps
+    ax.set_xticks([])
+    ax.set_yticks([])
+    ax.spines["polar"].set_visible(False)
 
-    # join every fifth element with a newline
-    def v_fn(v):
-        if isinstance(v, float):
-            return f"{v:.4f}"
-        if isinstance(v, int):
-            return f"{v}"
-        return v
+    # plot
+    ps = ps if isinstance(ps[0], (Sequence, np.ndarray)) else [ps]  # type: ignore
+    ax.plot([0, 0], "black", linewidth=1)
+    for p in ps:
+        ax.plot(p, p, "o", markersize=2, color="black")
+    plt.tight_layout()
+    plt.savefig(f"paper/figs/{f_name}.svg") if f_name else plt.show()
+    if ax_was_none:
+        plt.close()
 
-    # remove gamma from dict
-    xlabel.pop("gamma")
-    xlabel = "\n\n\n".join(
-        [
-            "    ".join([f"{k} : {v_fn(v)}" for k, v in xlabel.items()][i : i + 5])
-            for i in range(0, len(xlabel), 5)
-        ]
+
+def small_multiples(fnames, seqs, f_name, n_rows=2, n_cols=2):
+    assert (
+        len(fnames) == len(seqs) and len(fnames) >= n_rows * n_cols
+    ), "fnames and seqs must be the same length and n_rows * n_cols"
+    fig, axes = plt.subplots(
+        n_rows,
+        n_cols,
+        subplot_kw=dict(polar=True),
+        figsize=(n_cols * 5, n_rows * 5),
+        dpi=100,
     )
-    ax.set_xlabel(xlabel, color=fg)
-    fname = fname_fn(conf, fname)
-    plt.savefig(f"figs/{fname}", dpi=100)
+    for ax, fname, seqs in zip(axes.flat, fnames, seqs):  # type: ignore
+        polar_plot(seqs, fname, ax=ax)
+    # tight
+    plt.tight_layout()
+    plt.savefig(f"paper/figs/{f_name}.svg") if f_name else plt.show()  # test
 
 
 def curve_plot(
@@ -171,18 +159,3 @@ def init_curve_plot(info, conf):
     [spine.set_edgecolor(fg) for spine in ax.spines.values()]
     # ax y range from 0 to what it is
     return fig, ax
-
-
-def init_polar_plot():
-    fig, ax = plt.subplots(subplot_kw={"projection": "polar"}, figsize=(12, 12))
-    fig.patch.set_facecolor(bg)
-    ax.grid(False)
-    ax.set_yticklabels([])
-    ax.set_xticklabels([])
-    ax.set_facecolor(bg)
-    [spine.set_edgecolor(fg) for spine in ax.spines.values()]
-    # plt.tight_layout()
-    return fig, ax
-
-    y = mi.datum.data_fn(A000040, 2**16, partial(mi.numbs.base_n, n=2))[1]
-    polar_plot(y, "primes")  # plot of primes

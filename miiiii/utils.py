@@ -13,6 +13,7 @@ from chex import dataclass
 
 # constants
 red = "#da3527"
+blue = "#002fa7"
 
 
 # functions

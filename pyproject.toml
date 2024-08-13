@@ -14,7 +14,6 @@ oeis = "^2023.3.10"
 tqdm = "^4.66.4"
 requests = "^2.32.2"
 einops = "^0.8.0"
-darkdetect = "^0.8.0"          # remove
 matplotlib = "^3.9.0"
 streamlit = "^1.35.0"          # remove maybe
 pyyaml = "^6.0.1"

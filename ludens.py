@@ -25,9 +25,23 @@ train_fn, state = mi.train.init_train(apply_fn, params, cfg, mi.utils.alpha_fn, 
 state, metrics = train_fn(cfg.epochs, rng, state)
 
 # %% Evaluate
-# fig, ax = plt.subplots(figsize=(20, 10), dpi=100)
-# colors = sns.color_palette("Greys", len(ds.info.tasks) - 1) + [mi.utils.red]
-# sns.lineplot(data=metrics["valid_loss"], ax=ax, palette=colors)  # TODO: confirm order
+fig, ax = plt.subplots(figsize=(6, 4), dpi=100)
+colors = sns.color_palette("Greys", len(ds.info.tasks) - 1) + [mi.utils.blue]
+ax.set_title("Training Focal Loss")
+ax.set_xlabel("Epoch")
+# ax.set_ylabel("Focal Loss")
+sns.lineplot(
+    data=metrics["train_loss"],
+    ax=ax,
+    palette=colors,
+    legend=False,
+)  # TODO: confirm order
+# set ylim to 0, 1 and only show 0 and 1
+ax.set_ylim(-0.1, 1.1)
+ax.set_yticks([0, 1])
+# set legend to task names
+plt.tight_layout()
+plt.savefig("paper/figs/training_loss_curves.svg")
 
 # %%
 

@@ -18,16 +18,24 @@ def data_fn(n: int, base, ns_fn: Callable, key) -> mi.types.Dataset:
     x = ns_fn(mi.utils.digit_fn, x_range, base)  # number system representation of x
 
     # targets
-    is_prime = jnp.zeros_like(x[:, 0]).at[primes - 2].set(1)[:, None]  # what numbers are prime
-    primes_less_than_sqrt_n = primes[primes < jnp.sqrt(n)]   # prime numbers less than sqrt(n) for task
-    is_multiple = x_range[:, None] % primes_less_than_sqrt_n == 0  # what numbers are multiples of other primes
-    y = jnp.concatenate([is_prime, is_multiple], axis=-1)  # n x sqrt(n) + 1  # Concatenate tasks
+    is_prime = (
+        jnp.zeros_like(x[:, 0]).at[primes - 2].set(1)[:, None]
+    )  # what numbers are prime
+    primes_less_than_sqrt_n = primes[
+        primes < jnp.sqrt(n)
+    ]  # prime numbers less than sqrt(n) for task
+    is_multiple = (
+        x_range[:, None] % primes_less_than_sqrt_n == 0
+    )  # what numbers are multiples of other primes
+    y = jnp.concatenate(
+        [is_multiple, is_prime], axis=-1
+    )  # n x sqrt(n) + 1  # Concatenate tasks
 
     # shuffle data
     idxs = random.permutation(key, len(x))  # shuffle indices
     # x, y = x[idxs], y[idxs]  # shuffle data
     sep = len(x) // 2  # TODO: this a choise (split could be non 50/50
-    tasks = ["prime"] + primes_less_than_sqrt_n.tolist()  # task labels
+    tasks = primes_less_than_sqrt_n.tolist() + ["prime"]
 
     # dataset
     dataset = mi.types.Dataset(
