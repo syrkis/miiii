@@ -7,6 +7,7 @@ import miiiii as mi
 import numpy as np
 import matplotlib.pyplot as plt
 from typing import Sequence
+import jax.numpy as jnp
 from jax.tree_util import tree_flatten
 
 
@@ -15,7 +16,7 @@ cols = {True: "black", False: "white"}
 fg = "black"
 bg = "white"
 marks = ["o", "o", " ", "o"]
-plt.rcParams["font.family"] = "Monospace"
+plt.rcParams["font.family"] = "DejaVu Sans"
 
 
 def fname_fn(conf, fname):
@@ -25,33 +26,54 @@ def fname_fn(conf, fname):
     )
 
 
-# functions
-def syrkis_plot(matrix, cfg, metric, x_scale="linear"):
+def syrkis_plot(matrix, cfg, metric, ds, x_scale="linear"):
+    cols = matrix.shape[1] * 4
+    X = matrix[: (matrix.shape[0] // cols) * cols]
+    I = jnp.identity(cols).repeat(X.shape[0] // cols, axis=0)
+    matrix = (I[:, :, None] * X[:, None, :]).mean(axis=0).T
     one, two = matrix.shape
-    shape = (one / min(one, two), two / min(one, two))
-    fig, ax = plt.subplots(figsize=(shape[0] * 6, shape[1] * 12), dpi=100)
-    ax.patch.set_facecolor(bg)
+    fig, ax = plt.subplots(figsize=(12, 4), dpi=100)
+    plt.subplots_adjust(left=0.1, right=0.95, bottom=0.15, top=0.95)
+    ax.patch.set_facecolor("white")
     ax.set_aspect("equal", "box")
     ax.xaxis.set_major_locator(plt.NullLocator())  # type: ignore
     ax.yaxis.set_major_locator(plt.NullLocator())  # type: ignore
-    for (x, y), w in np.ndenumerate(matrix):
-        s = np.sqrt(w)
+    for (y, x), w in np.ndenumerate(matrix):
+        s = w ** (1 / 3.0)
         # is last fg is blue
         # c = mi.utils.blue if y == 0 else fg
-        c = fg
-        rect = plt.Rectangle([x - s / 2, y - s / 2], s, s, facecolor=c, edgecolor=c)  # type: ignore
+        rect = plt.Rectangle(  # type: ignore
+            [x - s / 2, y - s / 2],  # type: ignore
+            s,
+            s,
+            facecolor="black",
+            edgecolor="black",
+        )
         ax.add_patch(rect)
     ax.autoscale_view()
-    ax.invert_yaxis()
+    ax.set_xlim(-0.5, two - 0.5)
     # ax.set_title(metric)
+    # tick label params padding
+    # push ticks half a unit away from the plot
     for spine in ax.spines.values():
         spine.set_visible(False)
-    ax.set_xticks(np.arange(matrix.shape[0], step=cfg.epochs // 20))  # type: ignore
-    # set first and last y ticks to 0 and 1
-    # ax.set_yticks(["is even", "is prime"])
+    # only have tick at 0 and last value
+    ax.tick_params(axis="x", which="major", pad=10)
+    ax.tick_params(axis="y", which="major", pad=10)
+    ax.set_xticks(
+        [0, two - 1],
+    )  # type: ignore
+    # replace the last label with "n"
+    ax.set_xticklabels(
+        [1, cfg.epochs],
+    )  # type: ignore
+    ax.set_yticks([i for i in range(len(ds.info.tasks))])  # type: ignore
+    ax.set_yticklabels(ds.info.tasks[:-1] + ["ℙ"])
+    ax.set_xlabel("Epoch")
     plt.tight_layout()
-    fname = "syrkis_" + fname_fn(cfg, metric)
+    fname = "syrkis_" + mi.plots.fname_fn(cfg, metric)
     plt.savefig(f"paper/figs/{fname}.svg")
+    plt.close()
 
 
 def polar_plot(
@@ -77,6 +99,7 @@ def polar_plot(
     plt.savefig(f"paper/figs/{f_name}.svg") if f_name else plt.show()
     if ax_was_none:
         plt.close()
+    plt.close()
 
 
 def small_multiples(fnames, seqs, f_name, n_rows=2, n_cols=2):

@@ -28,42 +28,4 @@ mi.plots.small_multiples(fnames[:3], seqs[:3], "polar_nats_and_sixes", 1, 3)
 mi.plots.polar_plot(seqs[-1], "polar_primes")
 
 # %% Hinton plots
-
-
-# functions
-def syrkis_plot(matrix, cfg, metric, x_scale="linear"):
-    cols = matrix.shape[1] * 4
-    X = matrix[: (matrix.shape[0] // cols) * cols]
-    I = jnp.identity(cols).repeat(X.shape[0] // cols, axis=0)
-    matrix = (I[:, :, None] * X[:, None, :]).mean(axis=0).T
-    one, two = matrix.shape
-    fig, ax = plt.subplots(figsize=(12, 8), dpi=100)
-    ax.patch.set_facecolor("white")
-    ax.set_aspect("equal", "box")
-    ax.xaxis.set_major_locator(plt.NullLocator())  # type: ignore
-    ax.yaxis.set_major_locator(plt.NullLocator())  # type: ignore
-    for (y, x), w in np.ndenumerate(matrix):
-        s = np.sqrt(w)
-        # is last fg is blue
-        # c = mi.utils.blue if y == 0 else fg
-        rect = plt.Rectangle(  # type: ignore
-            [x - s / 2, y - s / 2],  # type: ignore
-            s,
-            s,
-            facecolor="black",
-            edgecolor="black",  # type: ignore
-        )
-        ax.add_patch(rect)
-    ax.autoscale_view()
-    ax.invert_yaxis()
-    # ax.set_title(metric)
-    for spine in ax.spines.values():
-        spine.set_visible(False)
-    ax.set_xticks(np.arange(matrix.shape[0], step=cfg.epochs // 20))  # type: ignore
-    plt.tight_layout()
-    fname = "syrkis_" + mi.plots.fname_fn(cfg, metric)
-    # plt.savefig(f"paper/figs/{fname}.svg")
-    plt.show()
-
-
-syrkis_plot(metrics["train_loss"], cfg, "Train Focal Loss")
+mi.plots.syrkis_plot(metrics["train_loss"], cfg, "Train Focal Loss", ds)
