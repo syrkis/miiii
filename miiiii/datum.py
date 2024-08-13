@@ -5,8 +5,7 @@
 # %% Imports
 import miiiii as mi
 import jax.numpy as jnp
-from jax import random
-from jax import Array
+from jax import Array, random
 from typing import Callable
 from oeis import oeis
 
@@ -32,8 +31,8 @@ def data_fn(n: int, base, ns_fn: Callable, key) -> mi.types.Dataset:
     )  # n x sqrt(n) + 1  # Concatenate tasks
 
     # shuffle data
-    idxs = random.permutation(key, len(x))  # shuffle indices
-    # x, y = x[idxs], y[idxs]  # shuffle data
+    idxs = random.permutation(key, len(x))  # ignore
+    x, y = x[idxs], y[idxs]  # shuffle data
     sep = len(x) // 2  # TODO: this a choise (split could be non 50/50
     tasks = primes_less_than_sqrt_n.tolist() + ["prime"]
 
@@ -41,7 +40,7 @@ def data_fn(n: int, base, ns_fn: Callable, key) -> mi.types.Dataset:
     dataset = mi.types.Dataset(
         train=mi.types.Datasplit(x=x[:sep], y=y[:sep]),
         valid=mi.types.Datasplit(x=x[sep:], y=y[sep:]),
-        info=mi.types.Datainfo(apriori=y.mean(axis=0), tasks=tasks),
+        info=mi.types.Datainfo(apriori=1 - y[:sep].mean(axis=0), tasks=tasks),
     )
 
     return dataset

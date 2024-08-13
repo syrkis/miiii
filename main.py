@@ -4,11 +4,8 @@
 
 # %% Imports
 import miiiii as mi
-from jax import random, tree
-import matplotlib.pyplot as plt
-import seaborn as sns
-import numpy as np
-import jax.numpy as jnp
+from jax import random
+from jax import numpy as jnp
 from oeis import A000040 as primes
 
 # %% Exploring and plotting the data
@@ -29,3 +26,6 @@ mi.plots.polar_plot(seqs[-1], "polar_primes")
 
 # %% Hinton plots
 mi.plots.syrkis_plot(metrics["train_loss"], cfg, "Train Focal Loss", ds)
+
+# %%
+mi.plots.syrkis_plot(metrics["valid_loss"], cfg, "Valid Focal Loss", ds)

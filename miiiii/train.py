@@ -5,22 +5,22 @@
 # %% Imports
 import miiiii as mi
 import jax
-from jax import random, jit, value_and_grad
+from jax import random, jit, value_and_grad, vmap
 import optax
 import jax.numpy as jnp
 from functools import partial
 
 
 # functions
-def make_loss_fn(cfg, alpha_fn, ds: mi.types.Dataset):
-    alpha = alpha_fn(cfg.n)
-    apriori = ds.info.apriori
+@partial(vmap, in_axes=(1, 1, 0))
+def focal_loss(logits, y, alpha):
+    return optax.sigmoid_focal_loss(logits, y, alpha=alpha)
 
+
+def make_loss_fn(cfg, ds: mi.types.Dataset):
     @jit
     def loss_fn(logits, y):  #  cross entropy loss
-        loss = optax.sigmoid_focal_loss(
-            logits, y, alpha=alpha, gamma=1 - apriori
-        ).mean()
+        loss = focal_loss(logits, y, ds.info.apriori).mean()
         return loss
 
     return loss_fn
@@ -142,8 +142,8 @@ def make_train_fn(step_fn):
 
 
 def init_train(apply_fn, params, cfg, alpha_fn, ds: mi.types.Dataset):
-    loss_fn = make_loss_fn(cfg, alpha_fn, ds)
-    opt = optax.adamw(cfg.lr, weight_decay=cfg.l2, b1=0.9, b2=0.98)  # @nanda2023
+    loss_fn = make_loss_fn(cfg, ds)
+    opt = optax.adamw(cfg.lr, weight_decay=cfg.l2)  # @nanda2023
     opt_state = opt.init(params)
 
     update_fn = make_update_fn(opt)

@@ -26,46 +26,41 @@ def fname_fn(conf, fname):
     )
 
 
-def syrkis_plot(matrix, cfg, metric, ds, x_scale="linear"):
-    cols = matrix.shape[1] * 4
+def syrkis_plot(matrix, cfg, metric, ds):
+    cols = matrix.shape[1] * 3
     X = matrix[: (matrix.shape[0] // cols) * cols]
-    I = jnp.identity(cols).repeat(X.shape[0] // cols, axis=0)
-    matrix = (I[:, :, None] * X[:, None, :]).mean(axis=0).T
+    _I = jnp.identity(cols).repeat(X.shape[0] // cols, axis=0) / (X.shape[0] // cols)
+    matrix = (_I[:, :, None] * X[:, None, :]).sum(axis=0).T
     one, two = matrix.shape
-    fig, ax = plt.subplots(figsize=(12, 4), dpi=100)
+    fig, ax = plt.subplots(figsize=(12, 6), dpi=100)
     plt.subplots_adjust(left=0.1, right=0.95, bottom=0.15, top=0.95)
     ax.patch.set_facecolor("white")
     ax.set_aspect("equal", "box")
     ax.xaxis.set_major_locator(plt.NullLocator())  # type: ignore
     ax.yaxis.set_major_locator(plt.NullLocator())  # type: ignore
+    matrix = matrix / 0.2
     for (y, x), w in np.ndenumerate(matrix):
-        s = w ** (1 / 3.0)
-        # is last fg is blue
-        # c = mi.utils.blue if y == 0 else fg
+        s = min(float(jnp.sqrt(w)), 0.9)
         rect = plt.Rectangle(  # type: ignore
             [x - s / 2, y - s / 2],  # type: ignore
             s,
             s,
             facecolor="black",
-            edgecolor="black",
+            edgecolor="black",  # type: ignore
         )
         ax.add_patch(rect)
     ax.autoscale_view()
-    ax.set_xlim(-0.5, two - 0.5)
-    # ax.set_title(metric)
-    # tick label params padding
-    # push ticks half a unit away from the plot
+    ax.set_xlim(-1, two + 1)  # important for symmetry
+    ax.set_ylim(-1, one + 1)  # important for symmetry
     for spine in ax.spines.values():
         spine.set_visible(False)
-    # only have tick at 0 and last value
     ax.tick_params(axis="x", which="major", pad=10)
     ax.tick_params(axis="y", which="major", pad=10)
     ax.set_xticks(
         [0, two - 1],
     )  # type: ignore
-    # replace the last label with "n"
     ax.set_xticklabels(
-        [1, cfg.epochs],
+        [1, cfg.epochs],  # type: ignore
     )  # type: ignore
     ax.set_yticks([i for i in range(len(ds.info.tasks))])  # type: ignore
     ax.set_yticklabels(ds.info.tasks[:-1] + ["ℙ"])
@@ -73,7 +68,7 @@ def syrkis_plot(matrix, cfg, metric, ds, x_scale="linear"):
     plt.tight_layout()
     fname = "syrkis_" + mi.plots.fname_fn(cfg, metric)
     plt.savefig(f"paper/figs/{fname}.svg")
-    plt.close()
+    # plt.close()
 
 
 def polar_plot(
@@ -99,7 +94,6 @@ def polar_plot(
     plt.savefig(f"paper/figs/{f_name}.svg") if f_name else plt.show()
     if ax_was_none:
         plt.close()
-    plt.close()
 
 
 def small_multiples(fnames, seqs, f_name, n_rows=2, n_cols=2):
@@ -153,9 +147,6 @@ def curve_plot(
         )
     ax.legend(info["legend"], frameon=False, labelcolor=fg)
     # make fname contain conf
-    fname = fname_fn(conf, "curves")
-    if darkdetect.isLight():
-        plt.savefig(f"figs/{fname}.pdf", dpi=100)
 
 
 ############################################

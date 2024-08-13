@@ -8,6 +8,14 @@ from typing import List
 import optax
 
 
+@dataclass
+class Metrics:
+    train_loss: Array
+    valid_loss: Array
+    train_f1: Array
+    valid_f1: Array
+
+
 # %% Model classes
 @dataclass
 class Head:
