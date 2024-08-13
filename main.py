@@ -18,11 +18,11 @@ train, state = mi.train.init_train(apply, params, cfg, mi.utils.alpha_fn, ds)
 state, metrics = train(cfg.epochs, rng, state)
 
 # %% Polar plots
-fnames = ["polar_nats", "polar_sixes", "polar_evens_and_fives", "polar_threes"]
-twos_and_fives = [range(0, 1024, 2), range(0, 1024, 5)]
-seqs = [range(1, 1024), range(0, 1024, 6), twos_and_fives, primes[1025:2049]]
-mi.plots.small_multiples(fnames[:3], seqs[:3], "polar_nats_and_sixes", 1, 3)
-mi.plots.polar_plot(seqs[-1], "polar_primes")
+# fnames = ["polar_nats", "polar_sixes", "polar_evens_and_fives", "polar_threes"]
+# twos_and_fives = [range(0, 1024, 2), range(0, 1024, 5)]
+# seqs = [range(1, 1024), range(0, 1024, 6), twos_and_fives, primes[1025:2049]]
+# mi.plots.small_multiples(fnames[:3], seqs[:3], "polar_nats_and_sixes", 1, 3)
+# mi.plots.polar_plot(seqs[-1], "polar_primes")
 
 # %% Hinton plots
 mi.plots.syrkis_plot(metrics["train_loss"], cfg, "Train Focal Loss", ds)
