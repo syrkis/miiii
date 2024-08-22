@@ -1,11 +1,10 @@
-base: 2
-n: 512
-emb: 256
+base: 100
+n: 1024
+emb: 32
 lr: 0.001  # learning rate
 depth: 2
-heads: 32
-epochs: 10000
+heads: 2
+epochs: 200
 block: vaswani
 dropout: 0.5
 l2: 1.0  # weight decay
-gamma: 2

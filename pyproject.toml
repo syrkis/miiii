@@ -24,6 +24,10 @@ jupyterlab = "^4.2.2"
 jax = "^0.4.31"
 optax = "^0.2.3"
 
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.3.2"
+pytest-cov = "^5.0.0"
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
@@ -31,3 +35,8 @@ build-backend = "poetry.core.masonry.api"
 [tool.pyright]
 venvPath = "."
 venv = ".venv"
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = "--cov=miiiii --cov-report=term-missing"
+testpaths = ["assert"]

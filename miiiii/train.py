@@ -12,15 +12,15 @@ from functools import partial
 
 
 # functions
-@partial(vmap, in_axes=(1, 1, 0))
+@partial(vmap, in_axes=(1, 1, 0))  # TODO: <- double check that axis are correct
 def focal_loss(logits, y, alpha):
     return optax.sigmoid_focal_loss(logits, y, alpha=alpha)
 
 
-def make_loss_fn(cfg, ds: mi.types.Dataset):
+def make_loss_fn(cfg, ds: mi.kinds.Dataset):
     @jit
     def loss_fn(logits, y):  #  cross entropy loss
-        loss = focal_loss(logits, y, ds.info.apriori).mean()
+        loss = focal_loss(logits, y, ds.info.alpha).mean()
         return loss
 
     return loss_fn
@@ -54,7 +54,7 @@ def make_grad_fn(loss_fn, apply_fn, cfg):
 
 
 @partial(jit, static_argnums=(2,))
-def gradfilter_ema(grads, state: mi.types.State, alpha=0.98, lamb=2.0):
+def gradfilter_ema(grads, state: mi.kinds.State, alpha=0.98, lamb=2.0):
     # @lee2024b grokfast-like EMA gradient filtering
     def _update_ema(prev_ema, gradient):
         return prev_ema * alpha + gradient * (1 - alpha)
@@ -64,13 +64,13 @@ def gradfilter_ema(grads, state: mi.types.State, alpha=0.98, lamb=2.0):
 
     ema_grads = jax.tree.map(_update_ema, state.ema_grads, grads)
     filtered_grads = jax.tree.map(_apply_ema, grads, ema_grads)
-    state = mi.types.State(
+    state = mi.kinds.State(
         ema_grads=ema_grads, opt_state=state.opt_state, params=state.params
     )
     return filtered_grads, state
 
 
-def make_step_fn(grad_fn, update_fn, ds: mi.types.Dataset, eval_fn):
+def make_step_fn(grad_fn, update_fn, ds: mi.kinds.Dataset, eval_fn):
     @jit
     def step_fn(state, rng):
         params, opt_state = state.params, state.opt_state
@@ -78,7 +78,7 @@ def make_step_fn(grad_fn, update_fn, ds: mi.types.Dataset, eval_fn):
         loss, grads, logits, state = grad_fn(state, key, ds.train.x, ds.train.y)
         params, opt_state = update_fn(params, grads, opt_state)
         metrics = eval_fn(params, rng, loss, logits)
-        state = mi.types.State(
+        state = mi.kinds.State(
             params=params, opt_state=opt_state, ema_grads=state.ema_grads
         )
         return state, metrics
@@ -131,8 +131,8 @@ def make_train_fn(step_fn):
 
     def flatten_metrics(metrics):
         """make metrics into flate table"""
-        valid_metrics = {f"valid_{k}": v for k, v in metrics["valid_metrics"].items()}
-        train_metrics = {f"train_{k}": v for k, v in metrics["train_metrics"].items()}
+        valid_metrics = {f"valid_{k}": v.T for k, v in metrics["valid_metrics"].items()}
+        train_metrics = {f"train_{k}": v.T for k, v in metrics["train_metrics"].items()}
         metrics = {**metrics, **train_metrics, **valid_metrics}
         metrics.pop("train_metrics")  # amazing coding practice
         metrics.pop("valid_metrics")  # amazing coding practice 2
@@ -141,7 +141,7 @@ def make_train_fn(step_fn):
     return train_fn
 
 
-def init_train(apply_fn, params, cfg, alpha_fn, ds: mi.types.Dataset):
+def init_train(apply_fn, params, cfg, ds: mi.kinds.Dataset):
     loss_fn = make_loss_fn(cfg, ds)
     opt = optax.adamw(cfg.lr, weight_decay=cfg.l2)  # @nanda2023
     opt_state = opt.init(params)
@@ -150,7 +150,7 @@ def init_train(apply_fn, params, cfg, alpha_fn, ds: mi.types.Dataset):
     grad_fn = make_grad_fn(loss_fn, apply_fn, cfg)
 
     ema_grads = jax.tree.map(jnp.zeros_like, params)
-    state = mi.types.State(params=params, opt_state=opt_state, ema_grads=ema_grads)
+    state = mi.kinds.State(params=params, opt_state=opt_state, ema_grads=ema_grads)
 
     eval_fn = make_eval_fn(apply_fn, loss_fn, ds)
     step_fn = make_step_fn(grad_fn, update_fn, ds, eval_fn)

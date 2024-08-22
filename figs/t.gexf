@@ -1,0 +1,3321 @@
+<?xml version='1.0' encoding='utf-8'?>
+<gexf xmlns="http://www.gexf.net/1.2draft" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.gexf.net/1.2draft http://www.gexf.net/1.2draft/gexf.xsd" version="1.2">
+  <meta lastmodifieddate="2024-02-29">
+    <creator>NetworkX 3.2.1</creator>
+  </meta>
+  <graph defaultedgetype="directed" mode="static" name="G">
+    <attributes mode="static" class="edge">
+      <attribute id="7" title="arrowhead" type="string" />
+      <attribute id="8" title="headlabel" type="string" />
+      <attribute id="9" title="labeldistance" type="string" />
+      <attribute id="10" title="tooltip" type="string" />
+      <attribute id="11" title="networkx_key" type="long" />
+      <attribute id="12" title="ltail" type="string" />
+      <attribute id="13" title="style" type="string" />
+    </attributes>
+    <attributes mode="static" class="node">
+      <attribute id="0" title="color" type="string" />
+      <attribute id="1" title="fillcolor" type="string" />
+      <attribute id="2" title="fontcolor" type="string" />
+      <attribute id="3" title="shape" type="string" />
+      <attribute id="4" title="style" type="string" />
+      <attribute id="5" title="kind" type="string" />
+      <attribute id="6" title="tooltip" type="string" />
+    </attributes>
+    <nodes>
+      <node id="5614914560" label="Parameter 20">
+        <attvalues>
+          <attvalue for="0" value="#cbae82" />
+          <attvalue for="1" value="#ffe0b2" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="5" value="Parameter" />
+        </attvalues>
+      </node>
+      <node id="5614951936" label="Parameter 16">
+        <attvalues>
+          <attvalue for="0" value="#cbae82" />
+          <attvalue for="1" value="#ffe0b2" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="5" value="Parameter" />
+        </attvalues>
+      </node>
+      <node id="5612890112" label="Parameter 13">
+        <attvalues>
+          <attvalue for="0" value="#cbae82" />
+          <attvalue for="1" value="#ffe0b2" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="5" value="Parameter" />
+        </attvalues>
+      </node>
+      <node id="5615690240" label="Parameter 12">
+        <attvalues>
+          <attvalue for="0" value="#cbae82" />
+          <attvalue for="1" value="#ffe0b2" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="5" value="Parameter" />
+        </attvalues>
+      </node>
+      <node id="5615642112" label="Parameter 5">
+        <attvalues>
+          <attvalue for="0" value="#cbae82" />
+          <attvalue for="1" value="#ffe0b2" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="5" value="Parameter" />
+        </attvalues>
+      </node>
+      <node id="5615637504" label="Parameter 4">
+        <attvalues>
+          <attvalue for="0" value="#cbae82" />
+          <attvalue for="1" value="#ffe0b2" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="5" value="Parameter" />
+        </attvalues>
+      </node>
+      <node id="5613486592" label="Parameter 18">
+        <attvalues>
+          <attvalue for="0" value="#cbae82" />
+          <attvalue for="1" value="#ffe0b2" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="5" value="Parameter" />
+        </attvalues>
+      </node>
+      <node id="5613464064" label="Parameter 19">
+        <attvalues>
+          <attvalue for="0" value="#cbae82" />
+          <attvalue for="1" value="#ffe0b2" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="5" value="Parameter" />
+        </attvalues>
+      </node>
+      <node id="5615870976" label="Parameter 0">
+        <attvalues>
+          <attvalue for="0" value="#cbae82" />
+          <attvalue for="1" value="#ffe0b2" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="5" value="Parameter" />
+        </attvalues>
+      </node>
+      <node id="5615863808" label="Parameter 1">
+        <attvalues>
+          <attvalue for="0" value="#cbae82" />
+          <attvalue for="1" value="#ffe0b2" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="5" value="Parameter" />
+        </attvalues>
+      </node>
+      <node id="5615823360" label="compare.0">
+        <attvalues>
+          <attvalue for="0" value="#9e9e9e" />
+          <attvalue for="1" value="white" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="6" value="jit(loss_fn)/jit(main)/lt&#10;source: /Users/syrkis/code/miiii/src/model.py:45" />
+          <attvalue for="5" value="compare" />
+        </attvalues>
+      </node>
+      <node id="5615816192" label="add.43">
+        <attvalues>
+          <attvalue for="0" value="#9e9e9e" />
+          <attvalue for="1" value="white" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="6" value="jit(loss_fn)/jit(main)/add&#10;source: /Users/syrkis/code/miiii/src/model.py:45" />
+          <attvalue for="5" value="add" />
+        </attvalues>
+      </node>
+      <node id="5615789568" label="select.0">
+        <attvalues>
+          <attvalue for="0" value="#9e9e9e" />
+          <attvalue for="1" value="white" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="6" value="jit(loss_fn)/jit(main)/select_n&#10;source: /Users/syrkis/code/miiii/src/model.py:45" />
+          <attvalue for="5" value="select" />
+        </attvalues>
+      </node>
+      <node id="5615756288" label="bitcast.35">
+        <attvalues>
+          <attvalue for="0" value="#97b498" />
+          <attvalue for="1" value="#c8e6c9" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="6" value="jit(loss_fn)/jit(main)/select_n&#10;source: /Users/syrkis/code/miiii/src/model.py:45" />
+          <attvalue for="5" value="bitcast" />
+        </attvalues>
+      </node>
+      <node id="5615735808" label="gather.1">
+        <attvalues>
+          <attvalue for="0" value="#af8eb5" />
+          <attvalue for="1" value="#e1bee7" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="6" value="jit(loss_fn)/jit(main)/gather[dimension_numbers=GatherDimensionNumbers(offset_dims=(2,), collapsed_slice_dims=(0,), start_index_map=(0,)) slice_sizes=(1, 64) unique_indices=False indices_are_sorted=False mode=GatherScatterMode.PROMISE_IN_BOUNDS fill_value=None]&#10;source: /Users/syrkis/code/miiii/src/model.py:45" />
+          <attvalue for="5" value="gather" />
+        </attvalues>
+      </node>
+      <node id="5619640832" label="Parameter 17">
+        <attvalues>
+          <attvalue for="0" value="#c88719" />
+          <attvalue for="1" value="#ffb74d" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="5" value="Parameter" />
+        </attvalues>
+      </node>
+      <node id="5615881216" label="Parameter 0">
+        <attvalues>
+          <attvalue for="0" value="#c88719" />
+          <attvalue for="1" value="#ffb74d" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="5" value="Parameter" />
+        </attvalues>
+      </node>
+      <node id="5615884288" label="iota.1">
+        <attvalues>
+          <attvalue for="0" value="#9e9e9e" />
+          <attvalue for="1" value="white" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="6" value="jit(loss_fn)/jit(main)/iota[dtype=int32 shape=(3,) dimension=0]&#10;source: /Users/syrkis/code/miiii/src/model.py:46" />
+          <attvalue for="5" value="iota" />
+        </attvalues>
+      </node>
+      <node id="5615874048" label="gather.0">
+        <attvalues>
+          <attvalue for="0" value="#af8eb5" />
+          <attvalue for="1" value="#e1bee7" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="6" value="jit(loss_fn)/jit(main)/gather[dimension_numbers=GatherDimensionNumbers(offset_dims=(1,), collapsed_slice_dims=(0,), start_index_map=(0,)) slice_sizes=(1, 64) unique_indices=False indices_are_sorted=False mode=GatherScatterMode.PROMISE_IN_BOUNDS fill_value=None]&#10;source: /Users/syrkis/code/miiii/src/model.py:46" />
+          <attvalue for="5" value="gather" />
+        </attvalues>
+      </node>
+      <node id="5616120832" label="Parameter 0">
+        <attvalues>
+          <attvalue for="0" value="#c88719" />
+          <attvalue for="1" value="#ffb74d" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="5" value="Parameter" />
+        </attvalues>
+      </node>
+      <node id="5616128000" label="Parameter 1">
+        <attvalues>
+          <attvalue for="0" value="#cbae82" />
+          <attvalue for="1" value="#ffe0b2" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="5" value="Parameter" />
+        </attvalues>
+      </node>
+      <node id="5616101888" label="broadcast.39">
+        <attvalues>
+          <attvalue for="0" value="#cbc693" />
+          <attvalue for="1" value="#fff9c4" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="6" value="jit(loss_fn)/jit(main)/add&#10;source: /Users/syrkis/code/miiii/src/model.py:46" />
+          <attvalue for="5" value="broadcast" />
+        </attvalues>
+      </node>
+      <node id="5616105984" label="add.40">
+        <attvalues>
+          <attvalue for="0" value="#9e9e9e" />
+          <attvalue for="1" value="white" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="6" value="jit(loss_fn)/jit(main)/add&#10;source: /Users/syrkis/code/miiii/src/model.py:46" />
+          <attvalue for="5" value="add" />
+        </attvalues>
+      </node>
+      <node id="5616111616" label="bitcast.33">
+        <attvalues>
+          <attvalue for="0" value="#97b498" />
+          <attvalue for="1" value="#c8e6c9" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="6" value="jit(loss_fn)/jit(main)/add&#10;source: /Users/syrkis/code/miiii/src/model.py:46" />
+          <attvalue for="5" value="bitcast" />
+        </attvalues>
+      </node>
+      <node id="5619553792" label="Parameter 6">
+        <attvalues>
+          <attvalue for="0" value="#c88719" />
+          <attvalue for="1" value="#ffb74d" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="5" value="Parameter" />
+        </attvalues>
+      </node>
+      <node id="5619555328" label="dot.4">
+        <attvalues>
+          <attvalue for="0" value="#003c8f" />
+          <attvalue for="1" value="#1565c0" />
+          <attvalue for="2" value="white" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="6" value="jit(loss_fn)/jit(main)/dot_general[dimension_numbers=(((2,), (0,)), ((), ())) precision=None preferred_element_type=float32]&#10;source: /Users/syrkis/code/miiii/src/model.py:38" />
+          <attvalue for="5" value="dot" />
+        </attvalues>
+      </node>
+      <node id="5616253952" label="Parameter 1">
+        <attvalues>
+          <attvalue for="0" value="#c88719" />
+          <attvalue for="1" value="#ffb74d" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="5" value="Parameter" />
+        </attvalues>
+      </node>
+      <node id="5616195584" label="bitcast.32">
+        <attvalues>
+          <attvalue for="0" value="#97b498" />
+          <attvalue for="1" value="#c8e6c9" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="6" value="jit(loss_fn)/jit(main)/dot_general[dimension_numbers=(((2,), (0,)), ((), ())) precision=None preferred_element_type=float32]&#10;source: /Users/syrkis/code/miiii/src/model.py:38" />
+          <attvalue for="5" value="bitcast" />
+        </attvalues>
+      </node>
+      <node id="5616174080" label="Parameter 0">
+        <attvalues>
+          <attvalue for="0" value="#cbae82" />
+          <attvalue for="1" value="#ffe0b2" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="5" value="Parameter" />
+        </attvalues>
+      </node>
+      <node id="5616177152" label="broadcast.38">
+        <attvalues>
+          <attvalue for="0" value="#cbc693" />
+          <attvalue for="1" value="#fff9c4" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="6" value="jit(loss_fn)/jit(main)/add&#10;source: /Users/syrkis/code/miiii/src/model.py:38" />
+          <attvalue for="5" value="broadcast" />
+        </attvalues>
+      </node>
+      <node id="5616163840" label="add.39">
+        <attvalues>
+          <attvalue for="0" value="#9e9e9e" />
+          <attvalue for="1" value="white" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="6" value="jit(loss_fn)/jit(main)/add&#10;source: /Users/syrkis/code/miiii/src/model.py:38" />
+          <attvalue for="5" value="add" />
+        </attvalues>
+      </node>
+      <node id="5616135168" label="maximum.3">
+        <attvalues>
+          <attvalue for="0" value="#9e9e9e" />
+          <attvalue for="1" value="white" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="6" value="jit(loss_fn)/jit(main)/jit(relu)/max&#10;source: /Users/syrkis/code/miiii/src/model.py:39" />
+          <attvalue for="5" value="maximum" />
+        </attvalues>
+      </node>
+      <node id="5616138240" label="bitcast.31">
+        <attvalues>
+          <attvalue for="0" value="#97b498" />
+          <attvalue for="1" value="#c8e6c9" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="6" value="jit(loss_fn)/jit(main)/jit(relu)/max&#10;source: /Users/syrkis/code/miiii/src/model.py:39" />
+          <attvalue for="5" value="bitcast" />
+        </attvalues>
+      </node>
+      <node id="5619340288" label="Parameter 7">
+        <attvalues>
+          <attvalue for="0" value="#c88719" />
+          <attvalue for="1" value="#ffb74d" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="5" value="Parameter" />
+        </attvalues>
+      </node>
+      <node id="5619341824" label="dot.5">
+        <attvalues>
+          <attvalue for="0" value="#003c8f" />
+          <attvalue for="1" value="#1565c0" />
+          <attvalue for="2" value="white" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="6" value="jit(loss_fn)/jit(main)/dot_general[dimension_numbers=(((2,), (0,)), ((), ())) precision=None preferred_element_type=float32]&#10;source: /Users/syrkis/code/miiii/src/model.py:40" />
+          <attvalue for="5" value="dot" />
+        </attvalues>
+      </node>
+      <node id="5619751936" label="Parameter 3">
+        <attvalues>
+          <attvalue for="0" value="#cbae82" />
+          <attvalue for="1" value="#ffe0b2" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="5" value="Parameter" />
+        </attvalues>
+      </node>
+      <node id="5616114688" label="Parameter 0">
+        <attvalues>
+          <attvalue for="0" value="#cbae82" />
+          <attvalue for="1" value="#ffe0b2" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="5" value="Parameter" />
+        </attvalues>
+      </node>
+      <node id="5615799296" label="broadcast.40">
+        <attvalues>
+          <attvalue for="0" value="#cbc693" />
+          <attvalue for="1" value="#fff9c4" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="6" value="jit(loss_fn)/jit(main)/mul&#10;source: /Users/syrkis/code/miiii/src/model.py:34" />
+          <attvalue for="5" value="broadcast" />
+        </attvalues>
+      </node>
+      <node id="5616087552" label="multiply.15">
+        <attvalues>
+          <attvalue for="0" value="#9e9e9e" />
+          <attvalue for="1" value="white" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="6" value="jit(loss_fn)/jit(main)/mul&#10;source: /Users/syrkis/code/miiii/src/model.py:34" />
+          <attvalue for="5" value="multiply" />
+        </attvalues>
+      </node>
+      <node id="5615962624" label="Parameter 0">
+        <attvalues>
+          <attvalue for="0" value="#c88719" />
+          <attvalue for="1" value="#ffb74d" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="5" value="Parameter" />
+        </attvalues>
+      </node>
+      <node id="5615947776" label="Parameter 1">
+        <attvalues>
+          <attvalue for="0" value="#cbae82" />
+          <attvalue for="1" value="#ffe0b2" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="5" value="Parameter" />
+        </attvalues>
+      </node>
+      <node id="5615952384" label="broadcast.43">
+        <attvalues>
+          <attvalue for="0" value="#cbc693" />
+          <attvalue for="1" value="#fff9c4" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="6" value="jit(loss_fn)/jit(main)/add&#10;source: /Users/syrkis/code/miiii/src/model.py:46" />
+          <attvalue for="5" value="broadcast" />
+        </attvalues>
+      </node>
+      <node id="5615924736" label="add.41">
+        <attvalues>
+          <attvalue for="0" value="#9e9e9e" />
+          <attvalue for="1" value="white" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="6" value="jit(loss_fn)/jit(main)/add&#10;source: /Users/syrkis/code/miiii/src/model.py:46" />
+          <attvalue for="5" value="add" />
+        </attvalues>
+      </node>
+      <node id="5615927808" label="transpose.72">
+        <attvalues>
+          <attvalue for="0" value="#97b498" />
+          <attvalue for="1" value="#c8e6c9" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="6" value="jit(loss_fn)/jit(main)/add&#10;source: /Users/syrkis/code/miiii/src/model.py:46" />
+          <attvalue for="5" value="transpose" />
+        </attvalues>
+      </node>
+      <node id="5615914496" label="copy.8">
+        <attvalues>
+          <attvalue for="0" value="#97b498" />
+          <attvalue for="1" value="#c8e6c9" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="6" value="jit(loss_fn)/jit(main)/add&#10;source: /Users/syrkis/code/miiii/src/model.py:46" />
+          <attvalue for="5" value="copy" />
+        </attvalues>
+      </node>
+      <node id="5615917568" label="bitcast.34">
+        <attvalues>
+          <attvalue for="0" value="#97b498" />
+          <attvalue for="1" value="#c8e6c9" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="6" value="jit(loss_fn)/jit(main)/add&#10;source: /Users/syrkis/code/miiii/src/model.py:46" />
+          <attvalue for="5" value="bitcast" />
+        </attvalues>
+      </node>
+      <node id="5619825152" label="dot.3">
+        <attvalues>
+          <attvalue for="0" value="#003c8f" />
+          <attvalue for="1" value="#1565c0" />
+          <attvalue for="2" value="white" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="6" value="jit(loss_fn)/jit(main)/dot_general[dimension_numbers=(((1,), (1,)), ((), ())) precision=None preferred_element_type=float32]&#10;source: /Users/syrkis/code/miiii/src/model.py:35" />
+          <attvalue for="5" value="dot" />
+        </attvalues>
+      </node>
+      <node id="5619512320" label="Parameter 2">
+        <attvalues>
+          <attvalue for="0" value="#cbae82" />
+          <attvalue for="1" value="#ffe0b2" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="5" value="Parameter" />
+        </attvalues>
+      </node>
+      <node id="5616040448" label="Parameter 0">
+        <attvalues>
+          <attvalue for="0" value="#cbae82" />
+          <attvalue for="1" value="#ffe0b2" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="5" value="Parameter" />
+        </attvalues>
+      </node>
+      <node id="5616052224" label="broadcast.41">
+        <attvalues>
+          <attvalue for="0" value="#cbc693" />
+          <attvalue for="1" value="#fff9c4" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="6" value="jit(loss_fn)/jit(main)/mul&#10;source: /Users/syrkis/code/miiii/src/model.py:34" />
+          <attvalue for="5" value="broadcast" />
+        </attvalues>
+      </node>
+      <node id="5616025088" label="multiply.16">
+        <attvalues>
+          <attvalue for="0" value="#9e9e9e" />
+          <attvalue for="1" value="white" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="6" value="jit(loss_fn)/jit(main)/mul&#10;source: /Users/syrkis/code/miiii/src/model.py:34" />
+          <attvalue for="5" value="multiply" />
+        </attvalues>
+      </node>
+      <node id="5619493376" label="dot.2">
+        <attvalues>
+          <attvalue for="0" value="#003c8f" />
+          <attvalue for="1" value="#1565c0" />
+          <attvalue for="2" value="white" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="6" value="jit(loss_fn)/jit(main)/dot_general[dimension_numbers=(((1,), (1,)), ((), ())) precision=None preferred_element_type=float32]&#10;source: /Users/syrkis/code/miiii/src/model.py:35" />
+          <attvalue for="5" value="dot" />
+        </attvalues>
+      </node>
+      <node id="5619494912" label="Parameter 0">
+        <attvalues>
+          <attvalue for="0" value="#cbae82" />
+          <attvalue for="1" value="#ffe0b2" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="5" value="Parameter" />
+        </attvalues>
+      </node>
+      <node id="5615667200" label="Parameter 0">
+        <attvalues>
+          <attvalue for="0" value="#cbae82" />
+          <attvalue for="1" value="#ffe0b2" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="5" value="Parameter" />
+        </attvalues>
+      </node>
+      <node id="5615739904" label="broadcast.46">
+        <attvalues>
+          <attvalue for="0" value="#cbc693" />
+          <attvalue for="1" value="#fff9c4" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="6" value="jit(loss_fn)/jit(main)/mul&#10;source: /Users/syrkis/code/miiii/src/model.py:34" />
+          <attvalue for="5" value="broadcast" />
+        </attvalues>
+      </node>
+      <node id="5615000576" label="multiply.18">
+        <attvalues>
+          <attvalue for="0" value="#9e9e9e" />
+          <attvalue for="1" value="white" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="6" value="jit(loss_fn)/jit(main)/mul&#10;source: /Users/syrkis/code/miiii/src/model.py:34" />
+          <attvalue for="5" value="multiply" />
+        </attvalues>
+      </node>
+      <node id="5619570176" label="dot">
+        <attvalues>
+          <attvalue for="0" value="#003c8f" />
+          <attvalue for="1" value="#1565c0" />
+          <attvalue for="2" value="white" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="6" value="jit(loss_fn)/jit(main)/dot_general[dimension_numbers=(((1,), (1,)), ((), ())) precision=None preferred_element_type=float32]&#10;source: /Users/syrkis/code/miiii/src/model.py:35" />
+        </attvalues>
+      </node>
+      <node id="5615133696" label="Parameter 1">
+        <attvalues>
+          <attvalue for="0" value="#cbae82" />
+          <attvalue for="1" value="#ffe0b2" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="5" value="Parameter" />
+        </attvalues>
+      </node>
+      <node id="5615995904" label="Parameter 0">
+        <attvalues>
+          <attvalue for="0" value="#cbae82" />
+          <attvalue for="1" value="#ffe0b2" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="5" value="Parameter" />
+        </attvalues>
+      </node>
+      <node id="5615969792" label="broadcast.42">
+        <attvalues>
+          <attvalue for="0" value="#cbc693" />
+          <attvalue for="1" value="#fff9c4" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="6" value="jit(loss_fn)/jit(main)/mul&#10;source: /Users/syrkis/code/miiii/src/model.py:34" />
+          <attvalue for="5" value="broadcast" />
+        </attvalues>
+      </node>
+      <node id="5615959552" label="multiply.17">
+        <attvalues>
+          <attvalue for="0" value="#9e9e9e" />
+          <attvalue for="1" value="white" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="6" value="jit(loss_fn)/jit(main)/mul&#10;source: /Users/syrkis/code/miiii/src/model.py:34" />
+          <attvalue for="5" value="multiply" />
+        </attvalues>
+      </node>
+      <node id="5619548160" label="dot.1">
+        <attvalues>
+          <attvalue for="0" value="#003c8f" />
+          <attvalue for="1" value="#1565c0" />
+          <attvalue for="2" value="white" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="6" value="jit(loss_fn)/jit(main)/dot_general[dimension_numbers=(((1,), (1,)), ((), ())) precision=None preferred_element_type=float32]&#10;source: /Users/syrkis/code/miiii/src/model.py:35" />
+          <attvalue for="5" value="dot" />
+        </attvalues>
+      </node>
+      <node id="5616676352" label="Parameter 4">
+        <attvalues>
+          <attvalue for="0" value="#c88719" />
+          <attvalue for="1" value="#ffb74d" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="5" value="Parameter" />
+        </attvalues>
+      </node>
+      <node id="5616710656" label="Parameter 5">
+        <attvalues>
+          <attvalue for="0" value="#c88719" />
+          <attvalue for="1" value="#ffb74d" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="5" value="Parameter" />
+        </attvalues>
+      </node>
+      <node id="5616598016" label="add.32">
+        <attvalues>
+          <attvalue for="0" value="#9e9e9e" />
+          <attvalue for="1" value="white" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="6" value="jit(loss_fn)/jit(main)/reduce_sum[axes=(3,)]&#10;source: /Users/syrkis/code/miiii/src/model.py:26" />
+          <attvalue for="5" value="add" />
+        </attvalues>
+      </node>
+      <node id="5616578048" label="Parameter 3">
+        <attvalues>
+          <attvalue for="0" value="#c88719" />
+          <attvalue for="1" value="#ffb74d" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="5" value="Parameter" />
+        </attvalues>
+      </node>
+      <node id="5616546816" label="add.31">
+        <attvalues>
+          <attvalue for="0" value="#9e9e9e" />
+          <attvalue for="1" value="white" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="6" value="jit(loss_fn)/jit(main)/reduce_sum[axes=(3,)]&#10;source: /Users/syrkis/code/miiii/src/model.py:26" />
+          <attvalue for="5" value="add" />
+        </attvalues>
+      </node>
+      <node id="5616610816" label="Parameter 2">
+        <attvalues>
+          <attvalue for="0" value="#c88719" />
+          <attvalue for="1" value="#ffb74d" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="5" value="Parameter" />
+        </attvalues>
+      </node>
+      <node id="5616544256" label="add.30">
+        <attvalues>
+          <attvalue for="0" value="#9e9e9e" />
+          <attvalue for="1" value="white" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="6" value="jit(loss_fn)/jit(main)/reduce_sum[axes=(3,)]&#10;source: /Users/syrkis/code/miiii/src/model.py:26" />
+          <attvalue for="5" value="add" />
+        </attvalues>
+      </node>
+      <node id="5616403456" label="multiply.10">
+        <attvalues>
+          <attvalue for="0" value="#9e9e9e" />
+          <attvalue for="1" value="white" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="6" value="jit(loss_fn)/jit(main)/div&#10;source: /Users/syrkis/code/miiii/src/model.py:26" />
+          <attvalue for="5" value="multiply" />
+        </attvalues>
+      </node>
+      <node id="5616553984" label="bitcast.27">
+        <attvalues>
+          <attvalue for="0" value="#97b498" />
+          <attvalue for="1" value="#c8e6c9" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="6" value="jit(loss_fn)/jit(main)/div&#10;source: /Users/syrkis/code/miiii/src/model.py:26" />
+          <attvalue for="5" value="bitcast" />
+        </attvalues>
+      </node>
+      <node id="5618139136" label="transpose.69">
+        <attvalues>
+          <attvalue for="0" value="#97b498" />
+          <attvalue for="1" value="#c8e6c9" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="6" value="jit(loss_fn)/jit(main)/div&#10;source: /Users/syrkis/code/miiii/src/model.py:26" />
+          <attvalue for="5" value="transpose" />
+        </attvalues>
+      </node>
+      <node id="5616311808" label="copy.5">
+        <attvalues>
+          <attvalue for="0" value="#97b498" />
+          <attvalue for="1" value="#c8e6c9" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="6" value="jit(loss_fn)/jit(main)/div&#10;source: /Users/syrkis/code/miiii/src/model.py:26" />
+          <attvalue for="5" value="copy" />
+        </attvalues>
+      </node>
+      <node id="5616400384" label="Parameter 1">
+        <attvalues>
+          <attvalue for="0" value="#c88719" />
+          <attvalue for="1" value="#ffb74d" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="5" value="Parameter" />
+        </attvalues>
+      </node>
+      <node id="5616394240" label="bitcast.26">
+        <attvalues>
+          <attvalue for="0" value="#97b498" />
+          <attvalue for="1" value="#c8e6c9" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="6" value="jit(loss_fn)/jit(main)/dot_general[dimension_numbers=(((2,), (0,)), ((), ())) precision=None preferred_element_type=float32]&#10;source: /Users/syrkis/code/miiii/src/model.py:40" />
+          <attvalue for="5" value="bitcast" />
+        </attvalues>
+      </node>
+      <node id="5616456192" label="Parameter 0">
+        <attvalues>
+          <attvalue for="0" value="#cbae82" />
+          <attvalue for="1" value="#ffe0b2" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="5" value="Parameter" />
+        </attvalues>
+      </node>
+      <node id="5616445952" label="broadcast.28">
+        <attvalues>
+          <attvalue for="0" value="#cbc693" />
+          <attvalue for="1" value="#fff9c4" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="6" value="jit(loss_fn)/jit(main)/add&#10;source: /Users/syrkis/code/miiii/src/model.py:40" />
+          <attvalue for="5" value="broadcast" />
+        </attvalues>
+      </node>
+      <node id="5616429056" label="add.29">
+        <attvalues>
+          <attvalue for="0" value="#9e9e9e" />
+          <attvalue for="1" value="white" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="6" value="jit(loss_fn)/jit(main)/add&#10;source: /Users/syrkis/code/miiii/src/model.py:40" />
+          <attvalue for="5" value="add" />
+        </attvalues>
+      </node>
+      <node id="5616425984" label="add.28">
+        <attvalues>
+          <attvalue for="0" value="#9e9e9e" />
+          <attvalue for="1" value="white" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="6" value="jit(loss_fn)/jit(main)/add&#10;source: /Users/syrkis/code/miiii/src/model.py:20" />
+          <attvalue for="5" value="add" />
+        </attvalues>
+      </node>
+      <node id="5616417792" label="bitcast.25">
+        <attvalues>
+          <attvalue for="0" value="#97b498" />
+          <attvalue for="1" value="#c8e6c9" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="6" value="jit(loss_fn)/jit(main)/add&#10;source: /Users/syrkis/code/miiii/src/model.py:20" />
+          <attvalue for="5" value="bitcast" />
+        </attvalues>
+      </node>
+      <node id="5619500544" label="Parameter 14">
+        <attvalues>
+          <attvalue for="0" value="#c88719" />
+          <attvalue for="1" value="#ffb74d" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="5" value="Parameter" />
+        </attvalues>
+      </node>
+      <node id="5619502080" label="dot.10">
+        <attvalues>
+          <attvalue for="0" value="#003c8f" />
+          <attvalue for="1" value="#1565c0" />
+          <attvalue for="2" value="white" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="6" value="jit(loss_fn)/jit(main)/dot_general[dimension_numbers=(((2,), (0,)), ((), ())) precision=None preferred_element_type=float32]&#10;source: /Users/syrkis/code/miiii/src/model.py:38" />
+          <attvalue for="5" value="dot" />
+        </attvalues>
+      </node>
+      <node id="5616717824" label="Parameter 1">
+        <attvalues>
+          <attvalue for="0" value="#c88719" />
+          <attvalue for="1" value="#ffb74d" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="5" value="Parameter" />
+        </attvalues>
+      </node>
+      <node id="5616549888" label="bitcast.24">
+        <attvalues>
+          <attvalue for="0" value="#97b498" />
+          <attvalue for="1" value="#c8e6c9" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="6" value="jit(loss_fn)/jit(main)/dot_general[dimension_numbers=(((2,), (0,)), ((), ())) precision=None preferred_element_type=float32]&#10;source: /Users/syrkis/code/miiii/src/model.py:38" />
+          <attvalue for="5" value="bitcast" />
+        </attvalues>
+      </node>
+      <node id="5616817152" label="Parameter 0">
+        <attvalues>
+          <attvalue for="0" value="#cbae82" />
+          <attvalue for="1" value="#ffe0b2" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="5" value="Parameter" />
+        </attvalues>
+      </node>
+      <node id="5618110464" label="broadcast.24">
+        <attvalues>
+          <attvalue for="0" value="#cbc693" />
+          <attvalue for="1" value="#fff9c4" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="6" value="jit(loss_fn)/jit(main)/add&#10;source: /Users/syrkis/code/miiii/src/model.py:38" />
+          <attvalue for="5" value="broadcast" />
+        </attvalues>
+      </node>
+      <node id="5616225792" label="add.27">
+        <attvalues>
+          <attvalue for="0" value="#9e9e9e" />
+          <attvalue for="1" value="white" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="6" value="jit(loss_fn)/jit(main)/add&#10;source: /Users/syrkis/code/miiii/src/model.py:38" />
+          <attvalue for="5" value="add" />
+        </attvalues>
+      </node>
+      <node id="5618498048" label="maximum.2">
+        <attvalues>
+          <attvalue for="0" value="#9e9e9e" />
+          <attvalue for="1" value="white" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="6" value="jit(loss_fn)/jit(main)/jit(relu)/max&#10;source: /Users/syrkis/code/miiii/src/model.py:39" />
+          <attvalue for="5" value="maximum" />
+        </attvalues>
+      </node>
+      <node id="5616632320" label="bitcast.23">
+        <attvalues>
+          <attvalue for="0" value="#97b498" />
+          <attvalue for="1" value="#c8e6c9" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="6" value="jit(loss_fn)/jit(main)/jit(relu)/max&#10;source: /Users/syrkis/code/miiii/src/model.py:39" />
+          <attvalue for="5" value="bitcast" />
+        </attvalues>
+      </node>
+      <node id="5619425792" label="Parameter 15">
+        <attvalues>
+          <attvalue for="0" value="#c88719" />
+          <attvalue for="1" value="#ffb74d" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="5" value="Parameter" />
+        </attvalues>
+      </node>
+      <node id="5619438080" label="dot.11">
+        <attvalues>
+          <attvalue for="0" value="#003c8f" />
+          <attvalue for="1" value="#1565c0" />
+          <attvalue for="2" value="white" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="6" value="jit(loss_fn)/jit(main)/dot_general[dimension_numbers=(((2,), (0,)), ((), ())) precision=None preferred_element_type=float32]&#10;source: /Users/syrkis/code/miiii/src/model.py:40" />
+          <attvalue for="5" value="dot" />
+        </attvalues>
+      </node>
+      <node id="5619439616" label="Parameter 11">
+        <attvalues>
+          <attvalue for="0" value="#cbae82" />
+          <attvalue for="1" value="#ffe0b2" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="5" value="Parameter" />
+        </attvalues>
+      </node>
+      <node id="5616477696" label="Parameter 0">
+        <attvalues>
+          <attvalue for="0" value="#cbae82" />
+          <attvalue for="1" value="#ffe0b2" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="5" value="Parameter" />
+        </attvalues>
+      </node>
+      <node id="5616410624" label="broadcast.32">
+        <attvalues>
+          <attvalue for="0" value="#cbc693" />
+          <attvalue for="1" value="#fff9c4" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="6" value="jit(loss_fn)/jit(main)/mul&#10;source: /Users/syrkis/code/miiii/src/model.py:34" />
+          <attvalue for="5" value="broadcast" />
+        </attvalues>
+      </node>
+      <node id="5616533504" label="multiply.11">
+        <attvalues>
+          <attvalue for="0" value="#9e9e9e" />
+          <attvalue for="1" value="white" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="6" value="jit(loss_fn)/jit(main)/mul&#10;source: /Users/syrkis/code/miiii/src/model.py:34" />
+          <attvalue for="5" value="multiply" />
+        </attvalues>
+      </node>
+      <node id="5618292736" label="Parameter 4">
+        <attvalues>
+          <attvalue for="0" value="#c88719" />
+          <attvalue for="1" value="#ffb74d" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="5" value="Parameter" />
+        </attvalues>
+      </node>
+      <node id="5616960512" label="Parameter 5">
+        <attvalues>
+          <attvalue for="0" value="#c88719" />
+          <attvalue for="1" value="#ffb74d" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="5" value="Parameter" />
+        </attvalues>
+      </node>
+      <node id="5616811520" label="add.38">
+        <attvalues>
+          <attvalue for="0" value="#9e9e9e" />
+          <attvalue for="1" value="white" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="6" value="jit(loss_fn)/jit(main)/reduce_sum[axes=(3,)]&#10;source: /Users/syrkis/code/miiii/src/model.py:26" />
+          <attvalue for="5" value="add" />
+        </attvalues>
+      </node>
+      <node id="5616808960" label="Parameter 3">
+        <attvalues>
+          <attvalue for="0" value="#c88719" />
+          <attvalue for="1" value="#ffb74d" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="5" value="Parameter" />
+        </attvalues>
+      </node>
+      <node id="5616824320" label="add.37">
+        <attvalues>
+          <attvalue for="0" value="#9e9e9e" />
+          <attvalue for="1" value="white" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="6" value="jit(loss_fn)/jit(main)/reduce_sum[axes=(3,)]&#10;source: /Users/syrkis/code/miiii/src/model.py:26" />
+          <attvalue for="5" value="add" />
+        </attvalues>
+      </node>
+      <node id="5616814592" label="Parameter 2">
+        <attvalues>
+          <attvalue for="0" value="#c88719" />
+          <attvalue for="1" value="#ffb74d" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="5" value="Parameter" />
+        </attvalues>
+      </node>
+      <node id="5617035264" label="add.35">
+        <attvalues>
+          <attvalue for="0" value="#9e9e9e" />
+          <attvalue for="1" value="white" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="6" value="jit(loss_fn)/jit(main)/reduce_sum[axes=(3,)]&#10;source: /Users/syrkis/code/miiii/src/model.py:26" />
+          <attvalue for="5" value="add" />
+        </attvalues>
+      </node>
+      <node id="5616320000" label="multiply.14">
+        <attvalues>
+          <attvalue for="0" value="#9e9e9e" />
+          <attvalue for="1" value="white" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="6" value="jit(loss_fn)/jit(main)/div&#10;source: /Users/syrkis/code/miiii/src/model.py:26" />
+          <attvalue for="5" value="multiply" />
+        </attvalues>
+      </node>
+      <node id="5616323072" label="bitcast.30">
+        <attvalues>
+          <attvalue for="0" value="#97b498" />
+          <attvalue for="1" value="#c8e6c9" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="6" value="jit(loss_fn)/jit(main)/div&#10;source: /Users/syrkis/code/miiii/src/model.py:26" />
+          <attvalue for="5" value="bitcast" />
+        </attvalues>
+      </node>
+      <node id="5616340992" label="transpose.71">
+        <attvalues>
+          <attvalue for="0" value="#97b498" />
+          <attvalue for="1" value="#c8e6c9" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="6" value="jit(loss_fn)/jit(main)/div&#10;source: /Users/syrkis/code/miiii/src/model.py:26" />
+          <attvalue for="5" value="transpose" />
+        </attvalues>
+      </node>
+      <node id="5616351232" label="copy.7">
+        <attvalues>
+          <attvalue for="0" value="#97b498" />
+          <attvalue for="1" value="#c8e6c9" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="6" value="jit(loss_fn)/jit(main)/div&#10;source: /Users/syrkis/code/miiii/src/model.py:26" />
+          <attvalue for="5" value="copy" />
+        </attvalues>
+      </node>
+      <node id="5616372736" label="Parameter 1">
+        <attvalues>
+          <attvalue for="0" value="#c88719" />
+          <attvalue for="1" value="#ffb74d" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="5" value="Parameter" />
+        </attvalues>
+      </node>
+      <node id="5616275456" label="bitcast.29">
+        <attvalues>
+          <attvalue for="0" value="#97b498" />
+          <attvalue for="1" value="#c8e6c9" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="6" value="jit(loss_fn)/jit(main)/dot_general[dimension_numbers=(((2,), (0,)), ((), ())) precision=None preferred_element_type=float32]&#10;source: /Users/syrkis/code/miiii/src/model.py:40" />
+          <attvalue for="5" value="bitcast" />
+        </attvalues>
+      </node>
+      <node id="5616257024" label="Parameter 0">
+        <attvalues>
+          <attvalue for="0" value="#cbae82" />
+          <attvalue for="1" value="#ffe0b2" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="5" value="Parameter" />
+        </attvalues>
+      </node>
+      <node id="5616247808" label="broadcast.35">
+        <attvalues>
+          <attvalue for="0" value="#cbc693" />
+          <attvalue for="1" value="#fff9c4" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="6" value="jit(loss_fn)/jit(main)/add&#10;source: /Users/syrkis/code/miiii/src/model.py:40" />
+          <attvalue for="5" value="broadcast" />
+        </attvalues>
+      </node>
+      <node id="5616235008" label="add.34">
+        <attvalues>
+          <attvalue for="0" value="#9e9e9e" />
+          <attvalue for="1" value="white" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="6" value="jit(loss_fn)/jit(main)/add&#10;source: /Users/syrkis/code/miiii/src/model.py:40" />
+          <attvalue for="5" value="add" />
+        </attvalues>
+      </node>
+      <node id="5616212992" label="add.33">
+        <attvalues>
+          <attvalue for="0" value="#9e9e9e" />
+          <attvalue for="1" value="white" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="6" value="jit(loss_fn)/jit(main)/add&#10;source: /Users/syrkis/code/miiii/src/model.py:20" />
+          <attvalue for="5" value="add" />
+        </attvalues>
+      </node>
+      <node id="5616216064" label="transpose.70">
+        <attvalues>
+          <attvalue for="0" value="#97b498" />
+          <attvalue for="1" value="#c8e6c9" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="6" value="jit(loss_fn)/jit(main)/add&#10;source: /Users/syrkis/code/miiii/src/model.py:20" />
+          <attvalue for="5" value="transpose" />
+        </attvalues>
+      </node>
+      <node id="5616202752" label="copy.6">
+        <attvalues>
+          <attvalue for="0" value="#97b498" />
+          <attvalue for="1" value="#c8e6c9" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="6" value="jit(loss_fn)/jit(main)/add&#10;source: /Users/syrkis/code/miiii/src/model.py:20" />
+          <attvalue for="5" value="copy" />
+        </attvalues>
+      </node>
+      <node id="5616205824" label="bitcast.28">
+        <attvalues>
+          <attvalue for="0" value="#97b498" />
+          <attvalue for="1" value="#c8e6c9" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="6" value="jit(loss_fn)/jit(main)/add&#10;source: /Users/syrkis/code/miiii/src/model.py:20" />
+          <attvalue for="5" value="bitcast" />
+        </attvalues>
+      </node>
+      <node id="5619467264" label="dot.9">
+        <attvalues>
+          <attvalue for="0" value="#003c8f" />
+          <attvalue for="1" value="#1565c0" />
+          <attvalue for="2" value="white" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="6" value="jit(loss_fn)/jit(main)/dot_general[dimension_numbers=(((1,), (1,)), ((), ())) precision=None preferred_element_type=float32]&#10;source: /Users/syrkis/code/miiii/src/model.py:35" />
+          <attvalue for="5" value="dot" />
+        </attvalues>
+      </node>
+      <node id="5619468800" label="Parameter 10">
+        <attvalues>
+          <attvalue for="0" value="#cbae82" />
+          <attvalue for="1" value="#ffe0b2" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="5" value="Parameter" />
+        </attvalues>
+      </node>
+      <node id="5616530432" label="Parameter 0">
+        <attvalues>
+          <attvalue for="0" value="#cbae82" />
+          <attvalue for="1" value="#ffe0b2" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="5" value="Parameter" />
+        </attvalues>
+      </node>
+      <node id="5617135104" label="broadcast.33">
+        <attvalues>
+          <attvalue for="0" value="#cbc693" />
+          <attvalue for="1" value="#fff9c4" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="6" value="jit(loss_fn)/jit(main)/mul&#10;source: /Users/syrkis/code/miiii/src/model.py:34" />
+          <attvalue for="5" value="broadcast" />
+        </attvalues>
+      </node>
+      <node id="5616515072" label="multiply.12">
+        <attvalues>
+          <attvalue for="0" value="#9e9e9e" />
+          <attvalue for="1" value="white" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="6" value="jit(loss_fn)/jit(main)/mul&#10;source: /Users/syrkis/code/miiii/src/model.py:34" />
+          <attvalue for="5" value="multiply" />
+        </attvalues>
+      </node>
+      <node id="5619373056" label="dot.8">
+        <attvalues>
+          <attvalue for="0" value="#003c8f" />
+          <attvalue for="1" value="#1565c0" />
+          <attvalue for="2" value="white" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="6" value="jit(loss_fn)/jit(main)/dot_general[dimension_numbers=(((1,), (1,)), ((), ())) precision=None preferred_element_type=float32]&#10;source: /Users/syrkis/code/miiii/src/model.py:35" />
+          <attvalue for="5" value="dot" />
+        </attvalues>
+      </node>
+      <node id="5618826752" label="Parameter 8">
+        <attvalues>
+          <attvalue for="0" value="#cbae82" />
+          <attvalue for="1" value="#ffe0b2" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="5" value="Parameter" />
+        </attvalues>
+      </node>
+      <node id="5820080128" label="Parameter 0">
+        <attvalues>
+          <attvalue for="0" value="#cbae82" />
+          <attvalue for="1" value="#ffe0b2" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="5" value="Parameter" />
+        </attvalues>
+      </node>
+      <node id="5820083200" label="broadcast.48">
+        <attvalues>
+          <attvalue for="0" value="#cbc693" />
+          <attvalue for="1" value="#fff9c4" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="6" value="jit(loss_fn)/jit(main)/mul&#10;source: /Users/syrkis/code/miiii/src/model.py:34" />
+          <attvalue for="5" value="broadcast" />
+        </attvalues>
+      </node>
+      <node id="5615656960" label="multiply.19">
+        <attvalues>
+          <attvalue for="0" value="#9e9e9e" />
+          <attvalue for="1" value="white" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="6" value="jit(loss_fn)/jit(main)/mul&#10;source: /Users/syrkis/code/miiii/src/model.py:34" />
+          <attvalue for="5" value="multiply" />
+        </attvalues>
+      </node>
+      <node id="5618830848" label="dot.6">
+        <attvalues>
+          <attvalue for="0" value="#003c8f" />
+          <attvalue for="1" value="#1565c0" />
+          <attvalue for="2" value="white" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="6" value="jit(loss_fn)/jit(main)/dot_general[dimension_numbers=(((1,), (1,)), ((), ())) precision=None preferred_element_type=float32]&#10;source: /Users/syrkis/code/miiii/src/model.py:35" />
+          <attvalue for="5" value="dot" />
+        </attvalues>
+      </node>
+      <node id="5618832384" label="Parameter 9">
+        <attvalues>
+          <attvalue for="0" value="#cbae82" />
+          <attvalue for="1" value="#ffe0b2" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="5" value="Parameter" />
+        </attvalues>
+      </node>
+      <node id="5616506880" label="Parameter 0">
+        <attvalues>
+          <attvalue for="0" value="#cbae82" />
+          <attvalue for="1" value="#ffe0b2" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="5" value="Parameter" />
+        </attvalues>
+      </node>
+      <node id="5616504320" label="broadcast.34">
+        <attvalues>
+          <attvalue for="0" value="#cbc693" />
+          <attvalue for="1" value="#fff9c4" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="6" value="jit(loss_fn)/jit(main)/mul&#10;source: /Users/syrkis/code/miiii/src/model.py:34" />
+          <attvalue for="5" value="broadcast" />
+        </attvalues>
+      </node>
+      <node id="5616493056" label="multiply.13">
+        <attvalues>
+          <attvalue for="0" value="#9e9e9e" />
+          <attvalue for="1" value="white" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="6" value="jit(loss_fn)/jit(main)/mul&#10;source: /Users/syrkis/code/miiii/src/model.py:34" />
+          <attvalue for="5" value="multiply" />
+        </attvalues>
+      </node>
+      <node id="5619356672" label="dot.7">
+        <attvalues>
+          <attvalue for="0" value="#003c8f" />
+          <attvalue for="1" value="#1565c0" />
+          <attvalue for="2" value="white" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="6" value="jit(loss_fn)/jit(main)/dot_general[dimension_numbers=(((1,), (1,)), ((), ())) precision=None preferred_element_type=float32]&#10;source: /Users/syrkis/code/miiii/src/model.py:35" />
+          <attvalue for="5" value="dot" />
+        </attvalues>
+      </node>
+      <node id="5618248704" label="Parameter 5">
+        <attvalues>
+          <attvalue for="0" value="#c88719" />
+          <attvalue for="1" value="#ffb74d" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="5" value="Parameter" />
+        </attvalues>
+      </node>
+      <node id="5618872320" label="Parameter 6">
+        <attvalues>
+          <attvalue for="0" value="#c88719" />
+          <attvalue for="1" value="#ffb74d" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="5" value="Parameter" />
+        </attvalues>
+      </node>
+      <node id="5617197568" label="add.26">
+        <attvalues>
+          <attvalue for="0" value="#9e9e9e" />
+          <attvalue for="1" value="white" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="6" value="jit(loss_fn)/jit(main)/reduce_sum[axes=(3,)]&#10;source: /Users/syrkis/code/miiii/src/model.py:26" />
+          <attvalue for="5" value="add" />
+        </attvalues>
+      </node>
+      <node id="5617043968" label="Parameter 4">
+        <attvalues>
+          <attvalue for="0" value="#c88719" />
+          <attvalue for="1" value="#ffb74d" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="5" value="Parameter" />
+        </attvalues>
+      </node>
+      <node id="5618275840" label="add.25">
+        <attvalues>
+          <attvalue for="0" value="#9e9e9e" />
+          <attvalue for="1" value="white" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="6" value="jit(loss_fn)/jit(main)/reduce_sum[axes=(3,)]&#10;source: /Users/syrkis/code/miiii/src/model.py:26" />
+          <attvalue for="5" value="add" />
+        </attvalues>
+      </node>
+      <node id="5618074112" label="Parameter 3">
+        <attvalues>
+          <attvalue for="0" value="#c88719" />
+          <attvalue for="1" value="#ffb74d" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="5" value="Parameter" />
+        </attvalues>
+      </node>
+      <node id="5619127296" label="add.24">
+        <attvalues>
+          <attvalue for="0" value="#9e9e9e" />
+          <attvalue for="1" value="white" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="6" value="jit(loss_fn)/jit(main)/reduce_sum[axes=(3,)]&#10;source: /Users/syrkis/code/miiii/src/model.py:26" />
+          <attvalue for="5" value="add" />
+        </attvalues>
+      </node>
+      <node id="5617064448" label="multiply.9">
+        <attvalues>
+          <attvalue for="0" value="#9e9e9e" />
+          <attvalue for="1" value="white" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="6" value="jit(loss_fn)/jit(main)/div&#10;source: /Users/syrkis/code/miiii/src/model.py:26" />
+          <attvalue for="5" value="multiply" />
+        </attvalues>
+      </node>
+      <node id="5616034816" label="bitcast.22">
+        <attvalues>
+          <attvalue for="0" value="#97b498" />
+          <attvalue for="1" value="#c8e6c9" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="6" value="jit(loss_fn)/jit(main)/div&#10;source: /Users/syrkis/code/miiii/src/model.py:26" />
+          <attvalue for="5" value="bitcast" />
+        </attvalues>
+      </node>
+      <node id="5618076672" label="transpose.68">
+        <attvalues>
+          <attvalue for="0" value="#97b498" />
+          <attvalue for="1" value="#c8e6c9" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="6" value="jit(loss_fn)/jit(main)/div&#10;source: /Users/syrkis/code/miiii/src/model.py:26" />
+          <attvalue for="5" value="transpose" />
+        </attvalues>
+      </node>
+      <node id="5616936960" label="copy.4">
+        <attvalues>
+          <attvalue for="0" value="#97b498" />
+          <attvalue for="1" value="#c8e6c9" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="6" value="jit(loss_fn)/jit(main)/div&#10;source: /Users/syrkis/code/miiii/src/model.py:26" />
+          <attvalue for="5" value="copy" />
+        </attvalues>
+      </node>
+      <node id="5616490496" label="Parameter 2">
+        <attvalues>
+          <attvalue for="0" value="#c88719" />
+          <attvalue for="1" value="#ffb74d" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="5" value="Parameter" />
+        </attvalues>
+      </node>
+      <node id="5619856896" label="bitcast.21">
+        <attvalues>
+          <attvalue for="0" value="#97b498" />
+          <attvalue for="1" value="#c8e6c9" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="6" value="jit(loss_fn)/jit(main)/dot_general[dimension_numbers=(((2,), (0,)), ((), ())) precision=None preferred_element_type=float32]&#10;source: /Users/syrkis/code/miiii/src/model.py:40" />
+          <attvalue for="5" value="bitcast" />
+        </attvalues>
+      </node>
+      <node id="5616646656" label="Parameter 1">
+        <attvalues>
+          <attvalue for="0" value="#cbae82" />
+          <attvalue for="1" value="#ffe0b2" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="5" value="Parameter" />
+        </attvalues>
+      </node>
+      <node id="5616831488" label="broadcast.21">
+        <attvalues>
+          <attvalue for="0" value="#cbc693" />
+          <attvalue for="1" value="#fff9c4" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="6" value="jit(loss_fn)/jit(main)/add&#10;source: /Users/syrkis/code/miiii/src/model.py:40" />
+          <attvalue for="5" value="broadcast" />
+        </attvalues>
+      </node>
+      <node id="5616803328" label="add.23">
+        <attvalues>
+          <attvalue for="0" value="#9e9e9e" />
+          <attvalue for="1" value="white" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="6" value="jit(loss_fn)/jit(main)/add&#10;source: /Users/syrkis/code/miiii/src/model.py:40" />
+          <attvalue for="5" value="add" />
+        </attvalues>
+      </node>
+      <node id="5616564224" label="add.22">
+        <attvalues>
+          <attvalue for="0" value="#9e9e9e" />
+          <attvalue for="1" value="white" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="6" value="jit(loss_fn)/jit(main)/add&#10;source: /Users/syrkis/code/miiii/src/model.py:20" />
+          <attvalue for="5" value="add" />
+        </attvalues>
+      </node>
+      <node id="5616581120" label="bitcast.19">
+        <attvalues>
+          <attvalue for="0" value="#97b498" />
+          <attvalue for="1" value="#c8e6c9" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="6" value="jit(loss_fn)/jit(main)/add&#10;source: /Users/syrkis/code/miiii/src/model.py:20" />
+          <attvalue for="5" value="bitcast" />
+        </attvalues>
+      </node>
+      <node id="5616673280" label="Parameter 0">
+        <attvalues>
+          <attvalue for="0" value="#cbae82" />
+          <attvalue for="1" value="#ffe0b2" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="5" value="Parameter" />
+        </attvalues>
+      </node>
+      <node id="5616557056" label="bitcast.20">
+        <attvalues>
+          <attvalue for="0" value="#97b498" />
+          <attvalue for="1" value="#c8e6c9" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="5" value="bitcast" />
+        </attvalues>
+      </node>
+      <node id="5618071040" label="dot.13">
+        <attvalues>
+          <attvalue for="0" value="#003c8f" />
+          <attvalue for="1" value="#1565c0" />
+          <attvalue for="2" value="white" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="6" value="jit(loss_fn)/jit(main)/dot_general[dimension_numbers=(((2,), (0,)), ((), ())) precision=None preferred_element_type=float32]&#10;source: /Users/syrkis/code/miiii/src/model.py:21" />
+          <attvalue for="5" value="dot" />
+        </attvalues>
+      </node>
+      <node id="5614584320" label="Parameter 0">
+        <attvalues>
+          <attvalue for="0" value="#cbae82" />
+          <attvalue for="1" value="#ffe0b2" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="5" value="Parameter" />
+        </attvalues>
+      </node>
+      <node id="5613373440" label="Parameter 1">
+        <attvalues>
+          <attvalue for="0" value="#cbae82" />
+          <attvalue for="1" value="#ffe0b2" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="5" value="Parameter" />
+        </attvalues>
+      </node>
+      <node id="5614540800" label="Parameter 1">
+        <attvalues>
+          <attvalue for="0" value="#cbae82" />
+          <attvalue for="1" value="#ffe0b2" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="5" value="Parameter" />
+        </attvalues>
+      </node>
+      <node id="5614917632" label="bitcast.37">
+        <attvalues>
+          <attvalue for="0" value="#97b498" />
+          <attvalue for="1" value="#c8e6c9" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="6" value="jit(loss_fn)/jit(main)/dot_general[dimension_numbers=(((2,), (0,)), ((), ())) precision=None preferred_element_type=float32]&#10;source: /Users/syrkis/code/miiii/src/model.py:21" />
+          <attvalue for="5" value="bitcast" />
+        </attvalues>
+      </node>
+      <node id="5614567424" label="slice.1">
+        <attvalues>
+          <attvalue for="0" value="#9e9e9e" />
+          <attvalue for="1" value="white" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="6" value="jit(loss_fn)/jit(main)/dynamic_slice[slice_sizes=(541, 1, 1)]&#10;source: /Users/syrkis/code/miiii/src/model.py:22" />
+          <attvalue for="5" value="slice" />
+        </attvalues>
+      </node>
+      <node id="5614570496" label="bitcast.36">
+        <attvalues>
+          <attvalue for="0" value="#97b498" />
+          <attvalue for="1" value="#c8e6c9" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="6" value="jit(loss_fn)/jit(main)/dynamic_slice[slice_sizes=(541, 1, 1)]&#10;source: /Users/syrkis/code/miiii/src/model.py:22" />
+          <attvalue for="5" value="bitcast" />
+        </attvalues>
+      </node>
+      <node id="5614668800" label="broadcast.52">
+        <attvalues>
+          <attvalue for="0" value="#cbc693" />
+          <attvalue for="1" value="#fff9c4" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="6" value="jit(loss_fn)/jit(main)/sub&#10;source: /var/folders/g5/r0c49hqx3f95cpg6vnztk5s80000gn/T/ipykernel_72968/3479883551.py:3" />
+          <attvalue for="5" value="broadcast" />
+        </attvalues>
+      </node>
+      <node id="5819499008" label="Parameter 0">
+        <attvalues>
+          <attvalue for="0" value="#cbae82" />
+          <attvalue for="1" value="#ffe0b2" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="5" value="Parameter" />
+        </attvalues>
+      </node>
+      <node id="5612883456" label="convert.1">
+        <attvalues>
+          <attvalue for="0" value="#9e9e9e" />
+          <attvalue for="1" value="white" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="6" value="jit(loss_fn)/jit(main)/convert_element_type[new_dtype=float32 weak_type=False]&#10;source: /var/folders/g5/r0c49hqx3f95cpg6vnztk5s80000gn/T/ipykernel_72968/3479883551.py:3" />
+          <attvalue for="5" value="convert" />
+        </attvalues>
+      </node>
+      <node id="5615118336" label="broadcast.50">
+        <attvalues>
+          <attvalue for="0" value="#cbc693" />
+          <attvalue for="1" value="#fff9c4" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="6" value="jit(loss_fn)/jit(main)/sub&#10;source: /var/folders/g5/r0c49hqx3f95cpg6vnztk5s80000gn/T/ipykernel_72968/3479883551.py:3" />
+          <attvalue for="5" value="broadcast" />
+        </attvalues>
+      </node>
+      <node id="5614505472" label="subtract.1">
+        <attvalues>
+          <attvalue for="0" value="#9e9e9e" />
+          <attvalue for="1" value="white" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="6" value="jit(loss_fn)/jit(main)/sub&#10;source: /var/folders/g5/r0c49hqx3f95cpg6vnztk5s80000gn/T/ipykernel_72968/3479883551.py:3" />
+          <attvalue for="5" value="subtract" />
+        </attvalues>
+      </node>
+      <node id="5614483456" label="multiply.20">
+        <attvalues>
+          <attvalue for="0" value="#9e9e9e" />
+          <attvalue for="1" value="white" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="6" value="jit(loss_fn)/jit(main)/mul&#10;source: /var/folders/g5/r0c49hqx3f95cpg6vnztk5s80000gn/T/ipykernel_72968/3479883551.py:3" />
+          <attvalue for="5" value="multiply" />
+        </attvalues>
+      </node>
+      <node id="5619293184" label="call">
+        <attvalues>
+          <attvalue for="0" value="#005005" />
+          <attvalue for="1" value="#2e7d32" />
+          <attvalue for="2" value="white" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+        </attvalues>
+      </node>
+      <node id="5619262464" label="reduce-window">
+        <attvalues>
+          <attvalue for="0" value="#af8eb5" />
+          <attvalue for="1" value="#e1bee7" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+        </attvalues>
+      </node>
+      <node id="5616841216" label="Parameter 0">
+        <attvalues>
+          <attvalue for="0" value="#cbae82" />
+          <attvalue for="1" value="#ffe0b2" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="5" value="Parameter" />
+        </attvalues>
+      </node>
+      <node id="5618167296" label="reduce.9">
+        <attvalues>
+          <attvalue for="0" value="#af8eb5" />
+          <attvalue for="1" value="#e1bee7" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="6" value="jit(loss_fn)/jit(main)/reduce_sum[axes=(0, 1)]&#10;source: /var/folders/g5/r0c49hqx3f95cpg6vnztk5s80000gn/T/ipykernel_72968/3479883551.py:3" />
+          <attvalue for="5" value="reduce" />
+        </attvalues>
+      </node>
+      <node id="5618246144" label="multiply.7">
+        <attvalues>
+          <attvalue for="0" value="#9e9e9e" />
+          <attvalue for="1" value="white" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="rect" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="6" value="jit(loss_fn)/jit(main)/div&#10;source: /var/folders/g5/r0c49hqx3f95cpg6vnztk5s80000gn/T/ipykernel_72968/3479883551.py:3" />
+          <attvalue for="5" value="multiply" />
+        </attvalues>
+      </node>
+      <node id="cluster_5777288080" label="ROOT">
+        <attvalues>
+          <attvalue for="0" value="#8c7b75" />
+          <attvalue for="1" value="#bcaaa4" />
+          <attvalue for="2" value="black" />
+          <attvalue for="3" value="circle" />
+          <attvalue for="4" value="filled" />
+          <attvalue for="6" value=" " />
+        </attvalues>
+      </node>
+    </nodes>
+    <edges>
+      <edge source="5614914560" target="5619293184" id="0">
+        <attvalues>
+          <attvalue for="7" value="empty" />
+          <attvalue for="8" value="0" />
+          <attvalue for="9" value="2" />
+          <attvalue for="10" value="Arg_20.21 -&gt; call" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5614951936" target="5616673280" id="1">
+        <attvalues>
+          <attvalue for="7" value="empty" />
+          <attvalue for="10" value="Arg_16.17 -&gt; param_0.9" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5612890112" target="5616646656" id="2">
+        <attvalues>
+          <attvalue for="7" value="empty" />
+          <attvalue for="10" value="Arg_13.14 -&gt; param_1.14" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5615690240" target="5616817152" id="3">
+        <attvalues>
+          <attvalue for="7" value="empty" />
+          <attvalue for="10" value="Arg_12.13 -&gt; param_0.13" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5615642112" target="5616456192" id="4">
+        <attvalues>
+          <attvalue for="7" value="empty" />
+          <attvalue for="10" value="Arg_5.6 -&gt; param_0.16" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5615642112" target="5616257024" id="5">
+        <attvalues>
+          <attvalue for="7" value="empty" />
+          <attvalue for="10" value="Arg_5.6 -&gt; param_0.30" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5615637504" target="5616174080" id="6">
+        <attvalues>
+          <attvalue for="7" value="empty" />
+          <attvalue for="10" value="Arg_4.5 -&gt; param_0.34" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5613486592" target="5615870976" id="7">
+        <attvalues>
+          <attvalue for="7" value="empty" />
+          <attvalue for="10" value="Arg_18.19 -&gt; param_0.51" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5613464064" target="5615863808" id="8">
+        <attvalues>
+          <attvalue for="7" value="empty" />
+          <attvalue for="10" value="Arg_19.20 -&gt; param_1.52" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5615870976" target="5615735808" id="9">
+        <attvalues>
+          <attvalue for="7" value="empty" />
+          <attvalue for="8" value="0" />
+          <attvalue for="9" value="2" />
+          <attvalue for="10" value="param_0.51 -&gt; gather.1" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5615863808" target="5615823360" id="10">
+        <attvalues>
+          <attvalue for="7" value="empty" />
+          <attvalue for="8" value="0" />
+          <attvalue for="9" value="2" />
+          <attvalue for="10" value="param_1.52 -&gt; compare.0" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5615863808" target="5615816192" id="11">
+        <attvalues>
+          <attvalue for="7" value="empty" />
+          <attvalue for="8" value="0" />
+          <attvalue for="9" value="2" />
+          <attvalue for="10" value="param_1.52 -&gt; add.43" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5615863808" target="5615789568" id="12">
+        <attvalues>
+          <attvalue for="7" value="empty" />
+          <attvalue for="8" value="2" />
+          <attvalue for="9" value="2" />
+          <attvalue for="10" value="param_1.52 -&gt; select.0" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5615823360" target="5615789568" id="13">
+        <attvalues>
+          <attvalue for="7" value="empty" />
+          <attvalue for="8" value="0" />
+          <attvalue for="9" value="2" />
+          <attvalue for="10" value="compare.0 -&gt; select.0" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5615816192" target="5615789568" id="14">
+        <attvalues>
+          <attvalue for="7" value="empty" />
+          <attvalue for="8" value="1" />
+          <attvalue for="9" value="2" />
+          <attvalue for="10" value="add.43 -&gt; select.0" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5615789568" target="5615756288" id="15">
+        <attvalues>
+          <attvalue for="7" value="empty" />
+          <attvalue for="10" value="select.0 -&gt; bitcast.35" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5615756288" target="5615735808" id="16">
+        <attvalues>
+          <attvalue for="7" value="empty" />
+          <attvalue for="8" value="1" />
+          <attvalue for="9" value="2" />
+          <attvalue for="10" value="bitcast.35 -&gt; gather.1" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5615735808" target="5616120832" id="17">
+        <attvalues>
+          <attvalue for="7" value="normal" />
+          <attvalue for="10" value="gather.1 -&gt; param_0.36" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5615735808" target="5615962624" id="18">
+        <attvalues>
+          <attvalue for="7" value="normal" />
+          <attvalue for="10" value="gather.1 -&gt; param_0.49" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5619640832" target="5615881216" id="19">
+        <attvalues>
+          <attvalue for="7" value="normal" />
+          <attvalue for="10" value="Arg_17.18 -&gt; param_0.50" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5615881216" target="5615874048" id="20">
+        <attvalues>
+          <attvalue for="7" value="normal" />
+          <attvalue for="8" value="0" />
+          <attvalue for="9" value="2" />
+          <attvalue for="10" value="param_0.50 -&gt; gather.0" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5615884288" target="5615874048" id="21">
+        <attvalues>
+          <attvalue for="7" value="empty" />
+          <attvalue for="8" value="1" />
+          <attvalue for="9" value="2" />
+          <attvalue for="10" value="iota.1 -&gt; gather.0" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5615874048" target="5616128000" id="22">
+        <attvalues>
+          <attvalue for="7" value="empty" />
+          <attvalue for="10" value="gather.0 -&gt; param_1.39" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5615874048" target="5615947776" id="23">
+        <attvalues>
+          <attvalue for="7" value="empty" />
+          <attvalue for="10" value="gather.0 -&gt; param_1.47" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5616120832" target="5616105984" id="24">
+        <attvalues>
+          <attvalue for="7" value="normal" />
+          <attvalue for="8" value="0" />
+          <attvalue for="9" value="2" />
+          <attvalue for="10" value="param_0.36 -&gt; add.40" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5616128000" target="5616101888" id="25">
+        <attvalues>
+          <attvalue for="7" value="empty" />
+          <attvalue for="10" value="param_1.39 -&gt; broadcast.39" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5616101888" target="5616105984" id="26">
+        <attvalues>
+          <attvalue for="7" value="normal" />
+          <attvalue for="8" value="1" />
+          <attvalue for="9" value="2" />
+          <attvalue for="10" value="broadcast.39 -&gt; add.40" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5616105984" target="5616111616" id="27">
+        <attvalues>
+          <attvalue for="7" value="normal" />
+          <attvalue for="10" value="add.40 -&gt; bitcast.33" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5616111616" target="5619555328" id="28">
+        <attvalues>
+          <attvalue for="7" value="normal" />
+          <attvalue for="8" value="0" />
+          <attvalue for="9" value="2" />
+          <attvalue for="10" value="bitcast.33 -&gt; dot.4" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5619553792" target="5619555328" id="29">
+        <attvalues>
+          <attvalue for="7" value="normal" />
+          <attvalue for="8" value="1" />
+          <attvalue for="9" value="2" />
+          <attvalue for="10" value="Arg_6.7 -&gt; dot.4" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5619555328" target="5616253952" id="30">
+        <attvalues>
+          <attvalue for="7" value="normal" />
+          <attvalue for="10" value="dot.4 -&gt; param_1.37" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5616253952" target="5616195584" id="31">
+        <attvalues>
+          <attvalue for="7" value="normal" />
+          <attvalue for="10" value="param_1.37 -&gt; bitcast.32" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5616195584" target="5616163840" id="32">
+        <attvalues>
+          <attvalue for="7" value="normal" />
+          <attvalue for="8" value="0" />
+          <attvalue for="9" value="2" />
+          <attvalue for="10" value="bitcast.32 -&gt; add.39" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5616174080" target="5616177152" id="33">
+        <attvalues>
+          <attvalue for="7" value="empty" />
+          <attvalue for="10" value="param_0.34 -&gt; broadcast.38" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5616177152" target="5616163840" id="34">
+        <attvalues>
+          <attvalue for="7" value="normal" />
+          <attvalue for="8" value="1" />
+          <attvalue for="9" value="2" />
+          <attvalue for="10" value="broadcast.38 -&gt; add.39" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5616163840" target="5616135168" id="35">
+        <attvalues>
+          <attvalue for="7" value="normal" />
+          <attvalue for="8" value="0" />
+          <attvalue for="9" value="2" />
+          <attvalue for="10" value="add.39 -&gt; maximum.3" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5616135168" target="5616138240" id="36">
+        <attvalues>
+          <attvalue for="7" value="normal" />
+          <attvalue for="10" value="maximum.3 -&gt; bitcast.31" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5616138240" target="5619341824" id="37">
+        <attvalues>
+          <attvalue for="7" value="normal" />
+          <attvalue for="8" value="0" />
+          <attvalue for="9" value="2" />
+          <attvalue for="10" value="bitcast.31 -&gt; dot.5" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5619340288" target="5619341824" id="38">
+        <attvalues>
+          <attvalue for="7" value="normal" />
+          <attvalue for="8" value="1" />
+          <attvalue for="9" value="2" />
+          <attvalue for="10" value="Arg_7.8 -&gt; dot.5" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5619341824" target="5616400384" id="39">
+        <attvalues>
+          <attvalue for="7" value="normal" />
+          <attvalue for="10" value="dot.5 -&gt; param_1.22" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5619341824" target="5616372736" id="40">
+        <attvalues>
+          <attvalue for="7" value="normal" />
+          <attvalue for="10" value="dot.5 -&gt; param_1.32" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5619751936" target="5616114688" id="41">
+        <attvalues>
+          <attvalue for="7" value="empty" />
+          <attvalue for="10" value="Arg_3.4 -&gt; param_0.39" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5616114688" target="5615799296" id="42">
+        <attvalues>
+          <attvalue for="7" value="empty" />
+          <attvalue for="10" value="param_0.39 -&gt; broadcast.40" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5615799296" target="5616087552" id="43">
+        <attvalues>
+          <attvalue for="7" value="empty" />
+          <attvalue for="8" value="0" />
+          <attvalue for="9" value="2" />
+          <attvalue for="10" value="broadcast.40 -&gt; multiply.15" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5616087552" target="5619825152" id="44">
+        <attvalues>
+          <attvalue for="7" value="empty" />
+          <attvalue for="8" value="0" />
+          <attvalue for="9" value="2" />
+          <attvalue for="10" value="multiply.15 -&gt; dot.3" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5615962624" target="5615924736" id="45">
+        <attvalues>
+          <attvalue for="7" value="normal" />
+          <attvalue for="8" value="0" />
+          <attvalue for="9" value="2" />
+          <attvalue for="10" value="param_0.49 -&gt; add.41" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5615947776" target="5615952384" id="46">
+        <attvalues>
+          <attvalue for="7" value="empty" />
+          <attvalue for="10" value="param_1.47 -&gt; broadcast.43" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5615952384" target="5615924736" id="47">
+        <attvalues>
+          <attvalue for="7" value="normal" />
+          <attvalue for="8" value="1" />
+          <attvalue for="9" value="2" />
+          <attvalue for="10" value="broadcast.43 -&gt; add.41" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5615924736" target="5615927808" id="48">
+        <attvalues>
+          <attvalue for="7" value="normal" />
+          <attvalue for="10" value="add.41 -&gt; transpose.72" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5615927808" target="5615914496" id="49">
+        <attvalues>
+          <attvalue for="7" value="normal" />
+          <attvalue for="10" value="transpose.72 -&gt; copy.8" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5615914496" target="5615917568" id="50">
+        <attvalues>
+          <attvalue for="7" value="normal" />
+          <attvalue for="10" value="copy.8 -&gt; bitcast.34" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5615917568" target="5619825152" id="51">
+        <attvalues>
+          <attvalue for="7" value="normal" />
+          <attvalue for="8" value="1" />
+          <attvalue for="9" value="2" />
+          <attvalue for="10" value="bitcast.34 -&gt; dot.3" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5615917568" target="5619493376" id="52">
+        <attvalues>
+          <attvalue for="7" value="normal" />
+          <attvalue for="8" value="1" />
+          <attvalue for="9" value="2" />
+          <attvalue for="10" value="bitcast.34 -&gt; dot.2" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5615917568" target="5619570176" id="53">
+        <attvalues>
+          <attvalue for="7" value="normal" />
+          <attvalue for="8" value="1" />
+          <attvalue for="9" value="2" />
+          <attvalue for="10" value="bitcast.34 -&gt; dot" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5615917568" target="5619548160" id="54">
+        <attvalues>
+          <attvalue for="7" value="normal" />
+          <attvalue for="8" value="1" />
+          <attvalue for="9" value="2" />
+          <attvalue for="10" value="bitcast.34 -&gt; dot.1" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5619825152" target="5616610816" id="55">
+        <attvalues>
+          <attvalue for="7" value="normal" />
+          <attvalue for="10" value="dot.3 -&gt; param_2.17" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5619825152" target="5616814592" id="56">
+        <attvalues>
+          <attvalue for="7" value="normal" />
+          <attvalue for="10" value="dot.3 -&gt; param_2.26" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5619512320" target="5616040448" id="57">
+        <attvalues>
+          <attvalue for="7" value="empty" />
+          <attvalue for="10" value="Arg_2.3 -&gt; param_0.42" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5616040448" target="5616052224" id="58">
+        <attvalues>
+          <attvalue for="7" value="empty" />
+          <attvalue for="10" value="param_0.42 -&gt; broadcast.41" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5616052224" target="5616025088" id="59">
+        <attvalues>
+          <attvalue for="7" value="empty" />
+          <attvalue for="8" value="0" />
+          <attvalue for="9" value="2" />
+          <attvalue for="10" value="broadcast.41 -&gt; multiply.16" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5616025088" target="5619493376" id="60">
+        <attvalues>
+          <attvalue for="7" value="empty" />
+          <attvalue for="8" value="0" />
+          <attvalue for="9" value="2" />
+          <attvalue for="10" value="multiply.16 -&gt; dot.2" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5619493376" target="5616578048" id="61">
+        <attvalues>
+          <attvalue for="7" value="normal" />
+          <attvalue for="10" value="dot.2 -&gt; param_3.13" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5619493376" target="5616808960" id="62">
+        <attvalues>
+          <attvalue for="7" value="normal" />
+          <attvalue for="10" value="dot.2 -&gt; param_3.18" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5619494912" target="5615667200" id="63">
+        <attvalues>
+          <attvalue for="7" value="empty" />
+          <attvalue for="10" value="Arg_0.1 -&gt; param_0.54" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5615667200" target="5615739904" id="64">
+        <attvalues>
+          <attvalue for="7" value="empty" />
+          <attvalue for="10" value="param_0.54 -&gt; broadcast.46" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5615739904" target="5615000576" id="65">
+        <attvalues>
+          <attvalue for="7" value="empty" />
+          <attvalue for="8" value="0" />
+          <attvalue for="9" value="2" />
+          <attvalue for="10" value="broadcast.46 -&gt; multiply.18" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5615000576" target="5619570176" id="66">
+        <attvalues>
+          <attvalue for="7" value="empty" />
+          <attvalue for="8" value="0" />
+          <attvalue for="9" value="2" />
+          <attvalue for="10" value="multiply.18 -&gt; dot" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5619570176" target="5616676352" id="67">
+        <attvalues>
+          <attvalue for="7" value="normal" />
+          <attvalue for="10" value="dot -&gt; param_4.5" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5619570176" target="5618292736" id="68">
+        <attvalues>
+          <attvalue for="7" value="normal" />
+          <attvalue for="10" value="dot -&gt; param_4.7" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5615133696" target="5615995904" id="69">
+        <attvalues>
+          <attvalue for="7" value="empty" />
+          <attvalue for="10" value="Arg_1.2 -&gt; param_0.45" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5615995904" target="5615969792" id="70">
+        <attvalues>
+          <attvalue for="7" value="empty" />
+          <attvalue for="10" value="param_0.45 -&gt; broadcast.42" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5615969792" target="5615959552" id="71">
+        <attvalues>
+          <attvalue for="7" value="empty" />
+          <attvalue for="8" value="0" />
+          <attvalue for="9" value="2" />
+          <attvalue for="10" value="broadcast.42 -&gt; multiply.17" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5615959552" target="5619548160" id="72">
+        <attvalues>
+          <attvalue for="7" value="empty" />
+          <attvalue for="8" value="0" />
+          <attvalue for="9" value="2" />
+          <attvalue for="10" value="multiply.17 -&gt; dot.1" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5619548160" target="5616710656" id="73">
+        <attvalues>
+          <attvalue for="7" value="normal" />
+          <attvalue for="10" value="dot.1 -&gt; param_5.4" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5619548160" target="5616960512" id="74">
+        <attvalues>
+          <attvalue for="7" value="normal" />
+          <attvalue for="10" value="dot.1 -&gt; param_5.5" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5616676352" target="5616598016" id="75">
+        <attvalues>
+          <attvalue for="7" value="normal" />
+          <attvalue for="8" value="0" />
+          <attvalue for="9" value="2" />
+          <attvalue for="10" value="param_4.5 -&gt; add.32" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5616710656" target="5616598016" id="76">
+        <attvalues>
+          <attvalue for="7" value="normal" />
+          <attvalue for="8" value="1" />
+          <attvalue for="9" value="2" />
+          <attvalue for="10" value="param_5.4 -&gt; add.32" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5616598016" target="5616546816" id="77">
+        <attvalues>
+          <attvalue for="7" value="normal" />
+          <attvalue for="8" value="0" />
+          <attvalue for="9" value="2" />
+          <attvalue for="10" value="add.32 -&gt; add.31" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5616578048" target="5616546816" id="78">
+        <attvalues>
+          <attvalue for="7" value="normal" />
+          <attvalue for="8" value="1" />
+          <attvalue for="9" value="2" />
+          <attvalue for="10" value="param_3.13 -&gt; add.31" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5616546816" target="5616544256" id="79">
+        <attvalues>
+          <attvalue for="7" value="normal" />
+          <attvalue for="8" value="0" />
+          <attvalue for="9" value="2" />
+          <attvalue for="10" value="add.31 -&gt; add.30" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5616610816" target="5616544256" id="80">
+        <attvalues>
+          <attvalue for="7" value="normal" />
+          <attvalue for="8" value="1" />
+          <attvalue for="9" value="2" />
+          <attvalue for="10" value="param_2.17 -&gt; add.30" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5616544256" target="5616403456" id="81">
+        <attvalues>
+          <attvalue for="7" value="normal" />
+          <attvalue for="8" value="0" />
+          <attvalue for="9" value="2" />
+          <attvalue for="10" value="add.30 -&gt; multiply.10" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5616403456" target="5616553984" id="82">
+        <attvalues>
+          <attvalue for="7" value="normal" />
+          <attvalue for="10" value="multiply.10 -&gt; bitcast.27" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5616553984" target="5618139136" id="83">
+        <attvalues>
+          <attvalue for="7" value="normal" />
+          <attvalue for="10" value="bitcast.27 -&gt; transpose.69" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5618139136" target="5616311808" id="84">
+        <attvalues>
+          <attvalue for="7" value="normal" />
+          <attvalue for="10" value="transpose.69 -&gt; copy.5" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5616311808" target="5616425984" id="85">
+        <attvalues>
+          <attvalue for="7" value="normal" />
+          <attvalue for="8" value="0" />
+          <attvalue for="9" value="2" />
+          <attvalue for="10" value="copy.5 -&gt; add.28" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5616400384" target="5616394240" id="86">
+        <attvalues>
+          <attvalue for="7" value="normal" />
+          <attvalue for="10" value="param_1.22 -&gt; bitcast.26" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5616394240" target="5616429056" id="87">
+        <attvalues>
+          <attvalue for="7" value="normal" />
+          <attvalue for="8" value="0" />
+          <attvalue for="9" value="2" />
+          <attvalue for="10" value="bitcast.26 -&gt; add.29" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5616456192" target="5616445952" id="88">
+        <attvalues>
+          <attvalue for="7" value="empty" />
+          <attvalue for="10" value="param_0.16 -&gt; broadcast.28" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5616445952" target="5616429056" id="89">
+        <attvalues>
+          <attvalue for="7" value="normal" />
+          <attvalue for="8" value="1" />
+          <attvalue for="9" value="2" />
+          <attvalue for="10" value="broadcast.28 -&gt; add.29" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5616429056" target="5616425984" id="90">
+        <attvalues>
+          <attvalue for="7" value="normal" />
+          <attvalue for="8" value="1" />
+          <attvalue for="9" value="2" />
+          <attvalue for="10" value="add.29 -&gt; add.28" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5616425984" target="5616417792" id="91">
+        <attvalues>
+          <attvalue for="7" value="normal" />
+          <attvalue for="10" value="add.28 -&gt; bitcast.25" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5616417792" target="5619502080" id="92">
+        <attvalues>
+          <attvalue for="7" value="normal" />
+          <attvalue for="8" value="0" />
+          <attvalue for="9" value="2" />
+          <attvalue for="10" value="bitcast.25 -&gt; dot.10" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5619500544" target="5619502080" id="93">
+        <attvalues>
+          <attvalue for="7" value="normal" />
+          <attvalue for="8" value="1" />
+          <attvalue for="9" value="2" />
+          <attvalue for="10" value="Arg_14.15 -&gt; dot.10" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5619502080" target="5616717824" id="94">
+        <attvalues>
+          <attvalue for="7" value="normal" />
+          <attvalue for="10" value="dot.10 -&gt; param_1.18" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5616717824" target="5616549888" id="95">
+        <attvalues>
+          <attvalue for="7" value="normal" />
+          <attvalue for="10" value="param_1.18 -&gt; bitcast.24" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5616549888" target="5616225792" id="96">
+        <attvalues>
+          <attvalue for="7" value="normal" />
+          <attvalue for="8" value="0" />
+          <attvalue for="9" value="2" />
+          <attvalue for="10" value="bitcast.24 -&gt; add.27" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5616817152" target="5618110464" id="97">
+        <attvalues>
+          <attvalue for="7" value="empty" />
+          <attvalue for="10" value="param_0.13 -&gt; broadcast.24" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5618110464" target="5616225792" id="98">
+        <attvalues>
+          <attvalue for="7" value="normal" />
+          <attvalue for="8" value="1" />
+          <attvalue for="9" value="2" />
+          <attvalue for="10" value="broadcast.24 -&gt; add.27" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5616225792" target="5618498048" id="99">
+        <attvalues>
+          <attvalue for="7" value="normal" />
+          <attvalue for="8" value="0" />
+          <attvalue for="9" value="2" />
+          <attvalue for="10" value="add.27 -&gt; maximum.2" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5618498048" target="5616632320" id="100">
+        <attvalues>
+          <attvalue for="7" value="normal" />
+          <attvalue for="10" value="maximum.2 -&gt; bitcast.23" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5616632320" target="5619438080" id="101">
+        <attvalues>
+          <attvalue for="7" value="normal" />
+          <attvalue for="8" value="0" />
+          <attvalue for="9" value="2" />
+          <attvalue for="10" value="bitcast.23 -&gt; dot.11" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5619425792" target="5619438080" id="102">
+        <attvalues>
+          <attvalue for="7" value="normal" />
+          <attvalue for="8" value="1" />
+          <attvalue for="9" value="2" />
+          <attvalue for="10" value="Arg_15.16 -&gt; dot.11" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5619438080" target="5616490496" id="103">
+        <attvalues>
+          <attvalue for="7" value="normal" />
+          <attvalue for="10" value="dot.11 -&gt; param_2.4" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5619439616" target="5616477696" id="104">
+        <attvalues>
+          <attvalue for="7" value="empty" />
+          <attvalue for="10" value="Arg_11.12 -&gt; param_0.19" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5616477696" target="5616410624" id="105">
+        <attvalues>
+          <attvalue for="7" value="empty" />
+          <attvalue for="10" value="param_0.19 -&gt; broadcast.32" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5616410624" target="5616533504" id="106">
+        <attvalues>
+          <attvalue for="7" value="empty" />
+          <attvalue for="8" value="0" />
+          <attvalue for="9" value="2" />
+          <attvalue for="10" value="broadcast.32 -&gt; multiply.11" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5616533504" target="5619467264" id="107">
+        <attvalues>
+          <attvalue for="7" value="empty" />
+          <attvalue for="8" value="0" />
+          <attvalue for="9" value="2" />
+          <attvalue for="10" value="multiply.11 -&gt; dot.9" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5618292736" target="5616811520" id="108">
+        <attvalues>
+          <attvalue for="7" value="normal" />
+          <attvalue for="8" value="0" />
+          <attvalue for="9" value="2" />
+          <attvalue for="10" value="param_4.7 -&gt; add.38" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5616960512" target="5616811520" id="109">
+        <attvalues>
+          <attvalue for="7" value="normal" />
+          <attvalue for="8" value="1" />
+          <attvalue for="9" value="2" />
+          <attvalue for="10" value="param_5.5 -&gt; add.38" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5616811520" target="5616824320" id="110">
+        <attvalues>
+          <attvalue for="7" value="normal" />
+          <attvalue for="8" value="0" />
+          <attvalue for="9" value="2" />
+          <attvalue for="10" value="add.38 -&gt; add.37" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5616808960" target="5616824320" id="111">
+        <attvalues>
+          <attvalue for="7" value="normal" />
+          <attvalue for="8" value="1" />
+          <attvalue for="9" value="2" />
+          <attvalue for="10" value="param_3.18 -&gt; add.37" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5616824320" target="5617035264" id="112">
+        <attvalues>
+          <attvalue for="7" value="normal" />
+          <attvalue for="8" value="0" />
+          <attvalue for="9" value="2" />
+          <attvalue for="10" value="add.37 -&gt; add.35" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5616814592" target="5617035264" id="113">
+        <attvalues>
+          <attvalue for="7" value="normal" />
+          <attvalue for="8" value="1" />
+          <attvalue for="9" value="2" />
+          <attvalue for="10" value="param_2.26 -&gt; add.35" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5617035264" target="5616320000" id="114">
+        <attvalues>
+          <attvalue for="7" value="normal" />
+          <attvalue for="8" value="0" />
+          <attvalue for="9" value="2" />
+          <attvalue for="10" value="add.35 -&gt; multiply.14" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5616320000" target="5616323072" id="115">
+        <attvalues>
+          <attvalue for="7" value="normal" />
+          <attvalue for="10" value="multiply.14 -&gt; bitcast.30" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5616323072" target="5616340992" id="116">
+        <attvalues>
+          <attvalue for="7" value="normal" />
+          <attvalue for="10" value="bitcast.30 -&gt; transpose.71" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5616340992" target="5616351232" id="117">
+        <attvalues>
+          <attvalue for="7" value="normal" />
+          <attvalue for="10" value="transpose.71 -&gt; copy.7" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5616351232" target="5616212992" id="118">
+        <attvalues>
+          <attvalue for="7" value="normal" />
+          <attvalue for="8" value="0" />
+          <attvalue for="9" value="2" />
+          <attvalue for="10" value="copy.7 -&gt; add.33" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5616372736" target="5616275456" id="119">
+        <attvalues>
+          <attvalue for="7" value="normal" />
+          <attvalue for="10" value="param_1.32 -&gt; bitcast.29" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5616275456" target="5616235008" id="120">
+        <attvalues>
+          <attvalue for="7" value="normal" />
+          <attvalue for="8" value="0" />
+          <attvalue for="9" value="2" />
+          <attvalue for="10" value="bitcast.29 -&gt; add.34" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5616257024" target="5616247808" id="121">
+        <attvalues>
+          <attvalue for="7" value="empty" />
+          <attvalue for="10" value="param_0.30 -&gt; broadcast.35" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5616247808" target="5616235008" id="122">
+        <attvalues>
+          <attvalue for="7" value="normal" />
+          <attvalue for="8" value="1" />
+          <attvalue for="9" value="2" />
+          <attvalue for="10" value="broadcast.35 -&gt; add.34" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5616235008" target="5616212992" id="123">
+        <attvalues>
+          <attvalue for="7" value="normal" />
+          <attvalue for="8" value="1" />
+          <attvalue for="9" value="2" />
+          <attvalue for="10" value="add.34 -&gt; add.33" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5616212992" target="5616216064" id="124">
+        <attvalues>
+          <attvalue for="7" value="normal" />
+          <attvalue for="10" value="add.33 -&gt; transpose.70" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5616216064" target="5616202752" id="125">
+        <attvalues>
+          <attvalue for="7" value="normal" />
+          <attvalue for="10" value="transpose.70 -&gt; copy.6" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5616202752" target="5616205824" id="126">
+        <attvalues>
+          <attvalue for="7" value="normal" />
+          <attvalue for="10" value="copy.6 -&gt; bitcast.28" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5616205824" target="5619467264" id="127">
+        <attvalues>
+          <attvalue for="7" value="normal" />
+          <attvalue for="8" value="1" />
+          <attvalue for="9" value="2" />
+          <attvalue for="10" value="bitcast.28 -&gt; dot.9" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5616205824" target="5619373056" id="128">
+        <attvalues>
+          <attvalue for="7" value="normal" />
+          <attvalue for="8" value="1" />
+          <attvalue for="9" value="2" />
+          <attvalue for="10" value="bitcast.28 -&gt; dot.8" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5616205824" target="5618830848" id="129">
+        <attvalues>
+          <attvalue for="7" value="normal" />
+          <attvalue for="8" value="1" />
+          <attvalue for="9" value="2" />
+          <attvalue for="10" value="bitcast.28 -&gt; dot.6" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5616205824" target="5619356672" id="130">
+        <attvalues>
+          <attvalue for="7" value="normal" />
+          <attvalue for="8" value="1" />
+          <attvalue for="9" value="2" />
+          <attvalue for="10" value="bitcast.28 -&gt; dot.7" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5619467264" target="5618074112" id="131">
+        <attvalues>
+          <attvalue for="7" value="normal" />
+          <attvalue for="10" value="dot.9 -&gt; param_3.8" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5619468800" target="5616530432" id="132">
+        <attvalues>
+          <attvalue for="7" value="empty" />
+          <attvalue for="10" value="Arg_10.11 -&gt; param_0.22" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5616530432" target="5617135104" id="133">
+        <attvalues>
+          <attvalue for="7" value="empty" />
+          <attvalue for="10" value="param_0.22 -&gt; broadcast.33" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5617135104" target="5616515072" id="134">
+        <attvalues>
+          <attvalue for="7" value="empty" />
+          <attvalue for="8" value="0" />
+          <attvalue for="9" value="2" />
+          <attvalue for="10" value="broadcast.33 -&gt; multiply.12" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5616515072" target="5619373056" id="135">
+        <attvalues>
+          <attvalue for="7" value="empty" />
+          <attvalue for="8" value="0" />
+          <attvalue for="9" value="2" />
+          <attvalue for="10" value="multiply.12 -&gt; dot.8" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5619373056" target="5617043968" id="136">
+        <attvalues>
+          <attvalue for="7" value="normal" />
+          <attvalue for="10" value="dot.8 -&gt; param_4.3" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5618826752" target="5820080128" id="137">
+        <attvalues>
+          <attvalue for="7" value="empty" />
+          <attvalue for="10" value="Arg_8.9 -&gt; param_0.57" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5820080128" target="5820083200" id="138">
+        <attvalues>
+          <attvalue for="7" value="empty" />
+          <attvalue for="10" value="param_0.57 -&gt; broadcast.48" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5820083200" target="5615656960" id="139">
+        <attvalues>
+          <attvalue for="7" value="empty" />
+          <attvalue for="8" value="0" />
+          <attvalue for="9" value="2" />
+          <attvalue for="10" value="broadcast.48 -&gt; multiply.19" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5615656960" target="5618830848" id="140">
+        <attvalues>
+          <attvalue for="7" value="empty" />
+          <attvalue for="8" value="0" />
+          <attvalue for="9" value="2" />
+          <attvalue for="10" value="multiply.19 -&gt; dot.6" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5618830848" target="5618248704" id="141">
+        <attvalues>
+          <attvalue for="7" value="normal" />
+          <attvalue for="10" value="dot.6 -&gt; param_5.3" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5618832384" target="5616506880" id="142">
+        <attvalues>
+          <attvalue for="7" value="empty" />
+          <attvalue for="10" value="Arg_9.10 -&gt; param_0.25" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5616506880" target="5616504320" id="143">
+        <attvalues>
+          <attvalue for="7" value="empty" />
+          <attvalue for="10" value="param_0.25 -&gt; broadcast.34" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5616504320" target="5616493056" id="144">
+        <attvalues>
+          <attvalue for="7" value="empty" />
+          <attvalue for="8" value="0" />
+          <attvalue for="9" value="2" />
+          <attvalue for="10" value="broadcast.34 -&gt; multiply.13" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5616493056" target="5619356672" id="145">
+        <attvalues>
+          <attvalue for="7" value="empty" />
+          <attvalue for="8" value="0" />
+          <attvalue for="9" value="2" />
+          <attvalue for="10" value="multiply.13 -&gt; dot.7" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5619356672" target="5618872320" id="146">
+        <attvalues>
+          <attvalue for="7" value="normal" />
+          <attvalue for="10" value="dot.7 -&gt; param_6.2" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5618248704" target="5617197568" id="147">
+        <attvalues>
+          <attvalue for="7" value="normal" />
+          <attvalue for="8" value="0" />
+          <attvalue for="9" value="2" />
+          <attvalue for="10" value="param_5.3 -&gt; add.26" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5618872320" target="5617197568" id="148">
+        <attvalues>
+          <attvalue for="7" value="normal" />
+          <attvalue for="8" value="1" />
+          <attvalue for="9" value="2" />
+          <attvalue for="10" value="param_6.2 -&gt; add.26" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5617197568" target="5618275840" id="149">
+        <attvalues>
+          <attvalue for="7" value="normal" />
+          <attvalue for="8" value="0" />
+          <attvalue for="9" value="2" />
+          <attvalue for="10" value="add.26 -&gt; add.25" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5617043968" target="5618275840" id="150">
+        <attvalues>
+          <attvalue for="7" value="normal" />
+          <attvalue for="8" value="1" />
+          <attvalue for="9" value="2" />
+          <attvalue for="10" value="param_4.3 -&gt; add.25" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5618275840" target="5619127296" id="151">
+        <attvalues>
+          <attvalue for="7" value="normal" />
+          <attvalue for="8" value="0" />
+          <attvalue for="9" value="2" />
+          <attvalue for="10" value="add.25 -&gt; add.24" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5618074112" target="5619127296" id="152">
+        <attvalues>
+          <attvalue for="7" value="normal" />
+          <attvalue for="8" value="1" />
+          <attvalue for="9" value="2" />
+          <attvalue for="10" value="param_3.8 -&gt; add.24" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5619127296" target="5617064448" id="153">
+        <attvalues>
+          <attvalue for="7" value="normal" />
+          <attvalue for="8" value="0" />
+          <attvalue for="9" value="2" />
+          <attvalue for="10" value="add.24 -&gt; multiply.9" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5617064448" target="5616034816" id="154">
+        <attvalues>
+          <attvalue for="7" value="normal" />
+          <attvalue for="10" value="multiply.9 -&gt; bitcast.22" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5616034816" target="5618076672" id="155">
+        <attvalues>
+          <attvalue for="7" value="normal" />
+          <attvalue for="10" value="bitcast.22 -&gt; transpose.68" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5618076672" target="5616936960" id="156">
+        <attvalues>
+          <attvalue for="7" value="normal" />
+          <attvalue for="10" value="transpose.68 -&gt; copy.4" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5616936960" target="5616564224" id="157">
+        <attvalues>
+          <attvalue for="7" value="normal" />
+          <attvalue for="8" value="0" />
+          <attvalue for="9" value="2" />
+          <attvalue for="10" value="copy.4 -&gt; add.22" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5616490496" target="5619856896" id="158">
+        <attvalues>
+          <attvalue for="7" value="normal" />
+          <attvalue for="10" value="param_2.4 -&gt; bitcast.21" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5619856896" target="5616803328" id="159">
+        <attvalues>
+          <attvalue for="7" value="normal" />
+          <attvalue for="8" value="0" />
+          <attvalue for="9" value="2" />
+          <attvalue for="10" value="bitcast.21 -&gt; add.23" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5616646656" target="5616831488" id="160">
+        <attvalues>
+          <attvalue for="7" value="empty" />
+          <attvalue for="10" value="param_1.14 -&gt; broadcast.21" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5616831488" target="5616803328" id="161">
+        <attvalues>
+          <attvalue for="7" value="normal" />
+          <attvalue for="8" value="1" />
+          <attvalue for="9" value="2" />
+          <attvalue for="10" value="broadcast.21 -&gt; add.23" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5616803328" target="5616564224" id="162">
+        <attvalues>
+          <attvalue for="7" value="normal" />
+          <attvalue for="8" value="1" />
+          <attvalue for="9" value="2" />
+          <attvalue for="10" value="add.23 -&gt; add.22" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5616564224" target="5616581120" id="163">
+        <attvalues>
+          <attvalue for="7" value="normal" />
+          <attvalue for="10" value="add.22 -&gt; bitcast.19" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5616581120" target="5618071040" id="164">
+        <attvalues>
+          <attvalue for="7" value="normal" />
+          <attvalue for="8" value="0" />
+          <attvalue for="9" value="2" />
+          <attvalue for="10" value="bitcast.19 -&gt; dot.13" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5616673280" target="5616557056" id="165">
+        <attvalues>
+          <attvalue for="7" value="empty" />
+          <attvalue for="10" value="param_0.9 -&gt; bitcast.20" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5616557056" target="5618071040" id="166">
+        <attvalues>
+          <attvalue for="7" value="empty" />
+          <attvalue for="8" value="1" />
+          <attvalue for="9" value="2" />
+          <attvalue for="10" value="bitcast.20 -&gt; dot.13" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5618071040" target="5619293184" id="167">
+        <attvalues>
+          <attvalue for="7" value="empty" />
+          <attvalue for="8" value="1" />
+          <attvalue for="9" value="2" />
+          <attvalue for="10" value="dot.13 -&gt; call" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5614584320" target="5819499008" id="168">
+        <attvalues>
+          <attvalue for="7" value="empty" />
+          <attvalue for="10" value="p -&gt; param_0.58" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5613373440" target="5614540800" id="169">
+        <attvalues>
+          <attvalue for="7" value="empty" />
+          <attvalue for="10" value="p.1 -&gt; param_1.57" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5614540800" target="5614917632" id="170">
+        <attvalues>
+          <attvalue for="7" value="empty" />
+          <attvalue for="10" value="param_1.57 -&gt; bitcast.37" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5614917632" target="5614567424" id="171">
+        <attvalues>
+          <attvalue for="7" value="empty" />
+          <attvalue for="10" value="bitcast.37 -&gt; slice.1" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5614567424" target="5614570496" id="172">
+        <attvalues>
+          <attvalue for="7" value="empty" />
+          <attvalue for="10" value="slice.1 -&gt; bitcast.36" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5614570496" target="5614668800" id="173">
+        <attvalues>
+          <attvalue for="7" value="empty" />
+          <attvalue for="10" value="bitcast.36 -&gt; broadcast.52" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5614668800" target="5614505472" id="174">
+        <attvalues>
+          <attvalue for="7" value="normal" />
+          <attvalue for="8" value="0" />
+          <attvalue for="9" value="2" />
+          <attvalue for="10" value="broadcast.52 -&gt; subtract.1" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5819499008" target="5612883456" id="175">
+        <attvalues>
+          <attvalue for="7" value="empty" />
+          <attvalue for="10" value="param_0.58 -&gt; convert.1" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5612883456" target="5615118336" id="176">
+        <attvalues>
+          <attvalue for="7" value="empty" />
+          <attvalue for="10" value="convert.1 -&gt; broadcast.50" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5615118336" target="5614505472" id="177">
+        <attvalues>
+          <attvalue for="7" value="normal" />
+          <attvalue for="8" value="1" />
+          <attvalue for="9" value="2" />
+          <attvalue for="10" value="broadcast.50 -&gt; subtract.1" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5614505472" target="5614483456" id="178">
+        <attvalues>
+          <attvalue for="7" value="normal" />
+          <attvalue for="8" value="0" />
+          <attvalue for="9" value="2" />
+          <attvalue for="10" value="subtract.1 -&gt; multiply.20" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5614505472" target="5614483456" id="179">
+        <attvalues>
+          <attvalue for="7" value="normal" />
+          <attvalue for="8" value="1" />
+          <attvalue for="9" value="2" />
+          <attvalue for="10" value="subtract.1 -&gt; multiply.20" />
+          <attvalue for="11" value="1" />
+        </attvalues>
+      </edge>
+      <edge source="5614483456" target="5619293184" id="180">
+        <attvalues>
+          <attvalue for="12" value="cluster_5772386848" />
+          <attvalue for="13" value="dashed" />
+          <attvalue for="10" value="parallel_fusion.1 -&gt; call" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5619293184" target="5619262464" id="181">
+        <attvalues>
+          <attvalue for="7" value="normal" />
+          <attvalue for="8" value="0" />
+          <attvalue for="9" value="2" />
+          <attvalue for="10" value="call -&gt; reduce-window" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5619262464" target="5616841216" id="182">
+        <attvalues>
+          <attvalue for="7" value="empty" />
+          <attvalue for="10" value="reduce-window -&gt; param_0.2" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5616841216" target="5618167296" id="183">
+        <attvalues>
+          <attvalue for="7" value="empty" />
+          <attvalue for="8" value="0" />
+          <attvalue for="9" value="2" />
+          <attvalue for="10" value="param_0.2 -&gt; reduce.9" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5618167296" target="5618246144" id="184">
+        <attvalues>
+          <attvalue for="7" value="empty" />
+          <attvalue for="8" value="0" />
+          <attvalue for="9" value="2" />
+          <attvalue for="10" value="reduce.9 -&gt; multiply.7" />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="5618246144" target="cluster_5777288080" id="185">
+        <attvalues>
+          <attvalue for="10" value=" " />
+          <attvalue for="11" value="0" />
+        </attvalues>
+      </edge>
+    </edges>
+  </graph>
+</gexf>

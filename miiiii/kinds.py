@@ -3,9 +3,10 @@
 # by: Noah Syrkis
 
 # %% Imports
-from chex import dataclass, Array
+from chex import dataclass
 from typing import List
 import optax
+from jax import Array
 
 
 @dataclass
@@ -14,6 +15,20 @@ class Metrics:
     valid_loss: Array
     train_f1: Array
     valid_f1: Array
+
+
+@dataclass
+class Conf:
+    base: int = 2
+    n: int = 1024
+    emb: int = 128
+    depth: int = 2
+    heads: int = 4
+    epochs: int = 100
+    lr: float = 1e-3
+    block: str = "vaswani"
+    l2: float = 1e-4  # lambda
+    dropout: float = 0.1
 
 
 # %% Model classes
@@ -64,7 +79,7 @@ class Datasplit:
 
 @dataclass
 class Datainfo:
-    apriori: Array  # for a given tasks, the apriori probabilities of each class
+    alpha: Array  # for a given tasks, the alpha probabilities of each class
     tasks: List[str]
 
 

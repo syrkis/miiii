@@ -4,25 +4,23 @@
 
 # imports
 import jax.numpy as jnp
-from jax import vmap, jit
-from functools import partial
 
 
 # functions
-def base_ns(digit_fn, x, base):
+def base_ns(x, base):
     digits = digit_fn(x.max(), base)
     numb = jnp.array([x // base**i % base for i in range(digits)][::-1]).T
     return numb
 
 
-def fibo(x):
-    pass
+def digit_fn(n, base):
+    return jnp.ceil(jnp.log(n + 1) / jnp.log(base)).astype(jnp.int32)
 
 
-def prime(x):
-    pass
-
-
-if __name__ == "__main__":
-    x = jnp.arange(33).T
-    print(base_ns(x, 16))
+# def fibo(x):
+# pass
+#
+#
+# def prime(x):
+# pass
+#

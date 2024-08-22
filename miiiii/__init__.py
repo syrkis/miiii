@@ -1,4 +1,4 @@
-from . import types
+from . import kinds
 from . import datum
 from . import utils
 from . import param
@@ -6,10 +6,11 @@ from . import plots
 from . import train
 from . import model
 from . import numbs
+from . import stats
 
 
 __all__ = [
-    "types",
+    "kinds",
     "datum",
     "utils",
     "param",
@@ -17,4 +18,5 @@ __all__ = [
     "train",
     "model",
     "numbs",
+    "stats",
 ]

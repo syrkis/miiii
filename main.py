@@ -5,17 +5,37 @@
 # %% Imports
 import miiiii as mi
 from jax import random
-from jax import numpy as jnp
-from oeis import A000040 as primes
+
+# from jax import numpy as jnp
+# from oeis import A000040 as primes
+import matplotlib.pyplot as plt
+
 
 # %% Exploring and plotting the data
-cfg, rng = mi.utils.get_conf(), random.PRNGKey(seed := 0)
+cfg, rng = mi.utils.load_conf(), random.PRNGKey(seed := 0)
 rng, key = random.split(rng)
-ds = mi.datum.data_fn(cfg.n, cfg.base, mi.numbs.base_ns, key)
+ds = mi.datum.data_fn(cfg.n, cfg.base, mi.numbs.base_ns)
+
+# %% Training
 params = mi.param.init_fn(key, cfg, ds.train.x, ds.train.y)
 apply = mi.model.make_apply_fn(mi.model.vaswani_fn)
-train, state = mi.train.init_train(apply, params, cfg, mi.utils.alpha_fn, ds)
+train, state = mi.train.init_train(apply, params, cfg, ds)
 state, metrics = train(cfg.epochs, rng, state)
+
+# %% Hinton metrics
+mi.plots.hinton_metric(metrics, "train_loss", ds)
+mi.plots.hinton_metric(metrics, "train_f1", ds)
+mi.plots.hinton_metric(metrics, "valid_loss", ds)
+mi.plots.hinton_metric(metrics, "valid_f1", ds)
+
+
+# %% Hinton weights
+params = state.params
+fig, ax = plt.subplots()
+mi.plots.hinton_fn(params.blocks[0].head.key[0], ax)
+plt.tight_layout()
+plt.show()
+
 
 # %% Polar plots
 # fnames = ["polar_nats", "polar_sixes", "polar_evens_and_fives", "polar_threes"]
@@ -25,7 +45,7 @@ state, metrics = train(cfg.epochs, rng, state)
 # mi.plots.polar_plot(seqs[-1], "polar_primes")
 
 # %% Hinton plots
-mi.plots.syrkis_plot(metrics["train_loss"], cfg, "Train Focal Loss", ds)
+# mi.plots.syrkis_plot(metrics["train_loss"], cfg, "Train Focal Loss", ds)
 
 # %%
-mi.plots.syrkis_plot(metrics["valid_loss"], cfg, "Valid Focal Loss", ds)
+# mi.plots.syrkis_plot(metrics["valid_loss"], cfg, "Valid Focal Loss", ds)

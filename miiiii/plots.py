@@ -1,31 +1,89 @@
-# plot.py
+# %% plot.py
 #    miii plots
 # by: Noah Syrkis
 
-# imports
+"""
+plot types:
+    1. hinton plot for model weights
+    2. syrkis plot for training progress of metrics
+    3. polar plot for number sequences
+    4. curve plot for training progress of loss
+"""
+
+# %% imports
 import miiiii as mi
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.patches import Rectangle
 from typing import Sequence
 import jax.numpy as jnp
 from jax.tree_util import tree_flatten
+import os
 
-
-# constants
-cols = {True: "black", False: "white"}
+# %% Constants and configurations
 fg = "black"
 bg = "white"
-marks = ["o", "o", " ", "o"]
-plt.rcParams["font.family"] = "DejaVu Sans"
+plt.rcParams["font.family"] = "Monospace"
 
 
-def fname_fn(conf, fname):
-    return (
-        "-".join([f"{k}_{v}" for k, v in conf.items() if k not in ["in_d", "out_d"]])
-        + f"_{fname}".replace(" ", "_").lower()
-    )
+# %% Hinton plots
+def hinton_metric(metrics, metric, ds):
+    data = metrics.get(metric)
+    fig, ax = plt.subplots(figsize=(12, 4))
+    pool_data = mi.stats.horizontal_mean_pooling(data)
+    hinton_fn(pool_data, ax)
+
+    # ax modifications
+    ax.set_xlim(0 - 1, len(pool_data[0]) + 1)
+    ax.set_ylim(0 - 1, len(pool_data) + 1)
+    ax.tick_params(axis="x", which="major", pad=10)
+    ax.tick_params(axis="y", which="major", pad=10)
+    ax.set_xticks([0, len(pool_data[0]) - 1])
+    ax.set_xticklabels(["1", data.shape[1]])
+    # title_pos = len(pool_data[0]) + 0.5, len(pool_data) / 2
+    # ax.text(*title_pos, f"{metric} in time", ha="center", va="center", rotation=270)
+    ax.set_yticks([i for i in range(len(ds.info.tasks))])  # type: ignore
+    ax.set_yticklabels(ds.info.tasks[:-1] + ["ℙ"])
+    plt.tight_layout()
+    plt.savefig(f"figs/{metric}.svg")
 
 
+def hinton_fn(data, ax):  # <- Hinton atomic
+    """Plot a matrix of data in a hinton diagram."""
+    scale = jnp.max(jnp.abs(data)) / 0.8
+    for (y, x), w in np.ndenumerate(data):
+        c = bg if w < 0 else fg  # color
+        s = np.sqrt(np.abs(w) / scale)  # size
+        ax.add_patch(Rectangle((x - s / 2, y - s / 2), s, s, facecolor=c, edgecolor=fg))
+    hinton_ax(ax)
+
+
+def hinton_ax(ax):
+    # remove ticks and labels
+    for spine in ax.spines.values():
+        spine.set_visible(False)
+    ax.set_xticks([])
+    ax.set_yticks([])
+    ax.autoscale_view()
+    ax.set_aspect("equal", "box")
+
+
+# %% Polar plots
+def polar_fn(ax, data):
+    """Plot a polar diagram of data."""
+    ax.plot(data, np.ones_like(data), "o", color=fg)
+
+
+# %% Curve plots
+def curve_fn(ax, data):
+    """Plot a curve of data."""
+    ax.plot(data, color=fg)
+
+
+# %% Figures
+
+
+# fig functions
 def syrkis_plot(matrix, cfg, metric, ds):
     cols = matrix.shape[1] * 3
     X = matrix[: (matrix.shape[0] // cols) * cols]
@@ -40,7 +98,7 @@ def syrkis_plot(matrix, cfg, metric, ds):
     ax.yaxis.set_major_locator(plt.NullLocator())  # type: ignore
     matrix = matrix / 0.2
     for (y, x), w in np.ndenumerate(matrix):
-        s = min(float(jnp.sqrt(w)), 0.9)
+        s = float(jnp.sqrt(w))
         rect = plt.Rectangle(  # type: ignore
             [x - s / 2, y - s / 2],  # type: ignore
             s,
@@ -66,8 +124,7 @@ def syrkis_plot(matrix, cfg, metric, ds):
     ax.set_yticklabels(ds.info.tasks[:-1] + ["ℙ"])
     ax.set_xlabel("Epoch")
     plt.tight_layout()
-    fname = "syrkis_" + mi.plots.fname_fn(cfg, metric)
-    plt.savefig(f"paper/figs/{fname}.svg")
+    plt.savefig(path_fn(cfg, metric))
     # plt.close()
 
 
@@ -173,3 +230,31 @@ def init_curve_plot(info, conf):
     [spine.set_edgecolor(fg) for spine in ax.spines.values()]
     # ax y range from 0 to what it is
     return fig, ax
+
+
+###############################################################
+# %% helpers
+
+
+def path_fn(cfg, kind):
+    """Creates a path for saving figures"""
+    if not os.path.exists("figs"):
+        os.mkdir("figs")
+    if not os.path.exists(os.path.join("figs", kind)):
+        os.mkdir(os.path.join("figs", kind))
+    return os.path.join("figs", kind, fname_fn(cfg))
+
+
+def fname_fn(cfg):
+    """Creates a filename for saving figures"""
+    return f"{cfg.base}_{cfg.n}_{cfg.l2}_{cfg.dropout}.svg"
+
+
+def ax_fn(ax):
+    """Cleans default matplotlib stuff"""
+    ax.patch.set_facecolor(bg)
+    [ax.spines[loc].set_visible(False) for loc in ["top", "right", "left", "bottom"]]
+    ax.set_xticks([])
+    ax.set_yticks([])
+    ax.set_xticklabels([])
+    ax.set_yticklabels([])
