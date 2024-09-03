@@ -11,7 +11,7 @@ from oeis import A000040 as primes
 # %% Exploring and plotting the data
 cfg, rng = mi.utils.cfg_fn(), random.PRNGKey(seed := 0)
 rng, key = random.split(rng)
-ds = mi.datum.prime_fn(cfg.n, cfg.base, mi.numbs.base_ns)
+ds = mi.prime.prime_fn(cfg.n, cfg.base, mi.numbs.base_ns)
 
 # %% Initialize
 params = mi.param.init_fn(key, cfg)

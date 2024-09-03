@@ -1,5 +1,6 @@
 from . import kinds
-from . import datum
+from . import prose
+from . import prime
 from . import utils
 from . import param
 from . import plots
@@ -11,7 +12,8 @@ from . import stats
 
 __all__ = [
     "kinds",
-    "datum",
+    "prose",
+    "prime",
     "utils",
     "param",
     "plots",
