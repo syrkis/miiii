@@ -28,9 +28,7 @@ plt.rcParams["font.family"] = "Monospace"
 
 
 # %% functions
-def plot_run(
-    metrics: Dict[str, Dict[str, Array]], ds: mi.kinds.Dataset, cfg: mi.kinds.Conf
-):
+def plot_run(metrics: Dict[str, Dict[str, Array]], ds: mi.kinds.Dataset, cfg: mi.kinds.Conf):
     # make run folder in figs/runs folder
     path = f"figs/runs/{name_run(cfg)}"
     os.makedirs(path, exist_ok=True)
@@ -51,7 +49,7 @@ def plot_run(
 
 def name_run(cfg: mi.kinds.Conf):
     datum_name = f"base_{cfg.base}_n_{cfg.n}"
-    model_name = f"emb_{cfg.emb}_heads_{cfg.heads}_depth_{cfg.depth}"
+    model_name = f"emb_{cfg.latent_dim}_heads_{cfg.heads}_depth_{cfg.depth}"
     train_name = f"lr_{cfg.lr}_epochs_{cfg.epochs}_l2_{cfg.l2}_dropout_{cfg.dropout}"
     name = f"{datum_name}_{model_name}_{train_name}"
     return name
@@ -70,9 +68,7 @@ def hinton_weight(weight: Array, path: str):
     plt.savefig(f"{path}/pdf/weights.pdf")
 
 
-def hinton_metric(
-    data: Array, metric: str, ds: mi.kinds.Dataset, path: str, split: str
-):
+def hinton_metric(data: Array, metric: str, ds: mi.kinds.Dataset, path: str, split: str):
     fig, ax = plt.subplots(figsize=(12, 5))
     pool_data = mi.stats.horizontal_mean_pooling(data)
     hinton_fn(pool_data, ax)
@@ -111,11 +107,7 @@ def hinton_fn(data, ax):  # <- Hinton atomic
 
 ########################################################################################
 # %% Polar plots
-def polar_plot(
-    ps: Sequence[Sequence] | Sequence | np.ndarray,
-    f_name: Sequence[str] | str | None = None,
-    ax=None,
-):
+def polar_plot(ps: Sequence[Sequence] | Sequence | np.ndarray, f_name: Sequence[str] | str | None = None, ax=None):
     # init and config
     ax_was_none = ax is None
     if ax is None:
@@ -131,9 +123,8 @@ def polar_plot(
     for p in ps:
         ax.plot(p, p, "o", markersize=2, color="black")
     plt.tight_layout()
-    plt.savefig(f"paper/figs/{f_name}.svg") if f_name else plt.show()
-    plt.savefig(f"paper/figs/{f_name}.png") if f_name else plt.show()
-    plt.savefig(f"paper/figs/{f_name}.pdf") if f_name else plt.show()
+    for format in ["svg", "png", "pdf"]:
+        plt.savefig(f"paper/figs/{f_name}.{format}") if f_name else plt.show()
     if ax_was_none:
         plt.close()
 
@@ -142,13 +133,7 @@ def small_multiples(fnames, seqs, f_name, n_rows=2, n_cols=2):
     assert (
         len(fnames) == len(seqs) and len(fnames) >= n_rows * n_cols
     ), "fnames and seqs must be the same length and n_rows * n_cols"
-    fig, axes = plt.subplots(
-        n_rows,
-        n_cols,
-        subplot_kw=dict(polar=True),
-        figsize=(n_cols * 5, n_rows * 5),
-        dpi=100,
-    )
+    fig, axes = plt.subplots(n_rows, n_cols, subplot_kw=dict(polar=True), figsize=(n_cols * 5, n_rows * 5), dpi=100)
     for ax, fname, seqs in zip(axes.flat, fnames, seqs):  # type: ignore
         polar_plot(seqs, fname, ax=ax)
     # tight

@@ -4,6 +4,7 @@
 
 # imports
 import miiiii.kinds as kinds
+import miiiii.numbs as numbs
 import argparse
 import os
 import jax.numpy as jnp
@@ -17,12 +18,38 @@ blue = "#002fa7"
 
 
 # functions
-def load_conf():
-    parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    with open(os.path.join(parent_dir, "config.yaml"), "r") as file:
-        conf = yaml.safe_load(file)
-    conf = kinds.Conf(**conf)
-    return conf
+def cfg_fn(
+    base=10,
+    n=1000,
+    epochs=100,
+    lr=1e-2,
+    dropout=0.1,
+    latent_dim=32,
+    heads=2,
+    depth=2,
+    task="prose",
+    theta=1e-2,
+    batch_size=32,
+):
+    vocab_size = base if task == "prime" else 118  # hardocded vocab size of borges' ficciones
+    seq_len = numbs.digit_fn(n, base).item() if task == "prime" else 32
+    cfg = kinds.Conf(
+        batch_size=batch_size,  # only used for prose
+        causal=True if task == "prose" else False,
+        base=base,
+        n=n,
+        epochs=epochs,
+        lr=lr,
+        dropout=dropout,
+        latent_dim=latent_dim,
+        heads=heads,
+        depth=depth,
+        task=task,
+        vocab_size=vocab_size,
+        seq_len=seq_len,
+        theta=theta,
+    )
+    return cfg
 
 
 def save_params(params, fname):

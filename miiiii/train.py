@@ -45,9 +45,7 @@ def make_grad_fn(loss_fn, apply_fn, cfg):
             loss = loss_fn(logits, y)
             return loss, logits
 
-        (loss, logits), grads = value_and_grad(loss_and_logits, has_aux=True)(
-            state.params
-        )
+        (loss, logits), grads = value_and_grad(loss_and_logits, has_aux=True)(state.params)
         grads, state = gradfilter_ema(grads, state)  # @lee2024b (grokfast)
         return loss, grads, logits, state
 
@@ -65,9 +63,7 @@ def gradfilter_ema(grads, state: mi.kinds.State, alpha=0.98, lamb=2.0):
 
     ema_grads = jax.tree.map(_update_ema, state.ema_grads, grads)
     filtered_grads = jax.tree.map(_apply_ema, grads, ema_grads)
-    state = mi.kinds.State(
-        ema_grads=ema_grads, opt_state=state.opt_state, params=state.params
-    )
+    state = mi.kinds.State(ema_grads=ema_grads, opt_state=state.opt_state, params=state.params)
     return filtered_grads, state
 
 
@@ -79,9 +75,7 @@ def make_step_fn(grad_fn, update_fn, ds: mi.kinds.Dataset, eval_fn):
         loss, grads, logits, state = grad_fn(state, key, ds.train.x, ds.train.y)
         params, opt_state = update_fn(params, grads, opt_state)
         metrics = eval_fn(params, rng, loss, logits)
-        state = mi.kinds.State(
-            params=params, opt_state=opt_state, ema_grads=state.ema_grads
-        )
+        state = mi.kinds.State(params=params, opt_state=opt_state, ema_grads=state.ema_grads)
         return state, metrics
 
     return step_fn

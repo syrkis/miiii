@@ -19,9 +19,17 @@ class Metrics:
 
 @dataclass
 class Conf:
+    # task is either "prime" or "prose"
+    vocab_size: int
+    batch_size: int
+    seq_len: int
+    task: str = "prime"  # "prose"
+    causal: bool = False
+    # initialixation scale for weights
+    theta: float = 1e-2
     base: int = 2
     n: int = 1024
-    emb: int = 128
+    latent_dim: int = 128
     depth: int = 2
     heads: int = 4
     epochs: int = 100
@@ -37,7 +45,7 @@ class Head:
     key: Array
     query: Array
     value: Array
-    proj: Array
+    # proj: Array
 
 
 @dataclass

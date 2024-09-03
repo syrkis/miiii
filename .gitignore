@@ -8,7 +8,6 @@ wandb/
 **/*.log
 log
 wandb/
-data/
 dist/
 .coverage
 .pytest_cache/

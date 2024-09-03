@@ -9,13 +9,13 @@ from oeis import A000040 as primes
 
 
 # %% Exploring and plotting the data
-cfg, rng = mi.utils.load_conf(), random.PRNGKey(seed := 0)
+cfg, rng = mi.utils.cfg_fn(), random.PRNGKey(seed := 0)
 rng, key = random.split(rng)
-ds = mi.datum.data_fn(cfg.n, cfg.base, mi.numbs.base_ns)
+ds = mi.datum.prime_fn(cfg.n, cfg.base, mi.numbs.base_ns)
 
 # %% Initialize
-params = mi.param.init_fn(key, cfg, ds.train.x, ds.train.y)
-apply = mi.model.make_apply_fn(mi.model.vaswani_fn)
+params = mi.param.init_fn(key, cfg)
+apply = mi.model.apply_fn(cfg)
 train, state = mi.train.init_train(apply, params, cfg, ds)
 
 # %% Training

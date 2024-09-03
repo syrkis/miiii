@@ -6,48 +6,51 @@
 import miiiii as mi
 from jax import random, Array
 import jax.numpy as jnp
-
-
-# constant
-theta = 0.01
+from oeis import A000040
 
 
 # init functions
 def init_head_fn(rng: Array, cfg: mi.kinds.Conf) -> mi.kinds.Head:
-    h, d = cfg.heads, cfg.emb
-    rng, key1, key2, key3 = random.split(rng, 4)
+    h, d = cfg.heads, cfg.latent_dim
+    keys = random.split(rng, 4)
 
-    key = random.uniform(key1, shape=(h, d, d // h), minval=-theta, maxval=theta)
-    query = random.uniform(key2, shape=(h, d, d // h), minval=-theta, maxval=theta)
-    value = random.uniform(key3, shape=(h, d, d // h), minval=-theta, maxval=theta)
-    proj = random.uniform(rng, shape=(h * d // h, d), minval=-theta, maxval=theta)
+    key = random.uniform(keys[0], shape=(h, d, d // h), minval=-cfg.theta, maxval=cfg.theta)
+    query = random.uniform(keys[1], shape=(h, d, d // h), minval=-cfg.theta, maxval=cfg.theta)
+    value = random.uniform(keys[2], shape=(h, d, d // h), minval=-cfg.theta, maxval=cfg.theta)
+    # proj = random.uniform(keys[3], shape=(h * d // h, d), minval=-cfg.theta, maxval=cfg.theta)
 
-    return mi.kinds.Head(query=query, key=key, value=value, proj=proj)
+    return mi.kinds.Head(query=query, key=key, value=value)  # proj=proj)
 
 
 def init_ffwd_fn(rng: Array, cfg: mi.kinds.Conf) -> mi.kinds.FFWD:
-    rng, key1, key2 = random.split(rng, 3)
-    w1 = random.uniform(key1, shape=(cfg.emb, cfg.emb), minval=-theta, maxval=theta)
-    w2 = random.uniform(key2, shape=(cfg.emb, cfg.emb), minval=-theta, maxval=theta)
-    b1 = jnp.zeros(cfg.emb)
-    b2 = jnp.zeros(cfg.emb)
+    keys = random.split(rng)
+    w1 = random.uniform(keys[0], shape=(cfg.latent_dim, cfg.latent_dim), minval=-cfg.theta, maxval=cfg.theta)
+    w2 = random.uniform(keys[1], shape=(cfg.latent_dim, cfg.latent_dim), minval=-cfg.theta, maxval=cfg.theta)
+    b1 = jnp.zeros(cfg.latent_dim)
+    b2 = jnp.zeros(cfg.latent_dim)
     return mi.kinds.FFWD(w1=w1, b1=b1, w2=w2, b2=b2)
 
 
 def init_block_fn(rng: Array, cfg: mi.kinds.Conf) -> mi.kinds.Block:
-    rng, key1, key2 = random.split(rng, 3)
-    params = mi.kinds.Block(head=init_head_fn(key1, cfg), ffwd=init_ffwd_fn(key2, cfg))
+    keys = random.split(rng)
+    head = init_head_fn(keys[0], cfg)
+    ffwd = init_ffwd_fn(keys[1], cfg)
+    params = mi.kinds.Block(head=head, ffwd=ffwd)
     return params
 
 
-def init_fn(rng: Array, cfg: mi.kinds.Conf, x: Array, y: Array) -> mi.kinds.Params:
-    rng, key1, key2, key3 = random.split(rng, 4)
-    transformer_keys = random.split(key1, cfg.depth)
-    in_d, out_d, emb_d, len_d = (cfg.base, y.shape[1], cfg.emb, x.shape[1])
+def init_fn(rng: Array, cfg: mi.kinds.Conf) -> mi.kinds.Params:  # x: Array, y: Array) -> mi.kinds.Params:
+    keys = random.split(rng, 3 + cfg.depth)
     params = mi.kinds.Params(
-        tok_emb=random.uniform(key1, shape=(in_d, emb_d), minval=-theta, maxval=theta),
-        pos_emb=random.uniform(key2, shape=(len_d, emb_d), minval=-theta, maxval=theta),
-        blocks=[init_block_fn(transformer_keys[i], cfg) for i in range(cfg.depth)],
-        lm_head=random.uniform(key3, shape=(emb_d, out_d), minval=-theta, maxval=theta),
+        tok_emb=random.uniform(keys[0], shape=(cfg.vocab_size, cfg.latent_dim), minval=-cfg.theta, maxval=cfg.theta),
+        pos_emb=random.uniform(keys[1], shape=(cfg.seq_len, cfg.latent_dim), minval=-cfg.theta, maxval=cfg.theta),
+        lm_head=random.uniform(keys[2], shape=(cfg.latent_dim, y_fn(cfg)), minval=-cfg.theta, maxval=cfg.theta),
+        blocks=[init_block_fn(key, cfg) for key in keys[3:]],
     )
     return params
+
+
+def y_fn(cfg: mi.kinds.Conf) -> int:
+    primes = jnp.array(A000040[1 : cfg.n * 2])
+    primes = primes[primes < jnp.sqrt(cfg.n)]
+    return primes.shape[0] + 1 if cfg.task == "prime" else cfg.vocab_size
