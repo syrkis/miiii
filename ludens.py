@@ -21,7 +21,7 @@ from tqdm import tqdm
 # %% Initialize
 cfg, (rng, key) = mi.utils.cfg_fn(task="prose"), random.split(random.PRNGKey(seed := 0))  # test
 ficciones, c2i, i2c = mi.prose.prose_fn(key, cfg)
-params = mi.param.init_fn(key, cfg)  # ds.train.x, ds.train.y)
+params = mi.model.init_fn(key, cfg)  # ds.train.x, ds.train.y)
 # %%
 
 

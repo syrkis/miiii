@@ -14,7 +14,7 @@ rng, key = random.split(rng)
 ds = mi.prime.prime_fn(cfg.n, cfg.base, mi.prime.base_ns)
 
 # %% Initialize
-params = mi.param.init_fn(key, cfg)
+params = mi.model.init_fn(key, cfg)
 apply = mi.model.apply_fn(cfg)
 train, state = mi.train.init_train(apply, params, cfg, ds)
 
