@@ -4,7 +4,7 @@
 
 # imports
 import miiiii.kinds as kinds
-import miiiii.numbs as numbs
+import miiiii.prime as prime
 import argparse
 import os
 import jax.numpy as jnp
@@ -33,7 +33,7 @@ def cfg_fn(
     batch_size=32,
 ):
     vocab_size = base if task == "prime" else 118  # hardocded vocab size of borges' ficciones
-    seq_len = numbs.digit_fn(n, base).item() if task == "prime" else 32
+    seq_len = prime.digit_fn(n, base).item() if task == "prime" else 32
     cfg = kinds.Conf(
         batch_size=batch_size,  # only used for prose
         causal=True if task == "prose" else False,
