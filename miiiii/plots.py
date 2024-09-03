@@ -70,7 +70,7 @@ def hinton_weight(weight: Array, path: str):
 
 def hinton_metric(data: Array, metric: str, ds: mi.kinds.Dataset, path: str, split: str):
     fig, ax = plt.subplots(figsize=(12, 5))
-    pool_data = mi.stats.horizontal_mean_pooling(data)
+    pool_data = horizontal_mean_pooling(data)
     hinton_fn(pool_data, ax)
 
     # ax modifications
@@ -177,3 +177,11 @@ def init_curve_plot():
     [spine.set_edgecolor(fg) for spine in ax.spines.values()]
     # ax y range from 0 to what it is
     return fig, ax
+
+
+def horizontal_mean_pooling(x: Array, width: int = 3) -> Array:
+    """Rolling mean array. Shrink to be rows x rows * width."""
+    x = x[:, : (x.shape[1] // (x.shape[0] * width)) * (x.shape[0] * width)]
+    i = jnp.eye(x.shape[0] * width).repeat(x.shape[1] // (x.shape[0] * width), axis=-1)
+    z = (x[:, None, :] * i[None, :, :]).sum(axis=-1)
+    return z / (x.shape[1] // (x.shape[0] * width))

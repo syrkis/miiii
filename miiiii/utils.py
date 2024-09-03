@@ -10,6 +10,7 @@ import os
 import jax.numpy as jnp
 import yaml
 import pickle
+from aim import Run
 
 
 # constants
@@ -62,3 +63,14 @@ def load_params(fname):
     path = os.path.join("data", fname)
     with open(path, "rb") as file:
         return pickle.load(file)
+
+
+def track_metrics(metrics, ds, cfg):
+    run = Run(experiment="miiiii")
+    run["cfg"] = cfg.__dict__
+
+    for epoch in range(cfg.epochs):
+        for idx, task in enumerate(ds.info.tasks):
+            for split in ["train", "valid"]:
+                to_log = {k: v[epoch][idx] for k, v in metrics[split].items()}
+                run.track(to_log, epoch=epoch + 1, context={"task": task, "split": split})

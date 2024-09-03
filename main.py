@@ -21,7 +21,7 @@ train, state = mi.train.init_train(apply, params, cfg, ds)
 # %% Training
 state, metrics = train(cfg.epochs, rng, state)
 mi.plots.plot_run(metrics, ds, cfg)
-mi.stats.track_metrics(metrics, ds, cfg)
+mi.utils.track_metrics(metrics, ds, cfg)
 
 # %% Hinton metrics
 
