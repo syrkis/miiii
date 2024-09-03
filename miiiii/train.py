@@ -9,6 +9,7 @@ from jax import random, jit, value_and_grad, vmap
 import optax
 import jax.numpy as jnp
 from functools import partial
+from aim import Run, Figure
 
 
 # functions
@@ -131,11 +132,9 @@ def make_train_fn(step_fn):
 
     def flatten_metrics(metrics):
         """make metrics into flate table"""
-        valid_metrics = {f"valid_{k}": v.T for k, v in metrics["valid_metrics"].items()}
-        train_metrics = {f"train_{k}": v.T for k, v in metrics["train_metrics"].items()}
-        metrics = {**metrics, **train_metrics, **valid_metrics}
-        metrics.pop("train_metrics")  # amazing coding practice
-        metrics.pop("valid_metrics")  # amazing coding practice 2
+        valid_metrics = {k: v.T for k, v in metrics["valid_metrics"].items()}
+        train_metrics = {k: v.T for k, v in metrics["train_metrics"].items()}
+        metrics = {"train": train_metrics, "valid": valid_metrics}
         return metrics
 
     return train_fn

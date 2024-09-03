@@ -11,3 +11,6 @@ wandb/
 data/
 dist/
 .coverage
+.pytest_cache/
+.aim/
+.venv/

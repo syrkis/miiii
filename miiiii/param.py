@@ -25,15 +25,13 @@ def init_head_fn(rng: Array, cfg: mi.kinds.Conf) -> mi.kinds.Head:
     return mi.kinds.Head(query=query, key=key, value=value, proj=proj)
 
 
-def init_ffwd_fn(rng: Array, cfg: mi.kinds.Conf) -> mi.kinds.FeedForward:
+def init_ffwd_fn(rng: Array, cfg: mi.kinds.Conf) -> mi.kinds.FFWD:
     rng, key1, key2 = random.split(rng, 3)
-    emb_dim = cfg.emb
-    shape = (emb_dim, 4 * emb_dim)
-    w1 = random.uniform(key1, shape=shape, minval=-theta, maxval=theta)
-    w2 = random.uniform(key2, shape=shape[::-1], minval=-theta, maxval=theta)
-    b1 = jnp.zeros(emb_dim * 4)
-    b2 = jnp.zeros(emb_dim)
-    return mi.kinds.FeedForward(w1=w1, b1=b1, w2=w2, b2=b2)
+    w1 = random.uniform(key1, shape=(cfg.emb, cfg.emb), minval=-theta, maxval=theta)
+    w2 = random.uniform(key2, shape=(cfg.emb, cfg.emb), minval=-theta, maxval=theta)
+    b1 = jnp.zeros(cfg.emb)
+    b2 = jnp.zeros(cfg.emb)
+    return mi.kinds.FFWD(w1=w1, b1=b1, w2=w2, b2=b2)
 
 
 def init_block_fn(rng: Array, cfg: mi.kinds.Conf) -> mi.kinds.Block:

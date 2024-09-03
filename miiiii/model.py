@@ -5,10 +5,11 @@
 # imports
 from miiiii import kinds
 import jax
+from jaxtyping import Array
 import jax.numpy as jnp
-from jax import vmap, random, Array
-from functools import partial
+from jax import vmap, random
 from einops import rearrange
+from functools import partial
 from typing import Callable, Tuple
 
 # constants
@@ -23,9 +24,7 @@ def predict_fn(apply_fn: Callable, params: kinds.Params, x: Array) -> Array:
 # optional rng
 def make_apply_fn(transformer_fn: Callable) -> Callable:
     @partial(vmap, in_axes=(None, None, 0, None))
-    def apply_fn(
-        params: kinds.Params, rng: Array, x: Array, dropout: float = 0.0
-    ) -> Array:
+    def apply_fn(params: kinds.Params, rng: Array, x: Array, dropout: float) -> Array:
         z = embed_fn(x, params.tok_emb, params.pos_emb)  # z: seq_len x emb_dim
         z, rng = dropout_fn(rng, z, dropout)
         for block in params.blocks:  # use fori_loop maybe
@@ -53,7 +52,7 @@ def embed_fn(x: Array, tok_emb_w: Array, pos_emb_w: Array) -> Array:
     return tok_emb + pos_emb  # z: seq_len x emb_dim
 
 
-def ffwd_fn(x: Array, params: kinds.FeedForward) -> Array:
+def ffwd_fn(x: Array, params: kinds.FFWD) -> Array:
     w1, w2, b1, b2 = params.w1, params.w2, params.b1, params.b2
     z = jnp.dot(x, w1) + b1  # z: seq_len x emb_dim
     z = jax.nn.relu(z)  # TODO: maybe switch activation

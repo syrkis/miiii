@@ -41,7 +41,7 @@ class Head:
 
 
 @dataclass
-class FeedForward:
+class FFWD:
     w1: Array
     b1: Array
     w2: Array
@@ -51,7 +51,7 @@ class FeedForward:
 @dataclass
 class Block:
     head: Head
-    ffwd: FeedForward
+    ffwd: FFWD
 
 
 @dataclass
