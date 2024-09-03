@@ -18,11 +18,16 @@ import optax
 from aim import Run, Figure
 from tqdm import tqdm
 
+# %% Constants
+latent_dim = 32
+
+
 # %% Initialize
-cfg, (rng, key) = mi.utils.cfg_fn(task="prose"), random.split(random.PRNGKey(seed := 0))  # test
-ficciones, c2i, i2c = mi.prose.prose_fn(key, cfg)
-params = mi.model.init_fn(key, cfg)  # ds.train.x, ds.train.y)
-# %%
+cfg = mi.utils.cfg_fn(task="prose", latent_dim=latent_dim, batch_size=32)
+rng, key1, key2 = random.split(random.PRNGKey(seed := 0), 3)
+
+ficciones, c2i, i2c = mi.prose.prose_fn(key1, cfg)
+params = mi.model.init_fn(key2, cfg)  # ds.train.x, ds.train.y)
 
 
 # %% Training
@@ -41,12 +46,14 @@ rngs = random.split(random.PRNGKey(0), cfg.batch_size)
 apply = jit(vmap(partial(mi.model.apply_fn(cfg), dropout=0.0), in_axes=(None, 0, 0)))
 grad_fn = jit(value_and_grad(loss_fn))
 
-i, loss = 0, 0
-for i, (x, y) in zip(range(1000), ficciones):
+steps = 10000
+pbar = tqdm(zip(range(steps), ficciones), total=steps)
+for i, (x, y) in pbar:
     x, y = next(ficciones)
     loss, grads = grad_fn(params, rngs, x, y)
     params = tree.map(lambda p, g: p - cfg.lr * g, params, grads)
-print(i, loss)
+    if i % 100 == 0:
+        pbar.set_description(f"Loss: {loss.mean()}")
 
 
 # %% Generate

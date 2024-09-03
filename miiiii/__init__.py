@@ -1,13 +1,14 @@
+import os
+
+os.environ["ENABLE_PJRT_COMPATIBILITY"] = "1"
+
 from . import kinds
 from . import prose
 from . import prime
 from . import utils
-from . import param
 from . import plots
 from . import train
 from . import model
-from . import numbs
-from . import stats
 
 
 __all__ = [
@@ -15,10 +16,7 @@ __all__ = [
     "prose",
     "prime",
     "utils",
-    "param",
     "plots",
     "train",
     "model",
-    "numbs",
-    "stats",
 ]
