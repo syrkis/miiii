@@ -53,3 +53,13 @@ def primes_fn(n: int) -> Array:
     assert max(primes) > n, "not enough primes"  # make sure there are enough primes
     primes = primes[primes < n]
     return primes
+
+
+def base_ns(x, base):
+    digits = digit_fn(x.max(), base)
+    numb = jnp.array([x // base**i % base for i in range(digits)][::-1]).T
+    return numb
+
+
+def digit_fn(n, base):
+    return jnp.ceil(jnp.log(n + 1) / jnp.log(base)).astype(jnp.int32)
