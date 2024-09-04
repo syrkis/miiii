@@ -1,6 +1,7 @@
 container.sif
 logs/
 **/__pycache__/
+**/*.pdf
 **/output/
 .DS_Store
 paper_old/
