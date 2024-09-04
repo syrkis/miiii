@@ -1,6 +1,5 @@
 // Variables
-#let title = [Mechanistic Interpretability and Implementability of Irriducible Integer Identifiers]
-#let image_path = "figs/runs/base_100_n_1024_emb_32_heads_2_depth_2_lr_0.001_epochs_800_l2_1.0_dropout_0.5/svg/"
+#let title = [Mechanistic Interpretability and Implementability of Irreducible Integer Identifiers]
 
 // Configuration
 #set page(
@@ -78,7 +77,7 @@ of deep learning models.
 
 Mechanistic interpretability is the ability to understand the inner
 workings of a model, and to explain why it makes the predictions it does.
-nanda2023 perform a mechanistic interpretability
+@nanda2023 perform a mechanistic interpretability
 analysis of a deep learning model trained to perform modular addition,
 trained to predict the remainder of the sum of two numbers $mod p$, $p$
 being a prime number.
@@ -106,7 +105,7 @@ $
 PP = {p in NN | p > 1, forall p' in PP < sqrt(p), % mod p' != 0}  // <- Prime Numbers
 $
 
-The task at hand, thus becomes similar to nanda2023's, in that we
+The task at hand, thus becomes similar to @nanda2023's, in that we
 are conditioning on modularity. An algorithm that could be learned
 by a two layer transformer model might be to first create a function
 evaluating if $n mod p != 0$. This function could then be
@@ -128,9 +127,13 @@ nats_and_sixes show the natural numbers, the multiples of six less than
 1024 in this system.
 
 
-Similarly, prime_numbers_1024_to_2048 shows the first 2048 prime numbers minus the first 1024 prime numbers.
+Similarly, @prime_numbers_1024_to_2048 shows the first 2048 prime numbers minus the first 1024 prime numbers.
 The random nature of the prime numbers is evident in the figure, with no clear pattern emerging.
 
+#figure(
+  image("figs/exploration/polar_primes.svg"),
+  caption: "The first 2048 primes minus the first 1024 primes."
+)<prime_numbers_1024_to_2048>
 
 === Sieve of Eratosthenes
 
@@ -150,7 +153,7 @@ but rather probabilistically—in inapropriately—by using a deep learning mode
 
 === RASP | Thinking Like a Transformer
 
-weiss2021 presents the language RASP, which forces the user to think like a transformer.
+@weiss2021 presents the language RASP, which forces the user to think like a transformer.
 RASP is turing complete, so it can indeed be bent into implementing algorithms a Transformer is unlikely to learn.
 To clarify the search space of our reverse enginerring tasks, I first implement the Sieve of Eratosthenes in RASP.
 
@@ -159,7 +162,7 @@ Then I create my own RASP based prime detecting algorithm, bending over backward
 = Methods
 
 The paper uses a JAX implementation of a two layer transformer model, with a hidden size of 128 and 8 heads,
-as per nanda2023. As prime classification is considerably more complex than modular addition, target vector $y$ rather than being a single one-hot number indicating the primately of a given sample,
+as per @nanda2023. As prime classification is considerably more complex than modular addition, target vector $y$ rather than being a single one-hot number indicating the primately of a given sample,
 is a vector of length $sqrt(n) + 1$, where the $i$th element is 1 if the sample is divisible by the $i$th prime number, and 0 otherwise, with the $sqrt(n)$-th element being 1 if the sample is prime, in which case all other elements are 0.
 
 == Data
@@ -197,7 +200,7 @@ The main task is to predict the primality of a given number, with the additional
 
 == Model
 
-A [vaswani2017] model is used (with the normalization layer removed.).
+A [@vaswani2017] model is used (with the normalization layer removed.).
 
 == Training
 
@@ -223,7 +226,6 @@ The purpose of the paper is not to train a good model, but to understand how the
 A model training is thus considered to be a part of the methods section and not the results section.
 
 = Results
-
 
 
 = Discussion
