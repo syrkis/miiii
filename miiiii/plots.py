@@ -30,10 +30,9 @@ plt.rcParams["font.family"] = "Monospace"
 # %% functions
 def plot_run(metrics: Dict[str, Dict[str, Array]], ds: mi.kinds.Dataset, cfg: mi.kinds.Conf):
     # make run folder in figs/runs folder
-    path = f"figs/runs/{name_run(cfg)}"
+    path = f"paper/figs/runs/{name_run(cfg)}"
     os.makedirs(path, exist_ok=True)
-    for folder in ["pdf", "svg", "png"]:
-        os.makedirs(f"{path}/{folder}", exist_ok=True)
+    os.makedirs(f"{path}/", exist_ok=True)
 
     # hinton plots of all metrics
     for split in ["train", "valid"]:
@@ -64,8 +63,6 @@ def hinton_weight(weight: Array, path: str):
         hinton_fn(weight[i], ax[i])
     plt.tight_layout()
     plt.savefig(f"{path}/svg/weights.svg")
-    plt.savefig(f"{path}/png/weights.png")
-    plt.savefig(f"{path}/pdf/weights.pdf")
 
 
 def hinton_metric(data: Array, metric: str, ds: mi.kinds.Dataset, path: str, split: str):
@@ -85,8 +82,7 @@ def hinton_metric(data: Array, metric: str, ds: mi.kinds.Dataset, path: str, spl
     ax.set_yticks([i for i in range(len(ds.info.tasks))])  # type: ignore
     ax.set_yticklabels(ds.info.tasks[:-1] + ["ℙ"])
     plt.tight_layout()
-    for format in ["svg", "png", "pdf"]:
-        plt.savefig(f"{path}/{format}/{split}_{metric}_hinton.{format}")
+    plt.savefig(f"{path}/{format}/{split}_{metric}_hinton.svg")
 
 
 def hinton_fn(data, ax):  # <- Hinton atomic
@@ -123,8 +119,7 @@ def polar_plot(ps: Sequence[Sequence] | Sequence | np.ndarray, f_name: Sequence[
     for p in ps:
         ax.plot(p, p, "o", markersize=2, color="black")
     plt.tight_layout()
-    for format in ["svg", "png", "pdf"]:
-        plt.savefig(f"paper/figs/{f_name}.{format}") if f_name else plt.show()
+    plt.savefig(f"paper/figs/{f_name}.svg") if f_name else plt.show()
     if ax_was_none:
         plt.close()
 
@@ -154,8 +149,7 @@ def curve_plot(data, metric, path, split):
     # ax.legend(info["legend"], frameon=False, labelcolor=fg)
     # make fname contain conf
     plt.tight_layout()
-    for format in ["svg", "png", "pdf"]:
-        plt.savefig(f"{path}/{format}/{split}_{metric}_curve.{format}")
+    plt.savefig(f"{path}/{format}/{split}_{metric}_curve.svg")
 
 
 def init_curve_plot():
