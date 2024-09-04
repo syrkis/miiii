@@ -1,51 +1,40 @@
-// Variables
+// head ///////////////////////////////////////////////////////////////////////
+
+#set page(paper: "us-letter", numbering: "1")
+#set par(justify: true, leading: 1em)
+#set text(font: "New Computer Modern", size: 12pt)
+
+
+// cover //////////////////////////////////////////////////////////////////////
+
 #let title = [Mechanistic Interpretability and Implementability of Irreducible Integer Identifiers]
-
-// Configuration
-#set page(
-  paper: "us-letter",
-  numbering: "1"
-)
-
-#set par(
-  justify: true,
-  leading: 1em
-)
-
-#set text(
-  font: "New Computer Modern",
-  size: 12pt
-)
-
-// Title Page
-
-#align(center, text(17pt)[
-  *#title*
-])
-
-
-// Authors
-
-#align(center)[
-Noah Syrkis & Anders Søgaard
-]
-
-// Abstract
+#align(center, text(17pt)[*#title*])
+#align(center)[Noah Syrkis & Anders Søgaard]
 
 = Abstract
 
-Deep learning models are increasingly obliquitous, while their interpretability is inherently opaque.
+Deep learning models are increasingly ubiquitous, while their interpretability is inherently opaque.
 This paper explores the mechanistic interpretability of deep learning models trained to solve problems
 related to prime numbers.
+#set heading(numbering: "1.")
 
-// Content
+#show outline.entry.where(
+  level: 1
+): it => {
+  v(12pt, weak: true)
+  strong(it)
+}
+
+#outline(indent: auto)
+
+#pagebreak()
+
+// body ///////////////////////////////////////////////////////////////////////
 
 = Introduction
 
 Deep learning models are increasingly obliquitous,
 while the explanations for their predictions remain opaque.
-
-
 
 = Background
 
@@ -67,7 +56,6 @@ The multi layer perception (MLP) can be thought of as performing a map,
 performing a function on every element of a set. The attention mechanism
 can be thought of as a reduce (or map-reduce) operation, where the
 attention mechanism is a function that takes a set of elements and
-
 
 #v(1em)
 
@@ -166,6 +154,8 @@ RASP is Turing complete, so it can indeed be bent into implementing algorithms a
 To clarify the search space of our reverse engineering tasks, I first implement the Sieve of Eratosthenes in RASP.
 
 Then I create my own RASP based prime detecting algorithm, bending over backwards to introduce rotational symmetry.
+
+= Preliminaries
 
 = Methods
 
