@@ -34,7 +34,7 @@ Noah Syrkis & Anders Søgaard
 
 = Abstract
 
-Deep learning models are increasingly obiquitous, while their interpretability is inherently opaque.
+Deep learning models are increasingly obliquitous, while their interpretability is inherently opaque.
 This paper explores the mechanistic interpretability of deep learning models trained to solve problems
 related to prime numbers.
 
@@ -42,7 +42,7 @@ related to prime numbers.
 
 = Introduction
 
-Deep learning models are increasingly obiquitous,
+Deep learning models are increasingly obliquitous,
 while the explanations for their predictions remain opaque.
 
 
@@ -53,14 +53,14 @@ As the ubiquity of deep learning models is a recent phenomenon,
 the interpretability of these models is a relatively new field.
 Definitions of interpretability vary @lipton_mythos_2018.
 One qualifier to interpretability is _mechanistic_ @nanda2023,
-which posits that a deep learning model that has generalised
-is a pourly written, but probably clean algorithm.
-"pourly written" means subsymbolic, and "probably clean"
+which posits that a deep learning model that has generalized
+is a poorly written, but probably clean algorithm.
+"poorly written" means sub-symbolic, and "probably clean"
 means that we could express the algorithm in a more human
 readable form, such as pseudocode (or Python).
 
 #cite(<weiss2021>, form: "prose") present the coding language RASP,
-in which incorporates the architectural contraints of the transformer model
+in which incorporates the architectural constraints of the transformer model
 into the language itself. This forces the programmer to be
 "thinking like a transformer" (which is the title of their paper).
 The multi layer perception (MLP) can be thought of as performing a map,
@@ -71,14 +71,14 @@ attention mechanism is a function that takes a set of elements and
 
 #v(1em)
 
-Primber numbers, being divisible by only 1 and themselves,
+Prime numbers, being divisible by only 1 and themselves,
 are a fundamental concept of number theory, about which the
 questions one might ask ranges from the relatively easily
 proven: "Are there infinitely many prime numbers?" (yes) to the
 still unsolved: "Is every even number the sum of two prime
 numbers?" (Goldbach's Conjecture). The breadth in difficulty
 of these questions, and the fact primes are easily generated
-makes them a good resevoir of tasks for mechanistic interpretability
+makes them a good reservoir of tasks for mechanistic interpretability
 of deep learning models.
 
 == Mechanistic Interpretability
@@ -102,7 +102,7 @@ and "How could I detect prime numbers, by spiraling the natural numbers?"
 
 Indeed, a number is prime if it is divisible only by 1 and itself.
 However, we do not have to test the divisibility of every number
-beteween 1 and the number in question to determine if it is prime.
+between 1 and the number in question to determine if it is prime.
 The Sieve of Eratosthenes is an ancient algorithm for finding all
 primes up to a given limit, and it teaches us that testing if the given
 number $n$ is a multiple of any prime number less than $sqrt(n)$ is sufficient.
@@ -150,28 +150,28 @@ less than $sqrt(n)$. This is the basis of the Sieve of Eratosthenes, which is an
 all prime numbers up to a given limit. The algorithm works by iteratively marking the multiples of each prime number
 starting from 2, and then finding the next number that is not marked as a multiple of a prime number, which is the next
 prime number. The algorithm is efficient, with a time complexity of $O(n log log n)$. Relating it to our polar
-plots, the Sieve of Eratosthenes can be seen as first plotting all naturak numbers up to a limit $n$, and then
+plots, the Sieve of Eratosthenes can be seen as first plotting all natural numbers up to a limit $n$, and then
 removing the multiples of the prime numbers less than $sqrt(n)$.
 
 === Zeolite of Eratosthenes
 
 The Zeolite of Eratosthenes is a variant of the Sieve of Eratosthenes,
 in which the multiples of the prime numbers are not filtered deterministically,
-but rather probabilistically—in inapropriately—by using a deep learning model.
+but rather probabilistically—in inappropriately—by using a deep learning model.
 
 === RASP | Thinking Like a Transformer
 
 @weiss2021 presents the language RASP, which forces the user to think like a transformer.
-RASP is turing complete, so it can indeed be bent into implementing algorithms a Transformer is unlikely to learn.
-To clarify the search space of our reverse enginerring tasks, I first implement the Sieve of Eratosthenes in RASP.
+RASP is Turing complete, so it can indeed be bent into implementing algorithms a Transformer is unlikely to learn.
+To clarify the search space of our reverse engineering tasks, I first implement the Sieve of Eratosthenes in RASP.
 
 Then I create my own RASP based prime detecting algorithm, bending over backwards to introduce rotational symmetry.
 
 = Methods
 
 The paper uses a JAX implementation of a two layer transformer model, with a hidden size of 128 and 8 heads,
-as per @nanda2023. As prime classification is considerably more complex than modular addition, target vector $y$ rather than being a single one-hot number indicating the primately of a given sample,
-is a vector of length $sqrt(n) + 1$, where the $i$th element is 1 if the sample is divisible by the $i$th prime number, and 0 otherwise, with the $sqrt(n)$-th element being 1 if the sample is prime, in which case all other elements are 0.
+as per @nanda2023. As prime classification is considerably more complex than modular addition, target vector $y$ rather than being a single one-hot number indicating the primality of a given sample,
+is a vector of length $sqrt(n) + 1$, where the $i$ element is 1 if the sample is divisible by the $i$th prime number, and 0 otherwise, with the $sqrt(n)$-th element being 1 if the sample is prime, in which case all other elements are 0.
 
 == Data
 
@@ -195,7 +195,7 @@ This vector was than converted to the desired number system.
 $Y$ was constructed by first querying all prime numbers less than or equal to $n+1$, creating a one hot vector for each sample, in $X$ indicating primality. $Y$ was further augmented by $sqrt(n)$ vectors, each indicating divisibility by the $i$th prime number up to $sqrt(n)$.
 thus, sum of all $y$ of primes is 1, and the sum of all $y$ of non-primes is >= 1 (one if if is divisible by a single other number).
 
-Note that the row sum of $Y$ can be thought of as a sort of measure of how "close" to being prime a given number is. For example 20 is very much not a prime since it is a mulitple of 2, 4, 5 and 10, while 51 (in base 10) looks like a prime (SITE SCOTT ALEXANDER) but can in fact be factorized into 3 and 17.
+Note that the row sum of $Y$ can be thought of as a sort of measure of how "close" to being prime a given number is. For example 20 is very much not a prime since it is a multiple of 2, 4, 5 and 10, while 51 (in base 10) looks like a prime (SITE SCOTT ALEXANDER) but can in fact be factorized into 3 and 17.
 
 $Y$ thus includes information about why a given not is not prime.
 The inclusion of these extra tasks also allows for interpretability to be on simpler tasks, by training the model on the simpler tasks first, and then training on the more complex task.
@@ -246,10 +246,10 @@ This paper has shown an example of how transformer models can detect divisibilit
 Divisibility is indeed an essential property of prime numbers, but it is not the only one. Future work could
 include training a transformer model to perform prime factorization, or to classify rare prime numbers, such as
 twin primes or Mersenne primes, the latter problems in particular being difficult as the sequence lengths of the
-representatiuons of the numbers involved become large.
+representations of the numbers involved become large.
 
 The code of this paper is available at github.com/syrkis/miiii.
-It can be installed with `pip install miiiii`, and reprdocued with `miiii reproduce thesis`.
+It can be installed with `pip install miiiii`, and reproduced with `miiii reproduce thesis`.
 
 = Conclusion
 
