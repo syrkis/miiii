@@ -26,42 +26,50 @@
 
 // Authors
 
-#grid(
-  columns: (1fr, 1fr),
-  align(center)[
-    Noah Syrkis \
-    The Virian Project \
-    #link("mailto:noah@syrkis.com")
-  ],
-  align(center)[
-    Anders Søgaard \
-    University of Copenhagen \
-    #link("mailto:doe@artos.edu")
-  ]
-)
+#align(center)[
+Noah Syrkis & Anders Søgaard
+]
 
 // Abstract
 
-#align(center)[
-  #set par(justify: false)
-  #set text(size: 11pt)
-  *Abstract*
-  #block(
-    width: 80%,
-    inset: 8pt,
-    radius: 4pt,
-    lorem(30),
-  )
-]
+= Abstract
 
+Deep learning models are increasingly obiquitous, while their interpretability is inherently opaque.
+This paper explores the mechanistic interpretability of deep learning models trained to solve problems
+related to prime numbers.
 
 // Content
-#show: rest => columns(2, rest)
 
 = Introduction
-#lorem(100)
+
+Deep learning models are increasingly obiquitous,
+while the explanations for their predictions remain opaque.
+
+
 
 = Background
+
+As the ubiquity of deep learning models is a recent phenomenon,
+the interpretability of these models is a relatively new field.
+Definitions of interpretability vary @lipton_mythos_2018.
+One qualifier to interpretability is _mechanistic_ @nanda2023,
+which posits that a deep learning model that has generalised
+is a pourly written, but probably clean algorithm.
+"pourly written" means subsymbolic, and "probably clean"
+means that we could express the algorithm in a more human
+readable form, such as pseudocode (or Python).
+
+#cite(<weiss2021>, form: "prose") present the coding language RASP,
+in which incorporates the architectural contraints of the transformer model
+into the language itself. This forces the programmer to be
+"thinking like a transformer" (which is the title of their paper).
+The multi layer perception (MLP) can be thought of as performing a map,
+performing a function on every element of a set. The attention mechanism
+can be thought of as a reduce (or map-reduce) operation, where the
+attention mechanism is a function that takes a set of elements and
+
+
+#v(1em)
 
 Primber numbers, being divisible by only 1 and themselves,
 are a fundamental concept of number theory, about which the
