@@ -1,15 +1,25 @@
-// head ///////////////////////////////////////////////////////////////////////
+#import "@preview/unequivocal-ams:0.1.1": ams-article, theorem, proof
 
-#set page(paper: "us-letter", numbering: "1")
-#set par(justify: true, leading: 1em)
-#set text(font: "New Computer Modern", size: 12pt)
+
+#show: ams-article.with(
+  title: [Mechanistic Interpretability and Implementability of Irreducible Integer Identifiers],
+  authors: (
+    (
+      name: "Noah Syrkis",
+      department: [Department of Mathematics],
+      organization: [University of South Carolina],
+      location: [Columbia, SC 29208],
+      email: "howard@math.sc.edu",
+      url: "www.math.sc.edu/~howard"
+    ),
+  ),
+  abstract: lorem(100),
+  bibliography: bibliography("zotero.bib"),
+)
 
 
 // cover //////////////////////////////////////////////////////////////////////
 
-#let title = [Mechanistic Interpretability and Implementability of Irreducible Integer Identifiers]
-#align(center, text(17pt)[*#title*])
-#align(center)[Noah Syrkis & Anders Søgaard]
 
 = Abstract
 
@@ -148,4 +158,3 @@ Furthermore, a one-hot vector is used to mask tasks, so as to shield the model f
 = Conclusion
 
 // Bibliography
-#bibliography("zotero.bib")
