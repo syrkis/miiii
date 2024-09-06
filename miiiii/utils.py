@@ -1,8 +1,8 @@
-# utils.py
+# %% utils.py
 #   miiii utils
 # by: Noah Syrkis
 
-# imports
+# %% imports
 import miiiii.kinds as kinds
 import miiiii.prime as prime
 import argparse
@@ -13,15 +13,15 @@ import pickle
 from aim import Run
 
 
-# constants
+# %% constants
 red = "#da3527"
 blue = "#002fa7"
 
 
-# functions
+# %% functions
 def cfg_fn(
     base=10,
-    n=1000,
+    n=12769,  # 113 ^ 2 @nanda2023 shoutout
     epochs=100,
     lr=1e-2,
     dropout=0.1,
