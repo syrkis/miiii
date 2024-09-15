@@ -1,6 +1,7 @@
 #import "@preview/unequivocal-ams:0.1.1": ams-article, theorem, proof
 
 
+
 #show: ams-article.with(
   title: [Mechanistic Interpretability and Implementability of Irreducible Integer Identifiers],
   authors: (
@@ -31,6 +32,17 @@ related to prime numbers.
 // body ///////////////////////////////////////////////////////////////////////
 
 = Introduction
+
+Current state of the art deep learning (DL) models are inherently hard to interpret.
+Indeed, DL is subsymbolic in nature, meaning atomic parts, that weights, of the models
+do not in and ofthemselves convey any meaning. @to_be_trained_or_not_to_be_trained shows
+a Hinton diagram of a trained and un trained embedding layer.
+
+#figure(
+  image("figs/exploration/syrkis_base_2-n_512-emb_128-depth_2-heads_16-epochs_1000-gamma_2-l2_0.001-lr_0.001-dropout_0.0-block_vaswani_train_focal_loss.svg"),
+  caption: "Initial (left) and trained (right) Hinton plot positional embeddings"
+)<to_be_trained_or_not_to_be_trained>
+
 
 - Deep learning is sub-symbolic.
 - Interpretability is difficult to define @lipton_mythos_2018.

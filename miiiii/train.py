@@ -1,4 +1,4 @@
-# train.py
+# %% train.py
 #   miiii train
 # by: Noah Syrkis
 
@@ -18,15 +18,6 @@ def focal_loss(logits, y, alpha):
     return optax.sigmoid_focal_loss(logits, y, alpha=alpha)
 
 
-def make_loss_fn(cfg, ds: mi.kinds.Dataset):
-    @jit
-    def loss_fn(logits, y):  #  cross entropy loss
-        loss = focal_loss(logits, y, ds.info.alpha).mean()
-        return loss
-
-    return loss_fn
-
-
 def make_update_fn(opt):
     @jit
     def update_fn(params, grads, opt_state):
@@ -39,10 +30,10 @@ def make_update_fn(opt):
 
 def make_grad_fn(loss_fn, apply_fn, cfg):
     @jit
-    def grad_fn(state, rng, x, y):  # maybe add allow_int flag below
+    def grad_fn(state, rng, x, y, alpha):  # maybe add allow_int flag below
         def loss_and_logits(params):
             logits = apply_fn(params, rng, x, cfg.dropout)
-            loss = loss_fn(logits, y)
+            loss = loss_fn(logits, y, alpha).mean()
             return loss, logits
 
         (loss, logits), grads = value_and_grad(loss_and_logits, has_aux=True)(state.params)
@@ -72,7 +63,7 @@ def make_step_fn(grad_fn, update_fn, ds: mi.kinds.Dataset, eval_fn):
     def step_fn(state, rng):
         params, opt_state = state.params, state.opt_state
         rng, key = random.split(rng)
-        loss, grads, logits, state = grad_fn(state, key, ds.train.x, ds.train.y)
+        loss, grads, logits, state = grad_fn(state, key, ds.train.x, ds.train.y, ds.info.alpha)
         params, opt_state = update_fn(params, grads, opt_state)
         metrics = eval_fn(params, rng, loss, logits)
         state = mi.kinds.State(params=params, opt_state=opt_state, ema_grads=state.ema_grads)
@@ -85,10 +76,10 @@ def make_eval_fn(apply_fn, loss_fn, ds):
     @jit
     def eval_fn(params, rng, train_loss, train_logits):
         valid_logits = apply_fn(params, rng, ds.valid.x, 0.0)
-        valid_loss = loss_fn(valid_logits, ds.valid.y)  # number
+        valid_loss = loss_fn(valid_logits, ds.valid.y, ds.info.alpha).mean()  # number
 
         train_metrics = metrics_fn(ds.train.y, train_logits)
-        valid_metrics = metrics_fn(ds.train.y, valid_logits)
+        valid_metrics = metrics_fn(ds.valid.y, valid_logits)
 
         return dict(
             train_loss=train_loss,
@@ -115,7 +106,7 @@ def metrics_fn(y_true, logits):
     rec = tp / (tp + fn + 1e-8)
     f1 = 2 * prec * rec / (prec + rec + 1e-8)
     loss = optax.sigmoid_focal_loss(logits, y_true).mean(axis=0)
-    return dict(loss=loss, f1=f1, prec=prec, rec=rec, acc=acc)
+    return dict(loss=loss, f1=f1)  # , prec=prec, rec=rec, acc=acc)
 
 
 def make_train_fn(step_fn):
@@ -135,7 +126,7 @@ def make_train_fn(step_fn):
 
 
 def init_train(apply_fn, params, cfg, ds: mi.kinds.Dataset):
-    loss_fn = make_loss_fn(cfg, ds)
+    loss_fn = focal_loss  # @nanda2023
     opt = optax.adamw(cfg.lr, weight_decay=cfg.l2)  # @nanda2023
     opt_state = opt.init(params)
 

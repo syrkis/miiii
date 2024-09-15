@@ -26,7 +26,6 @@ optax = "^0.2.3"
 numpy = "<2.0.0"
 aim = "^3.24.0"
 jaxtyping = "^0.2.33"
-jax-metal = "^0.1.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3.2"

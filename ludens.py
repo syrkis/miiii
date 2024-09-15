@@ -5,7 +5,6 @@
 
 # %% Imports
 import miiiii as mi
-
 import jax
 import jax.numpy as jnp
 from jax import random, vmap, jit, value_and_grad, grad, tree, lax, nn

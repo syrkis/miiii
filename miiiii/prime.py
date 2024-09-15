@@ -27,8 +27,9 @@ def target_fn(x: Array) -> Tuple[Array, List[str]]:
     return y, tasks
 
 
-def prime_fn(n: int, base: int, ns: Callable, key: Array | None = None) -> mi.kinds.Dataset:
-    x = source_fn(n, base, ns)  # get source
+def prime_fn(cfg: mi.kinds.Conf, key: Array | None = None) -> mi.kinds.Dataset:
+    n, base = cfg.n, cfg.base
+    x = source_fn(n, base, base_ns)  # get source
     y, tasks = target_fn(x)  # get target and tasks
 
     # shuffle data

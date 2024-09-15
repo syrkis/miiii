@@ -82,7 +82,7 @@ def hinton_metric(data: Array, metric: str, ds: mi.kinds.Dataset, path: str, spl
     ax.set_yticks([i for i in range(len(ds.info.tasks))])  # type: ignore
     ax.set_yticklabels(ds.info.tasks[:-1] + ["ℙ"])
     plt.tight_layout()
-    plt.savefig(f"{path}/{format}/{split}_{metric}_hinton.svg")
+    plt.savefig(f"{path}/{split}_{metric}_hinton.svg")
 
 
 def hinton_fn(data, ax):  # <- Hinton atomic
@@ -149,7 +149,7 @@ def curve_plot(data, metric, path, split):
     # ax.legend(info["legend"], frameon=False, labelcolor=fg)
     # make fname contain conf
     plt.tight_layout()
-    plt.savefig(f"{path}/{format}/{split}_{metric}_curve.svg")
+    plt.savefig(f"{path}/{split}_{metric}_curve.svg")
 
 
 def init_curve_plot():

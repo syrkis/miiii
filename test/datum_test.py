@@ -29,9 +29,7 @@ case_1_out = jnp.array([[0], [1], [2], [3], [4], [5], [6], [7], [8], [9]])
 source_case_1 = (case_1_in, case_1_out)
 
 case_2_in = (10, 8, numbs.base_ns)
-case_2_out = jnp.array(
-    [[0, 0], [0, 1], [0, 2], [0, 3], [0, 4], [0, 5], [0, 6], [0, 7], [1, 0], [1, 1]]
-)
+case_2_out = jnp.array([[0, 0], [0, 1], [0, 2], [0, 3], [0, 4], [0, 5], [0, 6], [0, 7], [1, 0], [1, 1]])
 source_case_2 = (case_2_in, case_2_out)
 
 
@@ -54,9 +52,7 @@ test_split = kinds.Datasplit(
     x=jnp.array([[5], [6], [7], [8], [9]]),
     y=jnp.array([[0, 0, 1], [1, 1, 0], [0, 0, 1], [1, 0, 0], [0, 1, 0]]),
 )
-info = kinds.Datainfo(
-    alpha=1 - jnp.array([3 / 5.0, 2 / 5.0, 2 / 5.0]), tasks=["2", "3", "prime"]
-)
+info = kinds.Datainfo(alpha=1 - jnp.array([3 / 5.0, 2 / 5.0, 2 / 5.0]), tasks=["2", "3", "prime"])
 case_1_out = kinds.Dataset(train=train_split, valid=test_split, info=info)
 data_case_1 = (case_1_in, case_1_out)
 

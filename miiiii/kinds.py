@@ -6,6 +6,7 @@
 from chex import dataclass
 from typing import List
 import optax
+import jax.numpy as jnp
 from jax import Array
 
 
@@ -26,7 +27,6 @@ class Conf:
     task: str = "prime"  # "prose"
     causal: bool = False
     # initialixation scale for weights
-    theta: float = 1e-2
     base: int = 2
     n: int = 1024
     latent_dim: int = 128
@@ -35,7 +35,7 @@ class Conf:
     epochs: int = 100
     lr: float = 1e-3
     block: str = "vaswani"
-    l2: float = 1e-4  # lambda
+    l2: float = 0.1
     dropout: float = 0.1
 
 
@@ -45,7 +45,7 @@ class Head:
     key: Array
     query: Array
     value: Array
-    # proj: Array
+    proj: Array
 
 
 @dataclass
@@ -57,16 +57,30 @@ class FFWD:
 
 
 @dataclass
+class LayerNorm:
+    gamma: Array
+    beta: Array
+
+
+@dataclass
 class Block:
     head: Head
     ffwd: FFWD
+    ln1: LayerNorm
+    ln2: LayerNorm
+
+
+@dataclass
+class Embeddings:
+    tok_emb: Array
+    pos_emb: Array
 
 
 @dataclass
 class Params:
-    tok_emb: Array
-    pos_emb: Array
+    embeddings: Embeddings
     blocks: List[Block]
+    ln: LayerNorm
     lm_head: Array
 
 
