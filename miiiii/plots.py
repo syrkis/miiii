@@ -32,7 +32,7 @@ plt.rcParams["font.family"] = "Monospace"
 def plot_run(metrics: Dict[str, Dict[str, Array]], ds: mi.kinds.Dataset, cfg: mi.kinds.Conf):
     # make run folder in figs/runs folder
     time_stamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-    path = f"paper/figs/runs/{time_stamp}_{name_run(cfg)}"
+    path = f"paper/figs/runs/{time_stamp}"  # _{name_run(cfg)}"
     os.makedirs(path, exist_ok=True)
     os.makedirs(f"{path}/", exist_ok=True)
 
