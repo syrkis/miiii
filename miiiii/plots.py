@@ -20,6 +20,7 @@ from matplotlib.patches import Rectangle
 from typing import Sequence
 import jax.numpy as jnp
 from typing import Dict
+import datetime
 
 # %% Constants and configurations
 fg = "black"
@@ -30,14 +31,16 @@ plt.rcParams["font.family"] = "Monospace"
 # %% functions
 def plot_run(metrics: Dict[str, Dict[str, Array]], ds: mi.kinds.Dataset, cfg: mi.kinds.Conf):
     # make run folder in figs/runs folder
-    path = f"paper/figs/runs/{name_run(cfg)}"
+    time_stamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    path = f"paper/figs/runs/{time_stamp}_{name_run(cfg)}"
     os.makedirs(path, exist_ok=True)
     os.makedirs(f"{path}/", exist_ok=True)
 
     # hinton plots of all metrics
     for split in ["train", "valid"]:
         for metric in metrics[split]:
-            hinton_metric(metrics[split][metric], metric, ds, path, split)
+            max_val = 1 if "f1" in metric else metrics["train"]["loss"].max().item()
+            hinton_metric(metrics[split][metric], metric, ds, path, split, max_val, cfg)
             plt.close()
     # curve plots of all metrics
     for split in ["train", "valid"]:
@@ -54,6 +57,13 @@ def name_run(cfg: mi.kinds.Conf):
     return name
 
 
+def title_fn(cfg: mi.kinds.Conf):
+    title = f"base : {cfg.base} | emb : {cfg.latent_dim} | heads : {cfg.heads} | depth : {cfg.depth} | lr : {cfg.lr} | l2 : {cfg.l2} | dropout : {cfg.dropout}"
+    # replce " | " with "    |    "
+    title = title.replace(" | ", "   |   ")
+    return title
+
+
 ########################################################################################
 # %% Hinton plots
 def hinton_weight(weight: Array, path: str):
@@ -65,32 +75,41 @@ def hinton_weight(weight: Array, path: str):
     plt.savefig(f"{path}/svg/weights.svg")
 
 
-def hinton_metric(data: Array, metric: str, ds: mi.kinds.Dataset, path: str, split: str):
+def hinton_metric(
+    data: Array, metric: str, ds: mi.kinds.Dataset, path: str, split: str, max_val: float, cfg: mi.kinds.Conf
+):
     fig, ax = plt.subplots(figsize=(12, 5))
     pool_data = horizontal_mean_pooling(data)
-    hinton_fn(pool_data, ax)
+    hinton_fn(pool_data, ax, max_val)
 
     # ax modifications
     ax.set_xlim(0 - 1, len(pool_data[0]) + 1)
     ax.set_ylim(0 - 1, len(pool_data) + 1)
     ax.tick_params(axis="x", which="major", pad=10)
     ax.tick_params(axis="y", which="major", pad=10)
-    ax.set_xticks([0, len(pool_data[0]) - 1])
-    ax.set_xticklabels(["1", data.shape[1]])  # type: ignore
-    # title_pos = len(pool_data[0]) + 0.5, len(pool_data) / 2
-    # ax.text(*title_pos, f"{metric} in time", ha="center", va="center", rotation=270)
+    ax.set_xticks(
+        [0, len(pool_data[0]) // 4, len(pool_data[0]) // 2, 3 * len(pool_data[0]) // 4, len(pool_data[0]) - 1]
+    )  # type: ignore
+    ax.set_xticklabels(["1", data.shape[1] // 4, data.shape[1] // 2, 3 * data.shape[1] // 4, data.shape[1]])  # type: ignore
+    # ax.set_xticklabels(["1", data.shape[1] // 3, 2 * data.shape[1] // 3, data.shape[1]])  # type: ignore
+    # ax.set_xlabel("Epochs")
+    # put config in the title with small text (center aligned)
+    title = title_fn(cfg)
+    ax.text(len(pool_data[0]) / 2, len(pool_data) + 0.1, title, ha="center", fontsize=10)
+    title_pos = len(pool_data[0]), len(pool_data) / 2 - 0.5
+    ax.text(*title_pos, f"{split} {metric}", va="center", rotation=270)
     ax.set_yticks([i for i in range(len(ds.info.tasks))])  # type: ignore
     ax.set_yticklabels(ds.info.tasks[:-1] + ["ℙ"])
     plt.tight_layout()
     plt.savefig(f"{path}/{split}_{metric}_hinton.svg")
 
 
-def hinton_fn(data, ax):  # <- Hinton atomic
+def hinton_fn(data, ax, scale: float = 1.0):  # <- Hinton atomic
     """Plot a matrix of data in a hinton diagram."""
-    scale = jnp.max(jnp.abs(data)) / 0.8
     for (y, x), w in np.ndenumerate(data):
         c = bg if w < 0 else fg  # color
-        s = np.sqrt(np.abs(w) / scale)  # size
+        s = (np.sqrt(np.abs(w)) / scale) * 0.8
+        # s = np.abs(w)  # size
         ax.add_patch(Rectangle((x - s / 2, y - s / 2), s, s, facecolor=c, edgecolor=fg))
 
     # ax modifications
@@ -140,11 +159,18 @@ def small_multiples(fnames, seqs, f_name, n_rows=2, n_cols=2):
 # %% Curve plots
 def curve_plot(data, metric, path, split):
     fig, ax = init_curve_plot()
+    new_len = len(data[0])
     for i, curve in enumerate(data):
-        ax.plot(curve, c=fg, lw=2, ls="--" if i > 0 else "-")
-    ax.set_xscale("log")  # make x-axis log
-    # truncate x axis to be large than 10
-    ax.set_xlim(10, len(data[0]))
+        # smooth curve
+        if i == len(data) - 1:
+            curve = np.convolve(curve, np.ones(10) / 10, mode="valid")
+            new_len = len(curve)
+            ax.plot(curve, c=fg, lw=2, ls="--" if i > 0 else "-")
+        else:
+            continue
+    # ax.set_xscale("log")  # make x-axis log
+    # smoothing x axis
+    ax.set_xlim(10, new_len)
     # add info key, val pairs to right side of plot (centered verticall on right axis) (relative to len(info))
     # ax.legend(info["legend"], frameon=False, labelcolor=fg)
     # make fname contain conf

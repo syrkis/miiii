@@ -9,7 +9,18 @@ from oeis import A000040 as primes
 
 
 # %% Exploring and plotting the data
-cfg = mi.utils.cfg_fn(task="prime")
+cfg = mi.utils.cfg_fn(
+    task="prime",
+    epochs=100,
+    depth=3,
+    dropout=0.1,
+    l2=0.1,
+    heads=4,
+    latent_dim=64,
+    lr=1e-4,
+    n=1024,
+    base=23,
+)
 rng, *keys = random.split(random.PRNGKey(0), 3)
 ds = mi.prime.prime_fn(cfg, keys[0])
 

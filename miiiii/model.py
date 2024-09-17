@@ -52,7 +52,7 @@ def attn_fn(cfg: mi.kinds.Conf):  # config specifies if the model is causal or n
         q, k, v = x @ params.query, x @ params.key, x @ params.value
         z = q @ rearrange(k, "b t c -> b c t")
         z /= jnp.sqrt(params.key.shape[-1])
-        z = lax.cond(cfg.causal, causal_fn, lambda x: x, z)
+        # z = lax.cond(cfg.causal, causal_fn, lambda x: x, z)
         # z = dropout_fn(key, z, cfg, dropout)
         z = rearrange(z @ v, "h t d -> t (h d)")
         z = z @ params.proj
@@ -195,19 +195,13 @@ if __name__ == "__main__":
     rng, key = random.split(random.PRNGKey(0))
     cfg = mi.utils.cfg_fn(latent_dim=256, batch_size=64, seq_len=128, depth=4, heads=8, task="prime")
     # ds_train, ds_test, c2i, i2c, cfg = mi.prose.prose_fn(rng, cfg)
-    ds = mi.prime.prime_fn(cfg, mi.prime.base_ns, key)
     apply = jit(apply_fn(cfg))
     grad_fn = jit(jax.value_and_grad(loss_fn))
     opt = optax.adamw(0.0001)
     params = init_fn(rng, cfg)
-    opt_state = opt.init(params)
 
     for i in (pbar := tqdm(range(5000))):
-        y_hat = apply(params, key, ds.train.x, 0.0)
         rng, key = random.split(rng)
-        loss, grads = grad_fn(params, key, ds.train.x, ds.train.y, 0.0)
-        params, opt_state = update(opt, opt_state, grads, params)
-        pbar.set_description(f"Loss: {loss:.4f}")
     # if i % 100 == 0:
     # train_loss = evaluate_splir(ds_train, params, apply)
     # eval_loss = evaluate_splir(ds_test, params, apply)

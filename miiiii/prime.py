@@ -36,8 +36,8 @@ def prime_fn(cfg: mi.kinds.Conf, key: Array | None = None) -> mi.kinds.Dataset:
     idxs = random.permutation(key, len(x)) if key is not None else jnp.arange(len(x))
     x, y = x[idxs], y[idxs]  # shuffle data
 
-    sep = len(x) // 2  # TODO: this a choise (split could be non 50/50)
-    alpha = 1 - y[:sep].mean(axis=0)  # for focal loss
+    sep = int(len(x) * 0.8)  # 80/20 split
+    alpha = (1 - y[:sep].mean(axis=0)) ** 2  # for focal loss
 
     # dataset
     train = mi.kinds.Datasplit(x=x[:sep], y=y[:sep])

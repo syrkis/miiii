@@ -44,7 +44,7 @@ def make_grad_fn(loss_fn, apply_fn, cfg):
 
 
 @partial(jit, static_argnums=(2,))
-def gradfilter_ema(grads, state: mi.kinds.State, alpha=0.98, lamb=2.0):
+def gradfilter_ema(grads, state: mi.kinds.State, alpha=0.8, lamb=0.1):  # like @lee2024b grokfast for MNIST
     # @lee2024b grokfast-like EMA gradient filtering
     def _update_ema(prev_ema, gradient):
         return prev_ema * alpha + gradient * (1 - alpha)
@@ -62,10 +62,10 @@ def make_step_fn(grad_fn, update_fn, ds: mi.kinds.Dataset, eval_fn):
     @jit
     def step_fn(state, rng):
         params, opt_state = state.params, state.opt_state
-        rng, key = random.split(rng)
-        loss, grads, logits, state = grad_fn(state, key, ds.train.x, ds.train.y, ds.info.alpha)
+        keys = random.split(rng)
+        loss, grads, logits, state = grad_fn(state, keys[0], ds.train.x, ds.train.y, ds.info.alpha)
         params, opt_state = update_fn(params, grads, opt_state)
-        metrics = eval_fn(params, rng, loss, logits)
+        metrics = eval_fn(params, keys[1], loss, logits)
         state = mi.kinds.State(params=params, opt_state=opt_state, ema_grads=state.ema_grads)
         return state, metrics
 
@@ -127,7 +127,7 @@ def make_train_fn(step_fn):
 
 def init_train(apply_fn, params, cfg, ds: mi.kinds.Dataset):
     loss_fn = focal_loss  # @nanda2023
-    opt = optax.adamw(cfg.lr, weight_decay=cfg.l2)  # @nanda2023
+    opt = optax.adamw(cfg.lr, b1=0.9, b2=0.999, eps=1e-8, weight_decay=cfg.l2)
     opt_state = opt.init(params)
 
     update_fn = make_update_fn(opt)

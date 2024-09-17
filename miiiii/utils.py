@@ -20,14 +20,14 @@ blue = "#002fa7"
 
 # %% functions
 def cfg_fn(
-    base=31,
+    base=37,
     n=1024,  # 113 ^ 2 @nanda2023 shoutout
-    epochs=2000,
-    lr=1e-3,
+    epochs=10000,
+    lr=3e-4,
     dropout=0.5,
     latent_dim=64,
     heads=8,
-    depth=3,
+    depth=4,
     task="prime",
     batch_size=32,
     seq_len=32,
