@@ -23,7 +23,7 @@ def loss_fn(logits, y, alpha):
 def update_fn(opt, ds, cfg):
     def update(params, opt_state, emas, key):
         losses, logits, grads = mi.train.grad_fn(params, key, ds, cfg)
-        grads, emas = filter_fn(grads, emas, 0.98, 0.8)
+        grads, emas = filter_fn(grads, emas, 0.98, 2)
         updates, opt_state = opt.update(grads, opt_state, params)
         params = optax.apply_updates(params, updates)
         return params, opt_state, emas, losses, logits
@@ -47,8 +47,7 @@ def filter_fn(grads, emas, alpha, lamb):
     return grads, emas
 
 
-def step_fn(ds, cfg):
-    opt = optax.adam(cfg.lr)
+def step_fn(ds, cfg, opt):
     evaluate = evaluate_fn(ds, cfg)
     update = update_fn(opt, ds, cfg)
 
@@ -65,9 +64,9 @@ def step_fn(ds, cfg):
 def train(rng, cfg, ds):
     params = mi.model.init_fn(rng, cfg)
     emas = tree.map(lambda x: jnp.zeros_like(x), params)
-    opt = optax.adam(cfg.lr)
+    opt = optax.adamw(cfg.lr, b1=0.9, b2=0.98, weight_decay=cfg.l2)
     opt_state = opt.init(params)  # type: ignore
-    step = step_fn(ds, cfg)
+    step = step_fn(ds, cfg, opt)
     rngs = random.split(rng, cfg.epochs)
     state = (params, opt_state, emas)
 

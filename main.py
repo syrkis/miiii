@@ -15,13 +15,13 @@ from oeis import A000040 as primes
 # %% Exploring and plotting the data
 cfg = mi.utils.cfg_fn(
     task="prime",
-    epochs=5000,
+    epochs=1000,
     depth=4,
-    dropout=0.5,
-    l2=1.0,
+    dropout=0.1,
+    l2=0.1,
     heads=8,
-    latent_dim=256,
-    lr=1e-4,
+    latent_dim=128,
+    lr=1e-3,  # like @nanda2023
     # n=12_769,  # 113 ^ 2 @nanda2023 shoutout + 1 (for gpu)
     # base=113,  # 113 is prime
     n=1024,
