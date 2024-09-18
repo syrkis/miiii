@@ -15,15 +15,17 @@ from oeis import A000040 as primes
 # %% Exploring and plotting the data
 cfg = mi.utils.cfg_fn(
     task="prime",
-    epochs=1000,
+    epochs=10000,
     depth=3,
-    dropout=0.5,
-    l2=1.0,
-    heads=4,
-    latent_dim=128,
+    dropout=0.2,
+    l2=0.3,
+    heads=8,
+    latent_dim=256,
     lr=1e-4,
-    n=12_769,  # 113 ^ 2 @nanda2023 shoutout + 1 (for gpu)
-    base=113,  # 113 is prime
+    # n=12_769,  # 113 ^ 2 @nanda2023 shoutout + 1 (for gpu)
+    # base=113,  # 113 is prime
+    n=1024,
+    base=37,
 )
 
 # %% Training
@@ -32,7 +34,7 @@ ds = mi.prime.prime_fn(cfg, rng)
 state, metrics = mi.train.train(rng, cfg, ds)
 
 # %%
-# mi.plots.plot_run(metrics, ds, cfg)
+mi.plots.plot_run(metrics, ds, cfg)
 # %%
 # state, metrics = train(cfg.epochs, rng, state)
 # state = train(cfg.epochs, rng, state)

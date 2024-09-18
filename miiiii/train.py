@@ -17,7 +17,7 @@ from tqdm import tqdm
 # functions
 @partial(vmap, in_axes=(1, 1, 0))  # vmap across task (not sample)
 def loss_fn(logits, y, alpha):
-    return optax.sigmoid_focal_loss(logits, y, alpha=alpha)  # do not take mean (task loss vector)
+    return optax.sigmoid_focal_loss(logits, y, alpha=alpha).mean()  # do not take mean (task loss vector)
 
 
 def update_fn(opt, ds, cfg):
@@ -50,8 +50,6 @@ def step_fn(ds, cfg):
         params, opt_state = state
         params, opt_state, losses, logits = update(params, opt_state, key)
         metrics = evaluate(params, key, logits, losses)
-        mi.utils.check_nan(params, "params")
-        mi.utils.check_nan(metrics, "metrics")
         return (params, opt_state), metrics
 
     return step
@@ -64,19 +62,26 @@ def train(rng, cfg, ds):
     step = step_fn(ds, cfg)
     rngs = random.split(rng, cfg.epochs)
     state = (params, opt_state)
-    state, metrics = lax.scan(step, state, rngs)  # getting a weird error
-    # metrics = []
-    # for key in (pbar := tqdm(rngs)):
-    #     state, metric = step(state, key)
-    #     metrics.append(metric)
-    #     pbar.set_description(
-    #         f"train_loss: {metric['train']['losses'].mean():.3f}, valid_loss: {metric['valid']['losses'].mean():.3f}"
-    #     )
-    # matrics = tree.map(lambda x, y: jnp.append(x, y), metrics, metric)
-    # mi.utils.check_nan(metrics, "metrics")
-    # mi.utils.check_nan(state[0], "params")
-    # mi.utils.check_nan(state[1], "opt_state")
 
+    # state, metrics = lax.scan(step, state, rngs)  # sometimes getting GPU metal shader error
+
+    #########################################
+    metrics = []
+    for key in (pbar := tqdm(rngs)):
+        state, metric = step(state, key)
+        metrics.append(metric)
+
+    metrics = {
+        "train": {
+            "f1": jnp.array([m.train_f1 for m in metrics]).T,
+            "loss": jnp.array([m.train_loss for m in metrics]).T,
+        },
+        "valid": {
+            "f1": jnp.array([m.valid_f1 for m in metrics]).T,
+            "loss": jnp.array([m.valid_loss for m in metrics]).T,
+        },
+    }
+    #########################################
     return state, metrics
 
 
@@ -87,9 +92,7 @@ def evaluate_fn(ds, cfg):
         valid_losses = mi.train.loss_fn(valid_logits, ds.valid.y, ds.info.alpha)
         train_f1 = f1_score(train_logits, ds.train.y)
         valid_f1 = f1_score(valid_logits, ds.valid.y)
-        train_metrics = dict(losses=train_losses, f1=train_f1)
-        valid_metrics = dict(losses=valid_losses, f1=valid_f1)
-        return dict(train=train_metrics, valid=valid_metrics)
+        return mi.kinds.Metrics(train_f1=train_f1, valid_f1=valid_f1, train_loss=train_losses, valid_loss=valid_losses)
 
     return evaluate
 
