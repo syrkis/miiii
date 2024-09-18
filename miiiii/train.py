@@ -21,11 +21,12 @@ def loss_fn(logits, y, alpha):
 
 
 def update_fn(opt, ds, cfg):
-    def update(params, opt_state, key):
+    def update(params, opt_state, emas, key):
         losses, logits, grads = mi.train.grad_fn(params, key, ds, cfg)
+        grads, emas = filter_fn(grads, emas, 0.98, 0.8)
         updates, opt_state = opt.update(grads, opt_state, params)
         params = optax.apply_updates(params, updates)
-        return params, opt_state, losses, logits
+        return params, opt_state, emas, losses, logits
 
     return update
 
@@ -40,6 +41,12 @@ def grad_fn(params, rng, ds, cfg):  # maybe add allow_int flag below
     return losses, logits, grads
 
 
+def filter_fn(grads, emas, alpha, lamb):
+    emas = tree.map(lambda grad, ema: ema * alpha + grad * (1 - alpha), grads, emas)
+    grads = tree.map(lambda grad, ema: grad + lamb * ema, grads, emas)
+    return grads, emas
+
+
 def step_fn(ds, cfg):
     opt = optax.adam(cfg.lr)
     evaluate = evaluate_fn(ds, cfg)
@@ -47,21 +54,22 @@ def step_fn(ds, cfg):
 
     @jit
     def step(state, key):
-        params, opt_state = state
-        params, opt_state, losses, logits = update(params, opt_state, key)
+        params, opt_state, emas = state
+        params, opt_state, emas, losses, logits = update(params, opt_state, emas, key)
         metrics = evaluate(params, key, logits, losses)
-        return (params, opt_state), metrics
+        return (params, opt_state, emas), metrics
 
     return step
 
 
 def train(rng, cfg, ds):
     params = mi.model.init_fn(rng, cfg)
+    emas = tree.map(lambda x: jnp.zeros_like(x), params)
     opt = optax.adam(cfg.lr)
     opt_state = opt.init(params)  # type: ignore
     step = step_fn(ds, cfg)
     rngs = random.split(rng, cfg.epochs)
-    state = (params, opt_state)
+    state = (params, opt_state, emas)
 
     # state, metrics = lax.scan(step, state, rngs)  # sometimes getting GPU metal shader error
 

@@ -15,10 +15,10 @@ from oeis import A000040 as primes
 # %% Exploring and plotting the data
 cfg = mi.utils.cfg_fn(
     task="prime",
-    epochs=10000,
-    depth=3,
-    dropout=0.2,
-    l2=0.3,
+    epochs=5000,
+    depth=4,
+    dropout=0.5,
+    l2=1.0,
     heads=8,
     latent_dim=256,
     lr=1e-4,
