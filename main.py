@@ -5,33 +5,37 @@
 # %% Imports
 import miiiii as mi  # test
 from jax import random
+import optax
+import jax.numpy as jnp
+from functools import partial
+from tqdm import tqdm
 from oeis import A000040 as primes
 
 
 # %% Exploring and plotting the data
 cfg = mi.utils.cfg_fn(
     task="prime",
-    epochs=100,
+    epochs=1000,
     depth=3,
-    dropout=0.1,
-    l2=0.1,
+    dropout=0.5,
+    l2=1.0,
     heads=4,
-    latent_dim=64,
+    latent_dim=128,
     lr=1e-4,
-    n=1024,
-    base=23,
+    n=12_769,  # 113 ^ 2 @nanda2023 shoutout + 1 (for gpu)
+    base=113,  # 113 is prime
 )
-rng, *keys = random.split(random.PRNGKey(0), 3)
-ds = mi.prime.prime_fn(cfg, keys[0])
-
-# %% Initialize
-params = mi.model.init_fn(keys[1], cfg)
-apply = mi.model.apply_fn(cfg)
-train, state = mi.train.init_train(apply, params, cfg, ds)
 
 # %% Training
-state, metrics = train(cfg.epochs, rng, state)
-mi.plots.plot_run(metrics, ds, cfg)
+rng, key = random.split(random.PRNGKey(0))
+ds = mi.prime.prime_fn(cfg, rng)
+state, metrics = mi.train.train(rng, cfg, ds)
+
+# %%
+# mi.plots.plot_run(metrics, ds, cfg)
+# %%
+# state, metrics = train(cfg.epochs, rng, state)
+# state = train(cfg.epochs, rng, state)
 # mi.utils.track_metrics(metrics, ds, cfg)
 # %% Hinton metrics
 

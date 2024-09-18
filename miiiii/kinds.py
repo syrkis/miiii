@@ -89,7 +89,7 @@ class Params:
 class State:  # replace with chex and put in types
     params: Params
     opt_state: optax.OptState
-    ema_grads: Array
+    # ema_grads: Array
 
 
 # %% Data classes

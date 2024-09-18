@@ -78,7 +78,7 @@ def hinton_weight(weight: Array, path: str):
 def hinton_metric(
     data: Array, metric: str, ds: mi.kinds.Dataset, path: str, split: str, max_val: float, cfg: mi.kinds.Conf
 ):
-    fig, ax = plt.subplots(figsize=(12, 5))
+    fig, ax = plt.subplots(figsize=(12, 4))
     pool_data = horizontal_mean_pooling(data)
     hinton_fn(pool_data, ax, max_val)
 
@@ -108,8 +108,10 @@ def hinton_fn(data, ax, scale: float = 1.0):  # <- Hinton atomic
     """Plot a matrix of data in a hinton diagram."""
     for (y, x), w in np.ndenumerate(data):
         c = bg if w < 0 else fg  # color
-        s = (np.sqrt(np.abs(w)) / scale) * 0.8
-        # s = np.abs(w)  # size
+        s = np.sqrt(np.abs(w) / scale) * 0.8
+        if s == jnp.nan:
+            s = 0
+        s = jnp.clip(s, 0, 0.9).item()
         ax.add_patch(Rectangle((x - s / 2, y - s / 2), s, s, facecolor=c, edgecolor=fg))
 
     # ax modifications
@@ -199,7 +201,7 @@ def init_curve_plot():
     return fig, ax
 
 
-def horizontal_mean_pooling(x: Array, width: int = 3) -> Array:
+def horizontal_mean_pooling(x: Array, width: int = 4) -> Array:
     """Rolling mean array. Shrink to be rows x rows * width."""
     x = x[:, : (x.shape[1] // (x.shape[0] * width)) * (x.shape[0] * width)]
     i = jnp.eye(x.shape[0] * width).repeat(x.shape[1] // (x.shape[0] * width), axis=-1)

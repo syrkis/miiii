@@ -8,6 +8,7 @@ import miiiii.prime as prime
 import argparse
 import os
 import jax.numpy as jnp
+from jax import tree
 import yaml
 import pickle
 from aim import Run
@@ -16,6 +17,10 @@ from aim import Run
 # %% constants
 red = "#da3527"
 blue = "#002fa7"
+
+
+def check_nan(pytree, name):
+    return jnp.array(tree.flatten(tree.map(lambda x: jnp.isnan(x).any(), pytree))[0]).any()
 
 
 # %% functions

@@ -11,7 +11,7 @@
       organization: [University of South Carolina],
       location: [Columbia, SC 29208],
       email: "howard@math.sc.edu",
-      url: "www.math.sc.edu/~howard"
+      url: "www.math.sc.edu/~howard",
     ),
   ),
   abstract: lorem(100),
@@ -39,8 +39,8 @@ do not in and ofthemselves convey any meaning. @to_be_trained_or_not_to_be_train
 a Hinton diagram of a trained and un trained embedding layer.
 
 #figure(
-  image("figs/exploration/syrkis_base_2-n_512-emb_128-depth_2-heads_16-epochs_1000-gamma_2-l2_0.001-lr_0.001-dropout_0.0-block_vaswani_train_focal_loss.svg"),
-  caption: "Initial (left) and trained (right) Hinton plot positional embeddings"
+  image("figs/latest/train_loss_hinton.svg"),
+  caption: "Initial (left) and trained (right) Hinton plot positional embeddings",
 )<to_be_trained_or_not_to_be_trained>
 
 
@@ -84,7 +84,7 @@ A dataset, $[X|Y]$, of the first 12 769 natural numbers is constructed, with $X$
 
 #figure(
   image("figs/polar_nats_and_sixes.svg"),
-  caption: "The first 2048 primes minus the first 1024 primes."
+  caption: "The first 2048 primes minus the first 1024 primes.",
 )<prime_numbers_1024_to_2048>
 
 Similarly, prime_numbers_1024_to_2048 shows the first 2048 prime numbers minus the first 1024 prime numbers.
@@ -92,7 +92,7 @@ The random nature of the prime numbers is evident in the figure, with no clear p
 
 #figure(
   image("figs/exploration/polar_primes.svg"),
-  caption: "The first 2048 primes minus the first 1024 primes."
+  caption: "The first 2048 primes minus the first 1024 primes.",
 )<prime_numbers_1024_to_2048>
 
 
@@ -123,14 +123,15 @@ is a vector of length $sqrt(n) + 1$, where the $i$ element is 1 if the sample is
   table(
     columns: (auto, auto, auto),
     table.header[$x$ (base 10)][$x$ (base 2)][\[$y_2 space y_3 space y_p$\]],
-    ["04"], ["0100"], [\[1  0  0\]],
-    ["05"], ["0101"], [\[0  0  1\]],
-    ["06"], ["0110"], [\[1  1  0\]],
-    ["07"], ["0111"], [\[0  0  1\]],
-    ["08"], ["1000"], [\[1  0  0\]],
-    ["09"], ["1001"], [\[0  1  0\]],
-  ), caption: [Base 10 and 2 dataset for $n = 6$,
-  note $sqrt(9) = 3$, so $y$ tests for multiples of 2 and 3, along with primality.]
+    ["04"], ["0100"], [\[1 0 0\]],
+    ["05"], ["0101"], [\[0 0 1\]],
+    ["06"], ["0110"], [\[1 1 0\]],
+    ["07"], ["0111"], [\[0 0 1\]],
+    ["08"], ["1000"], [\[1 0 0\]],
+    ["09"], ["1001"], [\[0 1 0\]],
+  ),
+  caption: [Base 10 and 2 dataset for $n = 6$,
+    note $sqrt(9) = 3$, so $y$ tests for multiples of 2 and 3, along with primality.],
 )<probe-a>
 
 In the following, $X$ denotes the input data, and $Y$ the target data, with $x$ and $y$ denoting individual samples.
