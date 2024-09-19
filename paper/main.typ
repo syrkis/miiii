@@ -43,6 +43,11 @@ a Hinton diagram of a trained and un trained embedding layer.
   caption: "Initial (left) and trained (right) Hinton plot positional embeddings",
 )<to_be_trained_or_not_to_be_trained>
 
+#figure(
+  image("figs/latest/valid_loss_hinton.svg"),
+  caption: "Initial (left) and trained (right) Hinton plot positional embeddings",
+)
+
 
 - Deep learning is sub-symbolic.
 - Interpretability is difficult to define @lipton_mythos_2018.

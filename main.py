@@ -12,15 +12,15 @@ from tqdm import tqdm
 from oeis import A000040 as primes
 
 
-# %% Exploring and plotting the data
+# %% Exploring and plotting the data 1
 cfg = mi.utils.cfg_fn(
     task="prime",
-    epochs=1000,
-    depth=4,
-    dropout=0.1,
-    l2=0.1,
-    heads=8,
-    latent_dim=128,
+    epochs=100,
+    depth=3,
+    dropout=0.2,  # nanda
+    l2=1.0,  # nanda
+    heads=4,
+    latent_dim=256,  # nanda and grokfast
     lr=1e-3,  # like @nanda2023
     # n=12_769,  # 113 ^ 2 @nanda2023 shoutout + 1 (for gpu)
     # base=113,  # 113 is prime

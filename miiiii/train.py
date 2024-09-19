@@ -12,6 +12,7 @@ from functools import partial
 from aim import Run, Figure
 from jax_tqdm import scan_tqdm
 from tqdm import tqdm
+import numpy as np
 
 
 # functions
@@ -71,6 +72,7 @@ def train(rng, cfg, ds):
     state = (params, opt_state, emas)
 
     # state, metrics = lax.scan(step, state, rngs)  # sometimes getting GPU metal shader error
+    # return lax.scan(step, state, rngs)  # sometimes getting GPU metal shader error
 
     #########################################
     metrics = []
@@ -80,12 +82,12 @@ def train(rng, cfg, ds):
 
     metrics = {
         "train": {
-            "f1": jnp.array([m.train_f1 for m in metrics]).T,
-            "loss": jnp.array([m.train_loss for m in metrics]).T,
+            "f1": np.array([m.train_f1 for m in metrics]).T,
+            "loss": np.array([m.train_loss for m in metrics]).T,
         },
         "valid": {
-            "f1": jnp.array([m.valid_f1 for m in metrics]).T,
-            "loss": jnp.array([m.valid_loss for m in metrics]).T,
+            "f1": np.array([m.valid_f1 for m in metrics]).T,
+            "loss": np.array([m.valid_loss for m in metrics]).T,
         },
     }
     #########################################

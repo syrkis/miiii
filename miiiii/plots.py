@@ -78,7 +78,7 @@ def hinton_weight(weight: Array, path: str):
 def hinton_metric(
     data: Array, metric: str, ds: mi.kinds.Dataset, path: str, split: str, max_val: float, cfg: mi.kinds.Conf
 ):
-    fig, ax = plt.subplots(figsize=(12, 4))
+    fig, ax = plt.subplots(figsize=(12, 5))
     pool_data = horizontal_mean_pooling(data)
     hinton_fn(pool_data, ax, max_val)
 
@@ -87,17 +87,17 @@ def hinton_metric(
     ax.set_ylim(0 - 1, len(pool_data) + 1)
     ax.tick_params(axis="x", which="major", pad=10)
     ax.tick_params(axis="y", which="major", pad=10)
-    ax.set_xticks(
-        [0, len(pool_data[0]) // 4, len(pool_data[0]) // 2, 3 * len(pool_data[0]) // 4, len(pool_data[0]) - 1]
-    )  # type: ignore
-    ax.set_xticklabels(["1", data.shape[1] // 4, data.shape[1] // 2, 3 * data.shape[1] // 4, data.shape[1]])  # type: ignore
-    # ax.set_xticklabels(["1", data.shape[1] // 3, 2 * data.shape[1] // 3, data.shape[1]])  # type: ignore
-    # ax.set_xlabel("Epochs")
+    ax.set_xticks([0, len(pool_data[0]) // 4, 3 * len(pool_data[0]) // 4, len(pool_data[0]) - 1])  # type: ignore
+    ax.set_xticklabels(["1", data.shape[1] // 4, 3 * data.shape[1] // 4, data.shape[1]])  # type: ignore
+    # ax.set_xlabel("Time")
+    ax.text(len(pool_data[0]) / 2, -1.75, "Time", ha="center")
     # put config in the title with small text (center aligned)
     title = title_fn(cfg)
     ax.text(len(pool_data[0]) / 2, len(pool_data) + 0.1, title, ha="center", fontsize=10)
+    # y lbal (tasks)
+    ax.set_ylabel("Task")
     title_pos = len(pool_data[0]), len(pool_data) / 2 - 0.5
-    ax.text(*title_pos, f"{split} {metric}", va="center", rotation=270)
+    ax.text(*title_pos, f"{split} {metric}", va="center", rotation=90)
     ax.set_yticks([i for i in range(len(ds.info.tasks))])  # type: ignore
     ax.set_yticklabels(ds.info.tasks[:-1] + ["ℙ"])
     plt.tight_layout()
@@ -201,7 +201,7 @@ def init_curve_plot():
     return fig, ax
 
 
-def horizontal_mean_pooling(x: Array, width: int = 4) -> Array:
+def horizontal_mean_pooling(x: Array, width: int = 3) -> Array:
     """Rolling mean array. Shrink to be rows x rows * width."""
     x = x[:, : (x.shape[1] // (x.shape[0] * width)) * (x.shape[0] * width)]
     i = jnp.eye(x.shape[0] * width).repeat(x.shape[1] // (x.shape[0] * width), axis=-1)

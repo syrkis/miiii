@@ -62,7 +62,7 @@ def embed_fn(params: mi.kinds.Embeddings, x: Array) -> Array:
 
 def ffwd(params: mi.kinds.FFWD, x: Array) -> Array:
     z = jnp.dot(x, params.w1) + params.b1  # z: seq_len x emb_dim
-    z = jax.nn.relu(z)  # TODO: maybe switch activation
+    z = jax.nn.gelu(z)  # grokfast
     z = z @ params.w2 + params.b2  # disable biases as per @nanda2023
     return z
 
