@@ -26,6 +26,8 @@ import datetime
 fg = "black"
 bg = "white"
 plt.rcParams["font.family"] = "Monospace"
+# set math text to new computer modern
+plt.rcParams["mathtext.fontset"] = "cm"
 
 
 # %% functions
