@@ -95,11 +95,17 @@ def hinton_metric(
     title = title_fn(cfg)
     ax.text(len(pool_data[0]) / 2, len(pool_data) + 0.1, title, ha="center", fontsize=10)
     # y lbal (tasks)
-    ax.set_ylabel("Task")
+    # ax.set_ylabel("Task")
+    ax.text(-1.75, len(pool_data) / 2 - 0.5, "Task", va="center", rotation=90)
     title_pos = len(pool_data[0]), len(pool_data) / 2 - 0.5
     ax.text(*title_pos, f"{split} {metric}", va="center", rotation=90)
-    ax.set_yticks([i for i in range(len(ds.info.tasks))])  # type: ignore
-    ax.set_yticklabels(ds.info.tasks[:-1] + ["ℙ"])
+    yticks = [i for i in range(len(ds.info.tasks))]  # type: ignore
+    y_tick_labels = ds.info.tasks[:-1] + ["ℙ"]
+    # remove the two middle ticks
+    yticks = yticks[: len(yticks) // 2 - 1] + yticks[len(yticks) // 2 + 1 :]
+    y_tick_labels = y_tick_labels[: len(y_tick_labels) // 2 - 1] + y_tick_labels[len(y_tick_labels) // 2 + 1 :]
+    ax.set_yticks(yticks)
+    ax.set_yticklabels(y_tick_labels)
     plt.tight_layout()
     plt.savefig(f"{path}/{split}_{metric}_hinton.svg")
 
