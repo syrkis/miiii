@@ -1,173 +1,172 @@
 #import "@preview/unequivocal-ams:0.1.1": ams-article, theorem, proof
+#import "@preview/equate:0.2.0": equate // <- for numbering equations
 
 
+#show: equate.with(breakable: true, sub-numbering: true)
+#set math.equation(numbering: "(1.1)")
 
 #show: ams-article.with(
   title: [Mechanistic Interpretability and Implementability of Irreducible Integer Identifiers],
   authors: (
     (
       name: "Noah Syrkis",
-      department: [Department of Mathematics],
-      organization: [University of South Carolina],
-      location: [Columbia, SC 29208],
-      email: "howard@math.sc.edu",
-      url: "www.math.sc.edu/~howard",
+      // department: [Department of Computer Science],
+      // organization: [University of Copenhagen],
+      // location: [Copenhagen, Denmark],
+      // url: "www.syrkis.com",
+    ),
+    (
+      name: "Anders Søgaard",
+      // department: [Department of Computer Science],
+      // organization: [University of Copenhagen],
+      // location: [Copenhagen, Denmark],
+      // url: "www.angbo.com",n
     ),
   ),
-  abstract: lorem(100),
+  abstract: [
+    An attention based deep learning model $cal(M)$ is trained to solve tasks related to prime numbers.
+    Specifically, $cal(M)$ is trained to predict if a given natural number $n$ is prime and what, if any,
+    prime numbers it can be factorized by. The model is then reverse engineered to understand the
+    learned algorithm.
+  ],
   bibliography: bibliography("zotero.bib"),
 )
-
-
-// cover //////////////////////////////////////////////////////////////////////
-
-
-= Abstract
-
-Deep learning models are increasingly ubiquitous, while their interpretability is inherently opaque.
-This paper explores the mechanistic interpretability of deep learning models trained to solve problems
-related to prime numbers.
-#set heading(numbering: "1.")
-
 // body ///////////////////////////////////////////////////////////////////////
 
 = Introduction
 
 Current state of the art deep learning (DL) models are inherently hard to interpret.
-Indeed, DL is subsymbolic in nature, meaning atomic parts, that weights, of the models
-do not in and ofthemselves convey any meaning. @to_be_trained_or_not_to_be_trained shows
-a Hinton diagram of a trained and un trained embedding layer.
-
-#figure(
-  image("figs/latest/train_loss_hinton.svg"),
-  caption: "Initial (left) and trained (right) Hinton plot positional embeddings",
-)<to_be_trained_or_not_to_be_trained>
-
-#figure(
-  image("figs/latest/valid_loss_hinton.svg"),
-  caption: "Initial (left) and trained (right) Hinton plot positional embeddings",
-)
-
-
-- Deep learning is sub-symbolic.
-- Interpretability is difficult to define @lipton_mythos_2018.
-- What is mechanistic interpretability.
-- Why are prime numbers a good challenge?
+Indeed, DL is subsymbolic in nature, meaning its atomic parts, the individual real numbers of the model weights,
+do not in and of themselves convey any meaning to a human observer.
+Interpretability is difficult to define @lipton_mythos_2018.
 
 = Related work
 
-*Generalization* — #cite(<power2022>, form: "prose") shows generalization can happen "[...] well past the point of overfitting". This is now well established: @nanda2023, @humayun2024, @wang2024a. By regarding the series of gradients of the gradients as a stochastic signal, #cite(<lee2024b>, form: "prose") decomposes the signal into two components: a fast-varying overfitting component and a slow-varying generalization component. They then show that amplification of the slow varying component significantly accelerates grokking. This is similar to momentum, but different, as the authors describe #cite(<lee2024b>, supplement: "p. 8").
+*Generalization* — #cite(<power2022>, form: "prose") shows generalization can happen #quote(attribution: cite(<power2022>), "[...] well past the point of overfitting"), dubbing the phenomenon "grokking". This is now well established @nanda2023, @humayun2024, @wang2024a, @conmy2023. By regarding the series of gradients as a stochastic signal, #cite(<lee2024b>, form: "prose") propose decomposing the signal into two components: a fast-varying overfitting component and a slow-varying generalization component. They then show that amplification of the slow varying component significantly accelerates grokking. This is similar to momentum and AdamW, but different, as the authors describe #cite(<lee2024b>, supplement: "p. 8") (I am trying to understand this better).
 
 *Mechanistic interpretability* — #cite(<nanda2023>, form:"prose") trains a transformer model to generalize the modular addition task.
 The learned algorithm is then reverse engineered using a qualitative approach (probing, plotting, and guessing).
-It is discovered that the generalized circuit uses a discrete Fourier transform (rotation in $CC$) to solve the problem.
+It is discovered that the generalized circuit uses a discrete Fourier transform (rotation in the complex plane) to solve the problem.
 #cite(<conmy2023>, form: "prose") further attempts to automate aspects of the mechanistic interpretability work flow.
 
-*Mechanistic implementability* — #cite(<weiss2021>, form: "prose") presents the coding language RASP, which incorporates the architectural constraints of the transformer model into the language itself.
+*Mechanistic _implementability_* — #cite(<weiss2021>, form: "prose") presents the coding language RASP, which incorporates the architectural constraints of the transformer model into the language itself.
 This forces the programmer to be "thinking like a transformer" (which is the title of their paper).
 The multi layer perception (MLP) can be thought of as performing a map, performing a function on every element of a set. The attention mechanism can be thought of as a reduce (or map-reduce) operation, where the
 attention mechanism is a function that takes a set of elements and
 
 *Primality detection* — Multiple papers describe the use of deep learning to detect prime numbers @egri_compositional_2006, @lee2024, @wu_classification_2023.
+None are particularly promising as prime detection algorithms, as they do not procide speedups, use more memory, or are less accurate than traditional methods.
+However, in exploring the foundations of deep learning, the task of prime detection is interesting, as it is a simple task that is hard to learn, and is synthetic, meaning that the arbitrary amounts data is generated by a simple algorithm.
 
 *Transformers* — Various modifications/simplifications have been made to the transformer block @he2023, @hosseini2024.
+Transformers combine self-attention (a communication mechanism) with feed-forward layers (a computation mechanism).
+Importantly, transformers tend to rely on risidual streams (I will elaborate).
+
 
 = Preliminaries
 
+$cal(M)$ is an attention based deep learning model.
 The set of all primes is referred to as $PP$.
 A number referred to as $p$ is in $PP$.
 A number referred to as $n$ is in $NN$.
-A given number $n$ is in $PP$ if and only if it is not a multiple of any member of ${p | p <= sqrt(n)}$.
-The matrix $[X|Y]$ denotes the dataset, with $X$ being representations of natural numbers, and $Y$ indicating primality, along with various other tasks.
+The dataset, $cal(D)$, is a set of pairs $[X|Y]$.
+$x in X$ and $y in Y$ are elements of the dataset.
+$X$ is a matrix of representations of $n in NN < |cal(D)|$.
+$Y$ is a one-hot tensor indicating $x in PP$, and which primes $n$ can be factorized by.
+There are about $n/ln(n)$ primes less than $n$.
+To test if a given number $n$ is prime,
+it is sufficient to test if it is divisible by any of the prime numbers less than $sqrt(n)$ (Sieve of Eratosthenes),
+of which there are about $sqrt(n)/ln(sqrt(n))$.
+The task is refered to as $cal(T)$, with a subscript indicating the task number.
 
 
 = Methods
 
-A deep learning model is trained to predict if a given natural number $n$ is $PP$, what primes it can be factorized by (if any), how close $n$ is to be factorzable by a given prime.
+Like #cite(<nanda2023>, form: "prose"), $cal(D)$ is constructed from the first 12 769 natural numbers ($113^2$).
+The model, $cal(M)$, is trained to predict if a given natural number $n$ is prime ($cal(T)_1$) and what primes it can be factorized by if it is not prime ($cal(T)_2)$. $cal(T)_1$ is strictly harder than $cal(T)_2$, as $cal(T)_1$ is a binary classification indicating failure to factorize by all primes tested for in Task 2. A Task 3, predicting the remainder of the division of $n$ by the prime it is attempted factorized by is also defined, but not used in this paper.
 
-A dataset, $[X|Y]$, of the first 12 769 natural numbers is constructed, with $X$ representing nautral numbers, and $Y$ indicating primarly.
+Architectural deceisions are made to align with #cite(<lee2024b>, form: "prose") and #cite(<nanda2023>, form: "prose").
+The model is trained using the AdamW optimizer with a learning rate of $10^(-3)$,
+and weight decay of $1.0$. Dropout is used with a rate of $0.5$.
+a hidden size of 128, a batch size of $|cal(D)|$, and a maximum of 6 000 epochs.
+GELU activation is used. Each attention layer has 4 heads (32 dimensions per head).
+The MLP layers map the input from 128 to 512 to 128.
+Layer normalization is also used.
+The gradients were modified in accordance with the method described by #cite(<lee2024b>, form: "prose"),
+to speed up generalization.
+3 transformer layers are used. The model is trained on a single Apple M3 Metal GPU with JAX.
+
+$cal(T)$ is harder to solve than the modular addition task by #cite(<nanda2023>, form: "prose"),
+as it consits of multiple tasks modular muliplication ($n mod p != 0 forall p < sqrt(n/ln(n))$). $T_1$ is being strictly harder than $T_2$,
+might merrit and increase in the number of layers, heads, and hidden size,
+which I am currently investigating (update for Anders).
 
 #figure(
   image("figs/polar_nats_and_sixes.svg"),
-  caption: "The first 2048 primes minus the first 1024 primes.",
-)<prime_numbers_1024_to_2048>
+  caption: [
+    $n in NN < 2^(10)$, $n in 2NN < 2^(10)$, and $n in 3NN union 6NN < 2^(10)$ in polar coordinates.
+  ],
+)<nats>
 
-Similarly, prime_numbers_1024_to_2048 shows the first 2048 prime numbers minus the first 1024 prime numbers.
-The random nature of the prime numbers is evident in the figure, with no clear pattern emerging.
+The rotational inclinations of the transformer model shown by #cite(<nanda2023>, form: "prose") motivates the use of a polar coordinate system to visualize the distribution of primes. Each prime number $p$ is mapped to the point $(p, p mod tau)$ in polar coordinates, as seen in @primes and @nats.
+One could imagine tigthening and loosening the spiral by multiplying $tau$ by a constant,
+to align multiple of a given number in a straight line (imagining this is encouraged).
 
 #figure(
   image("figs/exploration/polar_primes.svg"),
   caption: "The first 2048 primes minus the first 1024 primes.",
-)<prime_numbers_1024_to_2048>
+)<primes>
 
+The reader is asked to recall that the Sieve of Eratosthenes is an algorithm for finding all prime numbers up to a given limit $n$, by 1) noting that 2 is a prime number, 2) crossing out all multiples of 2, 3) finding the next number that is not crossed out, which is the next prime number, and 4) crossing out all multiples of that number, and so on. Step 2) corresponds to subtracting the center plot in @nats from the left side plot.
 
-
-The primality of a given number $n$ can be determined by testing if it is divisible by any of the prime numbers
-less than $sqrt(n)$. This is the basis of the Sieve of Eratosthenes, which is an ancient algorithm for finding
-all prime numbers up to a given limit. The algorithm works by iteratively marking the multiples of each prime number
-starting from 2, and then finding the next number that is not marked as a multiple of a prime number, which is the next
-prime number. The algorithm is efficient, with a time complexity of $O(n log log n)$. Relating it to our polar
-plots, the Sieve of Eratosthenes can be seen as first plotting all natural numbers up to a limit $n$, and then
-removing the multiples of the prime numbers less than $sqrt(n)$.
-
-
-The Zeolite of Eratosthenes is a variant of the Sieve of Eratosthenes,
+The Cheese Cloth of Eratosthenes is a variant of the Sieve of Eratosthenes,
 in which the multiples of the prime numbers are not filtered deterministically,
-but rather probabilistically—in inappropriately—by using a deep learning model.
+but rather probabilistically—and inappropriately—by using a deep learning model.
 
-Then I create my own RASP based prime detecting algorithm, bending over backwards to introduce rotational symmetry.
+// BELOW HERE IS A MESS
 
-
-The paper uses a JAX implementation of a two layer transformer model, with a hidden size of 128 and 8 heads,
-as per @nanda2023. As prime classification is considerably more complex than modular addition, target vector $y$ rather than being a single one-hot number indicating the primality of a given sample,
-is a vector of length $sqrt(n) + 1$, where the $i$ element is 1 if the sample is divisible by the $i$th prime number, and 0 otherwise, with the $sqrt(n)$-th element being 1 if the sample is prime, in which case all other elements are 0.
-
-== Tasks
-
-#figure(
-  table(
-    columns: (auto, auto, auto),
-    table.header[$x$ (base 10)][$x$ (base 2)][\[$y_2 space y_3 space y_p$\]],
-    ["04"], ["0100"], [\[1 0 0\]],
-    ["05"], ["0101"], [\[0 0 1\]],
-    ["06"], ["0110"], [\[1 1 0\]],
-    ["07"], ["0111"], [\[0 0 1\]],
-    ["08"], ["1000"], [\[1 0 0\]],
-    ["09"], ["1001"], [\[0 1 0\]],
-  ),
-  caption: [Base 10 and 2 dataset for $n = 6$,
-    note $sqrt(9) = 3$, so $y$ tests for multiples of 2 and 3, along with primality.],
-)<probe-a>
-
-In the following, $X$ denotes the input data, and $Y$ the target data, with $x$ and $y$ denoting individual samples.
-$X$ for a dataset of size $n$ was constructed by creating the vector $[2..n+1]$.
 This vector was than converted to the desired number system.
-$Y$ was constructed by first querying all prime numbers less than or equal to $n+1$, creating a one hot vector for each sample, in $X$ indicating primality. $Y$ was further augmented by $sqrt(n)$ vectors, each indicating divisibility by the $i$th prime number up to $sqrt(n)$.
-Thus, the sum of all $y$ of primes is 1, and the sum of all $y$ of non-primes is >= 1 (one if if is divisible by a single other number).
+// $Y$ was constructed by first querying all prime numbers less than or equal to $n+1$, creating a one hot vector for each sample, in $X$ indicating primality. $Y$ was further augmented by $sqrt(n)$ vectors, each indicating divisibility by the $i$th prime number up to $sqrt(n)$.
+Thus, the sum of all $y$ of primes is 1#footnote[With the exception of primes less than $sqrt(n)$ as those are both primes and a multiple of themselves (i.e. 2 is a prime number, but it is also a multiple of 2).], and the sum of all $y$ of non-primes is $>= 1$.
 
 Note that the row sum of $Y$ can be thought of as a sort of measure of how "close" to being prime a given number is. For example, 20 is very much not a prime since it is a multiple of 2, 4, 5 and 10, while 51 (in base 10) looks like a prime but can, in fact, be factorized into 3 and 17.
 
-$Y$ thus includes information about why a given number is not prime.
+
+$Y$ thus includes information about _why_ a given number is not prime.
 The inclusion of these extra tasks also allows for interpretability to be on simpler tasks, by training the model on the simpler tasks first, and then training on the more complex tasks.
-
 This allows for comparison of how the model solves the different tasks, when learning them in isolation versus in conjunction.
+For each of the $sqrt(n) + 1$ tasks, the focal loss (@focal_loss) and f1 score are calculated every epoch.
 
-Primality might be tested on three granularity levels:
+$
+  L_("focal") = -alpha times (1 - p_t)^gamma times log(p_t)
+$
+<focal_loss>
 
-1. *primality* — Is $n$ in a prime number?
-2. *Factorization* — If $n$ is not a prime number, what primes are its factors.
-3. *Modulation* — For every potential prime factorization, why does it fail?
-
-
-For each of the $sqrt(n) + 1$ tasks, the focal loss, f1, accuracy, and precision are calculated every epoch.
 The frequency of a positive samples with in task $i$ is used as the weight for the focal loss during training.
 Furthermore, a one-hot vector is used to mask tasks, so as to shield the model from a particular signal during training.
 
-== Model
-
-== Evaluation
-
 = Results
+
+$cal(M)$ was trained on $cal(D)$ for 6 000 epochs, with a batch size of 12 769.
+It generalized to some of the $sqrt(n)$ tasks, but not all.
+$cal(M)$ thus exists in a paricularaly interesting state,
+of partial generalization to the tasks in $cal(T)_2$,
+As $cal(T)_1$ is strictly harder than $cal(T)_2$,
+the model has not generalized to $cal(T)_1$.
+@train_loss_hinton shows the focal loss of the tasks in $cal(T)$ on the train data during training.
+@valid_loss_hinton shows the focal loss of the tasks in $cal(T)$ on the validation data during training.
+
+#figure(
+  image("figs/latest/train_loss_hinton.svg"),
+  caption: [The focal loss of the tasks in $cal(T)$ on the train data during training.],
+)<train_loss_hinton>
+
+#figure(
+  image("figs/latest/valid_loss_hinton.svg"),
+  caption: [The focal loss of the tasks in $cal(T)$ on the validation data during training.],
+)<valid_loss_hinton>
+
+
 
 = Analysis
 
