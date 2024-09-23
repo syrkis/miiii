@@ -25,15 +25,17 @@ init = nn.initializers.glorot_uniform()
 # %% Model #####################################################################
 @partial(vmap, in_axes=(None, None, 0, None))
 def apply(params, rng: Array, x: Array, dropout: float) -> Array:
-    # keys = random.split(rng, len(params.blocks) * 2).reshape(params.blocks.ffwd.w1.shape[0], 2, 2)
+    depth = params.blocks.ffwd.w1.shape[0]  # number of blocks
+    keys = random.split(rng, depth * 2).reshape(depth, 2, 2)
     z = embed_fn(params.embeddings, x)  # z: seq_len x emb_dim
-    z = lax.scan(block_fn, z, params.blocks)[0]
+    z = lax.scan(partial(block_fn, dropout=dropout), z, (keys, params.blocks))[0]
     return jnp.mean(z, axis=0) @ params.lm_head
 
 
-def block_fn(z, param):
-    z = z + attn_fn(param.attn, z)
-    z = z + ffwd_fn(param.ffwd, z)
+def block_fn(z, args, dropout):
+    keys, param = args
+    z = dropout_fn(keys[0], z + attn_fn(param.attn, z), dropout)
+    z = dropout_fn(keys[1], z + ffwd_fn(param.ffwd, z), dropout)
     return z, None
 
 

@@ -19,14 +19,15 @@ import matplotlib.pyplot as plt
 # %% Exploring and plotting the data 1
 
 # %% Training
-cfg = mi.utils.cfg_fn(epochs=1000, depth=3, lr=1e-3, n=1024, base=37)
+cfg = mi.utils.cfg_fn(epochs=100, depth=3, lr=1e-3, n=1024, base=37)
 rng, key = random.split(random.PRNGKey(0))
 ds = mi.prime.prime_fn(cfg, rng)
-# state, metrics = mi.train.train(rng, cfg, ds)
+state, metrics = mi.train.train(rng, cfg, ds)
 # mi.utils.save_params(state, "model.pkl")
-state = mi.utils.load_params("model.pkl")
+# state = mi.utils.load_params("model.pkl")
 
-params, _, _ = state
+
+# params, _, _ = state
 
 
 def block_fn(z, param):
@@ -44,8 +45,8 @@ def scope_fn(params: mi.kinds.Params, x):
 
 
 # %%
-embeds, activations, logits = scope_fn(params, ds.train.x)
-sns.heatmap(params.blocks.attn.p[1])
+# embeds, activations, logits = scope_fn(params, ds.train.x)
+# sns.heatmap(params.blocks.attn.p[1])
 
 # %%
 # mi.plots.plot_run(metrics, ds, cfg)  # type: ignore
