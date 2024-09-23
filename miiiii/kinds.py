@@ -41,15 +41,13 @@ class Conf:
 
 # %% Model classes
 @dataclass
-class Head:
-    key: Array
-    query: Array
-    value: Array
-    proj: Array
+class LayerNorm:
+    gamma: Array
+    beta: Array
 
 
 @dataclass
-class FFWD:
+class Feedforward:
     w1: Array
     b1: Array
     w2: Array
@@ -57,30 +55,29 @@ class FFWD:
 
 
 @dataclass
-class LayerNorm:
-    gamma: Array
-    beta: Array
+class Attention:
+    q: Array
+    k: Array
+    v: Array
+    p: Array
 
 
 @dataclass
 class Block:
-    head: Head
-    ffwd: FFWD
-    ln1: LayerNorm
-    ln2: LayerNorm
+    ffwd: Feedforward
+    attn: Attention
 
 
 @dataclass
-class Embeddings:
+class Embedding:
     tok_emb: Array
     pos_emb: Array
 
 
 @dataclass
 class Params:
-    embeddings: Embeddings
-    blocks: List[Block]
-    ln: LayerNorm
+    embeddings: Embedding
+    blocks: Block
     lm_head: Array
 
 

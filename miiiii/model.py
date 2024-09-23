@@ -15,56 +15,48 @@ from functools import partial
 from tqdm import tqdm
 from einops import rearrange
 from oeis import A000040
-from typing import Callable, Optional
+from typing import Callable, Optional, Tuple
+from chex import dataclass
 
 # %% Constants #################################################################
-initializer = nn.initializers.glorot_uniform()
+init = nn.initializers.glorot_uniform()
 
 
 # %% Model #####################################################################
-# attn = attn_fn(cfg)  # causal or not
-
-
 @partial(vmap, in_axes=(None, None, 0, None))
 def apply(params, rng: Array, x: Array, dropout: float) -> Array:
-    keys = random.split(rng, len(params.blocks) * 2).reshape(len(params.blocks), 2, 2)
+    # keys = random.split(rng, len(params.blocks) * 2).reshape(params.blocks.ffwd.w1.shape[0], 2, 2)
     z = embed_fn(params.embeddings, x)  # z: seq_len x emb_dim
-    for key, block in zip(keys, params.blocks):  # use fori_loop maybe
-        z = z + attn(block.head, layer_norm(block.ln1, z))
-        z = dropout_fn(key[0], z, dropout)
-        z = z + ffwd(block.ffwd, layer_norm(block.ln2, z))
-        z = dropout_fn(key[1], z, dropout)
-
-    z = layer_norm(params.ln, z)
-    z = jnp.mean(z, axis=0)
-    logits = z @ params.lm_head  # logits: seq_len x vocab
-    return logits  # logits: vocab
+    z = lax.scan(block_fn, z, params.blocks)[0]
+    return jnp.mean(z, axis=0) @ params.lm_head
 
 
-def attn(params: mi.kinds.Head, x: Array):
-    q, k, v = x @ params.query, x @ params.key, x @ params.value
+def block_fn(z, param):
+    z = z + attn_fn(param.attn, z)
+    z = z + ffwd_fn(param.ffwd, z)
+    return z, None
+
+
+def attn_fn(p: mi.kinds.Attention, x: Array):
+    q, k, v = x @ p.q, x @ p.k, x @ p.v
     z = q @ rearrange(k, "b t c -> b c t")
-    z /= jnp.sqrt(params.key.shape[-1])
+    z /= jnp.sqrt(p.k.shape[-1])
     z = rearrange(z @ v, "h t d -> t (h d)")
-    z = z @ params.proj
+    z = z @ p.p
     return z
 
 
-def dropout_fn(key: Array, x: Array, dropout: float) -> Array:
-    return jnp.where(dropout == 0.0, x, x * random.bernoulli(key, 1 - dropout, x.shape) / (1 - dropout))
-
-
-def embed_fn(params: mi.kinds.Embeddings, x: Array) -> Array:
-    tok_emb = jnp.take(params.tok_emb, x, axis=0)
-    pos_emb = jnp.take(params.pos_emb, jnp.arange(x.shape[0]), axis=0)
-    return tok_emb + pos_emb  # z: seq_len x emb_dim
-
-
-def ffwd(params: mi.kinds.FFWD, x: Array) -> Array:
-    z = jnp.dot(x, params.w1) + params.b1  # z: seq_len x emb_dim
+def ffwd_fn(p: mi.kinds.Feedforward, x: Array) -> Array:
+    z = jnp.dot(x, p.w1) + p.b1  # z: seq_len x emb_dim
     z = jax.nn.gelu(z)  # grokfast
-    z = z @ params.w2 + params.b2  # disable biases as per @nanda2023
+    z = z @ p.w2 + p.b2  # disable biases as per @nanda2023
     return z
+
+
+def embed_fn(p: mi.kinds.Embedding, x: Array) -> Array:
+    tok_emb = jnp.take(p.tok_emb, x, axis=0)
+    pos_emb = jnp.take(p.pos_emb, jnp.arange(x.shape[0]), axis=0)
+    return tok_emb + pos_emb  # z: seq_len x emb_dim
 
 
 def layer_norm(params: mi.kinds.LayerNorm, x: Array) -> Array:
@@ -74,79 +66,50 @@ def layer_norm(params: mi.kinds.LayerNorm, x: Array) -> Array:
 
 
 # %% Initializers ###########################################################
-
-
-def init_layer_norm_fn(cfg: mi.kinds.Conf) -> mi.kinds.LayerNorm:
-    gamma = jnp.ones(cfg.latent_dim)
-    beta = jnp.zeros(cfg.latent_dim)
-    return mi.kinds.LayerNorm(gamma=gamma, beta=beta)
-
-
-def init_head_fn(rng: Array, cfg: mi.kinds.Conf) -> mi.kinds.Head:
-    keys = random.split(rng, 4)
-    key = initializer(keys[0], (cfg.heads, cfg.latent_dim, cfg.latent_dim // cfg.heads))
-    query = initializer(keys[1], (cfg.heads, cfg.latent_dim, cfg.latent_dim // cfg.heads))
-    value = initializer(keys[2], (cfg.heads, cfg.latent_dim, cfg.latent_dim // cfg.heads))
-    proj = initializer(keys[3], (cfg.latent_dim, cfg.latent_dim))
-    return mi.kinds.Head(query=query, key=key, value=value, proj=proj)
-
-
-def init_ffwd_fn(rng: Array, cfg: mi.kinds.Conf) -> mi.kinds.FFWD:
-    keys = random.split(rng)
-    w1 = initializer(keys[0], (cfg.latent_dim, cfg.latent_dim * 4))
-    w2 = initializer(keys[1], (cfg.latent_dim * 4, cfg.latent_dim))
-    b1 = jnp.zeros(cfg.latent_dim * 4)
-    b2 = jnp.zeros(cfg.latent_dim)
-    return mi.kinds.FFWD(w1=w1, b1=b1, w2=w2, b2=b2)
-
-
-def init_block_fn(rng: Array, cfg: mi.kinds.Conf) -> mi.kinds.Block:
-    keys = random.split(rng)
-    head = init_head_fn(keys[0], cfg)
-    ffwd = init_ffwd_fn(keys[1], cfg)
-    ln1 = init_layer_norm_fn(cfg)
-    ln2 = init_layer_norm_fn(cfg)
-    params = mi.kinds.Block(head=head, ffwd=ffwd, ln1=ln1, ln2=ln2)
-    return params
-
-
 def init_embed_fn(rng: Array, cfg: mi.kinds.Conf):
     keys = random.split(rng, 2)
-    tok_emb = initializer(keys[0], (cfg.vocab_size, cfg.latent_dim))
-    pos_emb = initializer(keys[1], (cfg.seq_len, cfg.latent_dim))
-    return mi.kinds.Embeddings(tok_emb=tok_emb, pos_emb=pos_emb)
+    tok_emb = init(keys[0], (cfg.vocab_size, cfg.latent_dim))
+    pos_emb = init(keys[1], (cfg.seq_len, cfg.latent_dim))
+    return mi.kinds.Embedding(tok_emb=tok_emb, pos_emb=pos_emb)
+
+
+def init_attn_fn(rng: Array, cfg: mi.kinds.Conf) -> mi.kinds.Attention:
+    keys = random.split(rng, 4)
+    shape = (cfg.heads, cfg.latent_dim, cfg.latent_dim // cfg.heads)
+    q, k, v = init(keys[0], shape), init(keys[1], shape), init(keys[2], shape)
+    p = init(keys[3], (cfg.latent_dim, cfg.latent_dim))
+    return mi.kinds.Attention(q=q, k=k, v=v, p=p)
+
+
+def init_ffwd_fn(rng: Array, cfg: mi.kinds.Conf) -> mi.kinds.Feedforward:
+    w1 = init(rng, (cfg.latent_dim, cfg.latent_dim * 4))
+    b1 = jnp.zeros(cfg.latent_dim * 4)
+    w2 = init(rng, (cfg.latent_dim * 4, cfg.latent_dim))
+    b2 = jnp.zeros(cfg.latent_dim)
+    return mi.kinds.Feedforward(w1=w1, b1=b1, w2=w2, b2=b2)
+
+
+def init_block(cfg: mi.kinds.Conf, rng) -> mi.kinds.Block:
+    keys = random.split(rng)
+    ffwd = init_ffwd_fn(keys[1], cfg)
+    attn = init_attn_fn(keys[0], cfg)
+    return mi.kinds.Block(attn=attn, ffwd=ffwd)
 
 
 def init_fn(rng: Array, cfg: mi.kinds.Conf):  # x: Array, y: Array) -> mi.kinds.Params:
     keys = random.split(rng, 3 + cfg.depth)
-    params = mi.kinds.Params(
-        embeddings=init_embed_fn(keys[0], cfg),
-        lm_head=initializer(keys[1], (cfg.latent_dim, y_fn(cfg))),
-        blocks=[init_block_fn(key, cfg) for key in keys[3:]],
-        ln=init_layer_norm_fn(cfg),  # layer norm for the final layer
-    )
-    return params
+    embeds = init_embed_fn(keys[0], cfg)
+    lm_head = init(keys[1], (cfg.latent_dim, y_fn(cfg)))
+    blocks = lax.map(partial(init_block, cfg), keys[2:])
+    return mi.kinds.Params(embeddings=embeds, lm_head=lm_head, blocks=blocks)
 
 
+# %% Functions #################################################################
 def y_fn(cfg: mi.kinds.Conf) -> int:
     primes = jnp.array(A000040[1 : cfg.n * 2])
     primes = primes[primes < jnp.sqrt(cfg.n)]
     return primes.shape[0] + 1 if cfg.task == "prime" else cfg.vocab_size
 
 
-# %% Functions #################################################################
-def predict_fn(apply_fn: Callable, params: mi.kinds.Params, x: Array) -> Array:
-    logits = apply_fn(params, x)
-    return (jax.nn.sigmoid(logits) > 0.5).astype(jnp.int32)
-
-    return jnp.mean(optax.sigmoid_focal_loss(y_hat, y))
-
-
-def evaluate_splir(ds, params, apply_fn):
-    losses = []
-
-
-# @partial(jit, static_argnums=(0,))
-def update(opt, opt_state, grads, params):
-    updates, opt_state = opt.update(grads, opt_state, params)
-    return optax.apply_updates(params, updates), opt_state
+def dropout_fn(key: Array, x: Array, dropout: float) -> Array:
+    return jnp.where(dropout == 0.0, x, x * random.bernoulli(key, 1 - dropout, x.shape) / (1 - dropout))
