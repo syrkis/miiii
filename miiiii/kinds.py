@@ -39,6 +39,13 @@ class Conf:
     dropout: float = 0.1
 
 
+@dataclass
+class State:
+    params: Array
+    opt_state: Array
+    emas: Array
+
+
 # %% model dataclasses ##############################################################
 @dataclass
 class Feedforward:
@@ -55,24 +62,31 @@ class Attention:
     v: Array
     p: Array
 
+@dataclass
+class LayerNorm:
+    gamma: Array
+    beta: Array
+
 
 @dataclass
 class Block:
     ffwd: Feedforward
     attn: Attention
+    norm: LayerNorm
 
 
 @dataclass
 class Embedding:
     tok_emb: Array
     pos_emb: Array
+    # norm: LayerNorm
 
 
 @dataclass
 class Params:
     embeds: Embedding
     blocks: Block
-    lm_out: Array  # should be a linear layer ?
+    lm_out: Feedforward  # should be a linear layer ?
 
 
 # %% data dataclasses ##############################################################

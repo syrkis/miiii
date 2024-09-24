@@ -24,17 +24,20 @@ init = nn.initializers.glorot_uniform()
 
 # %% Model #####################################################################
 @partial(vmap, in_axes=(None, None, 0, None))
-def apply(p, rng: Array, x: Array, dropout: float) -> Array:
+def apply(p: mi.kinds.Params, rng: Array, x: Array, dropout: float) -> Array:
     z = embed_fn(p.embeds, x)
     step_fn = partial(block_fn, dropout=dropout)
     z = lax.scan(step_fn, z, (key_fn(p, rng), p.blocks))[0]
-    return jnp.mean(z, axis=0) @ p.lm_out
+    return jnp.mean(ffwd_fn(p.lm_out, z), axis=0)
 
 
 def block_fn(z, args, dropout):
     keys, param = args
-    z = dropout_fn(keys[0], z + attn_fn(param.attn, z), dropout)
-    z = dropout_fn(keys[1], z + ffwd_fn(param.ffwd, z), dropout)
+    z = z + attn_fn(param.attn, z)
+    z = dropout_fn(keys[0], z, dropout)
+    z = z + ffwd_fn(param.ffwd, z)
+    z = dropout_fn(keys[1], z, dropout)
+    z = layer_norm(param.norm, z)
     return z, None
 
 
@@ -42,6 +45,7 @@ def attn_fn(p: mi.kinds.Attention, x: Array):
     q, k, v = x @ p.q, x @ p.k, x @ p.v
     z = q @ rearrange(k, "b t c -> b c t")
     z /= jnp.sqrt(p.k.shape[-1])
+    z = nn.softmax(z, axis=-1)
     z = rearrange(z @ v, "h t d -> t (h d)")
     z = z @ p.p
     return z
@@ -60,13 +64,21 @@ def embed_fn(p: mi.kinds.Embedding, x: Array) -> Array:
     return tok_emb + pos_emb  # z: seq_len x emb_dim
 
 
-# def layer_norm(params: mi.kinds.LayerNorm, x: Array) -> Array:
-#     mean = jnp.mean(x, axis=-1, keepdims=True)
-#     std = jnp.std(x, axis=-1, keepdims=True)
-#     return params.gamma * (x - mean) / (std + 1e-5) + params.beta
+
+
+def layer_norm(params: mi.kinds.LayerNorm, x: Array) -> Array:
+    mean = jnp.mean(x, axis=-1, keepdims=True)
+    std = jnp.std(x, axis=-1, keepdims=True)
+    return params.gamma * (x - mean) / (std + 1e-5) + params.beta
+
 
 
 # %% Initializers ###########################################################
+def init_norm_fn(cfg: mi.kinds.Conf) -> mi.kinds.LayerNorm:
+    gamma = jnp.ones(cfg.latent_dim)
+    beta = jnp.zeros(cfg.latent_dim)
+    return mi.kinds.LayerNorm(gamma=gamma, beta=beta)
+
 def init_embed_fn(rng: Array, cfg: mi.kinds.Conf):
     keys = random.split(rng, 2)
     tok_emb = init(keys[0], (cfg.vocab_size, cfg.latent_dim))
@@ -90,19 +102,27 @@ def init_ffwd_fn(rng: Array, cfg: mi.kinds.Conf) -> mi.kinds.Feedforward:
     return mi.kinds.Feedforward(w1=w1, b1=b1, w2=w2, b2=b2)
 
 
-def init_block(cfg: mi.kinds.Conf, rng) -> mi.kinds.Block:
+def init_block(cfg: mi.kinds.Conf, rng: jnp.ndarray) -> mi.kinds.Block:
     keys = random.split(rng)
-    ffwd = init_ffwd_fn(keys[1], cfg)
     attn = init_attn_fn(keys[0], cfg)
-    return mi.kinds.Block(attn=attn, ffwd=ffwd)
+    ffwd = init_ffwd_fn(keys[1], cfg)
+    norm = init_norm_fn(cfg)
+    return mi.kinds.Block(attn=attn, ffwd=ffwd, norm=norm)
 
+def init_lm_out(rng: Array, cfg: mi.kinds.Conf) -> mi.kinds.Feedforward:
+    keys = random.split(rng, 2)
+    w1 = init(keys[0], (cfg.latent_dim, cfg.latent_dim))
+    b1 = jnp.zeros(cfg.latent_dim)
+    w2 = init(keys[1], (cfg.latent_dim, y_fn(cfg)))
+    b2 = jnp.zeros(y_fn(cfg))
+    return mi.kinds.Feedforward(w1=w1, b1=b1, w2=w2, b2=b2)
 
 def init_fn(rng: Array, cfg: mi.kinds.Conf):  # x: Array, y: Array) -> mi.kinds.Params:
     keys = random.split(rng, 3 + cfg.depth)
     embeds = init_embed_fn(keys[0], cfg)
-    lm_head = init(keys[1], (cfg.latent_dim, y_fn(cfg)))
+    lm_out = init_lm_out(keys[1], cfg)
     blocks = lax.map(partial(init_block, cfg), keys[2:])
-    return mi.kinds.Params(embeds=embeds, lm_out=lm_head, blocks=blocks)
+    return mi.kinds.Params(embeds=embeds, lm_out=lm_out, blocks=blocks)
 
 
 # %% Functions #################################################################
@@ -113,7 +133,8 @@ def y_fn(cfg: mi.kinds.Conf) -> int:  # infers the number of tasks we are solvin
 
 
 def dropout_fn(key: Array, x: Array, dropout: float) -> Array:
-    return jnp.where(dropout == 0.0, x, x * random.bernoulli(key, 1 - dropout, x.shape) / (1 - dropout))
+    mask = random.bernoulli(key, 1 - dropout, x.shape)
+    return jnp.where(dropout == 0.0, x, x * mask / (1 - dropout))
 
 
 def key_fn(p, rng):  # split key for dropout

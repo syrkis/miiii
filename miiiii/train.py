@@ -9,6 +9,7 @@ import jax.numpy as jnp
 from jax_tqdm import scan_tqdm
 import optax
 from functools import partial
+from typing import Tuple
 
 
 # functions
@@ -28,8 +29,8 @@ def update_fn(opt, ds, cfg):
     return update
 
 
-def grad_fn(params, rng, ds, cfg):  # maybe add allow_int flag below
-    def loss_and_logits(params):
+def grad_fn(params: mi.kinds.Params, rng: jnp.ndarray, ds: mi.kinds.Dataset, cfg: mi.kinds.Conf) -> Tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray, jnp.ndarray]:
+    def loss_and_logits(params: mi.kinds.Params) -> Tuple[jnp.ndarray, Tuple[jnp.ndarray, jnp.ndarray]]:
         logits = mi.model.apply(params, rng, ds.train.x, cfg.dropout)
         losses = loss_fn(logits, ds.train.y, ds.info.alpha)  # mean for optimization
         return losses.mean(), (losses, logits)
@@ -38,7 +39,7 @@ def grad_fn(params, rng, ds, cfg):  # maybe add allow_int flag below
     return loss, losses, logits, grads
 
 
-def filter_fn(grads, emas, alpha, lamb):
+def filter_fn(grads, emas, alpha: float, lamb: float):
     emas = tree.map(lambda grad, ema: ema * alpha + grad * (1 - alpha), grads, emas)
     grads = tree.map(lambda grad, ema: grad + lamb * ema, grads, emas)
     return grads, emas
@@ -49,7 +50,6 @@ def step_fn(ds, cfg, opt):
     update = update_fn(opt, ds, cfg)
 
     @scan_tqdm(cfg.epochs)
-    @jit
     def step(state, args):
         (params, opt_state, emas), (epoch, key) = state, args
         (params, opt_state, emas), (loss, losses, logits) = update(params, opt_state, emas, key)
