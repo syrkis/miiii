@@ -37,6 +37,8 @@
 
 = Introduction
 
+It is well established that deep learning models can function as both archives and algorithms, with more recent work focusing on the transition between these two modes @nanda2023, @power2022, @conmy2023. This work aims to further understand this dynamic, by training a deep learning model to solve a set of tasks, whose difficulty are evenly spaced on a gradient. Specifucally, the tasks asks if a given natural number $n_0$ is a multiple of every prime number less than $sqrt(n)$, or if the number is prime. Given that the generelized solution to each varries in difficulty, the model will have varying degrees of generalization for any of the tasks, at given point during traing.
+
 = Related work
 
 *Generalization / Grokking* — #cite(<power2022>, form: "prose") shows generalization can happen #quote(attribution: cite(<power2022>), "[...] well past the point of overfitting"), dubbing the phenomenon "grokking". The phenomenon is now well established @nanda2023, @humayun2024, @wang2024, @conmy2023, @lee2024a. By regarding the series of gradients as a stochastic signal, #cite(<lee2024a>, form: "prose") propose decomposing the signal into two components: a fast-varying overfitting component and a slow-varying generalization component. They then show that amplification of the slow-varying component significantly accelerates grokking substantially (more than fifty-fold in some cases). This is similar to momentum and AdamW, but the authors explain why it is not the same and can be used in alongside AdamW #cite(<lee2024a>, supplement: "p. 8") (I am trying to understand this better).
@@ -91,21 +93,23 @@ lends itself much better to visualization (than the 113, 113, 113 cube), we choo
 in the initial phase of our experiment.
 
 #figure(
-  image("attention_one.svg"),
-  caption: "Attenion from digit b to itself",
-)
+  image("figs/attention_one.svg"),
+  caption: [Attenion from digit $b$ to itself in the first head of the first layer for all ($a$, $b$)-pairs.],
+)<atten_weight>
+
+In @atten_weight we see a vertical peroiodic pattern, which is expected, as the model is trained to predict the prime factorization of the number $a * 113 + b$.
+#lorem(140)
+
 
 #figure(
-  image("attention_layer_0.svg"),
+  image("figs/attention_layer_0.svg"),
   caption: "Attenion from digit a to digit b",
 )
 
 #figure(
-  image("attention_layer_1.svg"),
+  image("figs/attention_layer_1.svg"),
   caption: "Attenion from digit a to digit b",
 )
-
-
 
 The model, $cal(M)$, is trained to predict if a given natural number $n$ is prime ($cal(T)_1$) and what primes it can be factorized by if it is not prime ($cal(T)_2)$. $cal(T)_1$ is strictly harder than $cal(T)_2$, as $cal(T)_1$ is a binary classification indicating failure to factorize by all primes tested for in Task 2. A Task 3, predicting the remainder of the division of $n$ by the prime it is attempted to factorize by, is also defined, but not used in this paper.
 

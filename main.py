@@ -62,17 +62,17 @@ def attention_hintons(attn_acts, layer, a, b):
     # add text to the right side of plot (rotated 90) giving the description hellow world
     # fig.text(1, 0.5, f"Attention from digit a to b", va="center", rotation=90)
     plt.tight_layout()
-    plt.savefig(f"paper/attention_layer_{layer}.svg", format="svg", bbox_inches="tight")
+    plt.savefig(f"paper/figs/attention_layer_{layer}.svg", format="svg", bbox_inches="tight")
     plt.close()
 
 
 attention_hintons(attn_acts, 0, 1, 1)
-attention_hintons(attn_acts, 0, 1, 0)
+attention_hintons(attn_acts, 0, 0, 1)
 fig, ax = plt.subplots(figsize=(8, 8))
 mi.plots.hinton_fn(attn_acts.wei[:, 0, 1, 1, 1].reshape(p, p), ax)
 ax.set_yticks([0, p - 1])
 ax.set_xticks([0, p - 1])
-plt.savefig("paper/attention_one.svg", format="svg", bbox_inches="tight")
+plt.savefig("paper/figs/attention_one.svg", format="svg", bbox_inches="tight")
 
 
 # %%
