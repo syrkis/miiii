@@ -25,8 +25,7 @@ init = nn.initializers.glorot_uniform()
 # %% Model #####################################################################
 @partial(vmap, in_axes=(None, None, 0, None))
 def apply(params, rng: Array, x: Array, dropout: float) -> Array:
-    depth = params.blocks.ffwd.w1.shape[0]  # number of blocks
-    keys = random.split(rng, depth * 2).reshape(depth, 2, 2)
+    keys = random.split(rng, params.blocks.ffwd.w1.shape[0] * 2).reshape(params.blocks.ffwd.w1.shape[0], 2, 2)
     z = embed_fn(params.embeddings, x)  # z: seq_len x emb_dim
     z = lax.scan(partial(block_fn, dropout=dropout), z, (keys, params.blocks))[0]
     return jnp.mean(z, axis=0) @ params.lm_head
@@ -107,7 +106,7 @@ def init_fn(rng: Array, cfg: mi.kinds.Conf):  # x: Array, y: Array) -> mi.kinds.
 
 
 # %% Functions #################################################################
-def y_fn(cfg: mi.kinds.Conf) -> int:
+def y_fn(cfg: mi.kinds.Conf) -> int:  # infers the number of tasks we are solving
     primes = jnp.array(A000040[1 : cfg.n * 2])
     primes = primes[primes < jnp.sqrt(cfg.n)]
     return primes.shape[0] + 1 if cfg.task == "prime" else cfg.vocab_size

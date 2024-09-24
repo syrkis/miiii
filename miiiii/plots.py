@@ -31,7 +31,7 @@ plt.rcParams["mathtext.fontset"] = "cm"
 
 
 # %% functions
-def plot_run(metrics: Dict[str, Dict[str, Array]], ds: mi.kinds.Dataset, cfg: mi.kinds.Conf):
+def plot_run(metrics: Dict[str, Dict[str, Array]], ds: mi.kinds.Dataset, cfg: mi.kinds.Conf, activations=None):
     # make run folder in figs/runs folder
     time_stamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     path = f"paper/figs/runs/{time_stamp}"  # _{name_run(cfg)}"
@@ -48,6 +48,10 @@ def plot_run(metrics: Dict[str, Dict[str, Array]], ds: mi.kinds.Dataset, cfg: mi
     for split in ["train", "valid"]:
         for metric in metrics[split]:
             curve_plot(metrics[split][metric], metric, path, split)
+            plt.close()
+    if activations is not None:
+        for i, act in enumerate(activations):
+            hinton_activations(act, path)
             plt.close()
 
 
@@ -75,6 +79,15 @@ def hinton_weight(weight: Array, path: str):
         hinton_fn(weight[i], ax[i])
     plt.tight_layout()
     plt.savefig(f"{path}/svg/weights.svg")
+
+
+def hinton_activations(acts: Array, path: str):
+    assert len(acts.shape) == 3
+    fig, axes = plt.subplots(nrows=acts.shape[0], figsize=(12, 12))
+    for i in range(acts.shape[0]):
+        hinton_fn(acts[i], axes[i])
+    plt.tight_layout()
+    plt.savefig(f"{path}/activations.svg")
 
 
 def hinton_metric(

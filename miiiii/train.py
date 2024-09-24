@@ -52,9 +52,11 @@ def step_fn(ds, cfg, opt):
     evaluate = evaluate_fn(ds, cfg)
     update = update_fn(opt, ds, cfg)
 
+    @scan_tqdm(cfg.epochs)
     @jit
-    def step(state, key):
+    def step(state, args):
         params, opt_state, emas = state
+        _, key = args
         params, opt_state, emas, losses, logits = update(params, opt_state, emas, key)
         metrics = evaluate(params, key, logits, losses)
         return (params, opt_state, emas), metrics
@@ -72,25 +74,25 @@ def train(rng, cfg, ds):
     state = (params, opt_state, emas)
 
     # state, metrics = lax.scan(step, state, rngs)  # sometimes getting GPU metal shader error
-    # return lax.scan(step, state, rngs)  # sometimes getting GPU metal shader error
+    return lax.scan(step, state, (jnp.arange(cfg.epochs), rngs))  # sometimes getting GPU metal shader error
 
-    #########################################
-    metrics = []
-    for key in (pbar := tqdm(rngs)):
-        state, metric = step(state, key)
-        metrics.append(metric)
+    # #########################################
+    # metrics = []
+    # for key in (pbar := tqdm(rngs)):
+    #     state, metric = step(state, key)
+    #     metrics.append(metric)
 
-    metrics = {
-        "train": {
-            "f1": np.array([m.train_f1 for m in metrics]).T,
-            "loss": np.array([m.train_loss for m in metrics]).T,
-        },
-        "valid": {
-            "f1": np.array([m.valid_f1 for m in metrics]).T,
-            "loss": np.array([m.valid_loss for m in metrics]).T,
-        },
-    }
-    #########################################
+    # metrics = {
+    #     "train": {
+    #         "f1": np.array([m.train_f1 for m in metrics]).T,
+    #         "loss": np.array([m.train_loss for m in metrics]).T,
+    #     },
+    #     "valid": {
+    #         "f1": np.array([m.valid_f1 for m in metrics]).T,
+    #         "loss": np.array([m.valid_loss for m in metrics]).T,
+    #     },
+    # }
+    # #########################################
     return state, metrics
 
 

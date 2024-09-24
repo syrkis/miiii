@@ -16,37 +16,35 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 
 
-# %% Exploring and plotting the data 1
-
 # %% Training
-cfg = mi.utils.cfg_fn(epochs=100, depth=3, lr=1e-3, n=1024, base=37)
+cfg = mi.utils.cfg_fn(epochs=100, depth=3, lr=1e-3, n=1024, base=2, latent_dim=32)
 rng, key = random.split(random.PRNGKey(0))
 ds = mi.prime.prime_fn(cfg, rng)
 state, metrics = mi.train.train(rng, cfg, ds)
-# mi.utils.save_params(state, "model.pkl")
+mi.utils.save_params(state, "model.pkl")
 # state = mi.utils.load_params("model.pkl")
+params = state[0]
 
 
-# params, _, _ = state
-
-
+# %%
 def block_fn(z, param):
-    z = z + mi.model.attn_fn(param.attn, z)
-    z = z + mi.model.ffwd_fn(param.ffwd, z)
-    return z, z
+    z = (attn := z + mi.model.attn_fn(param.attn, z))
+    z = (ffwd := z + mi.model.ffwd_fn(param.ffwd, z))
+    return z, (attn, ffwd)
 
 
 @partial(vmap, in_axes=(None, 0))
 def scope_fn(params: mi.kinds.Params, x):
     embeds = mi.model.embed_fn(params.embeddings, x)
-    z, acts = lax.scan(block_fn, embeds, params.blocks)  # params.blocks would need to be array
+    z, acts = lax.scan(block_fn, embeds, params.blocks)
     logits = jnp.mean(z, axis=0) @ params.lm_head
     return embeds, acts, logits
 
 
 # %%
-# embeds, activations, logits = scope_fn(params, ds.train.x)
-# sns.heatmap(params.blocks.attn.p[1])
+embeds, (attn_acts, ffwd_acts), logits = scope_fn(params, ds.train.x)
+# mi.plots.hinton_activations(attn_acts[0], "./")
+# mi.plots.hinton_activations(ffwd_acts[0], "./")
 
 # %%
 # mi.plots.plot_run(metrics, ds, cfg)  # type: ignore

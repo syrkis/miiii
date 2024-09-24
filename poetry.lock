@@ -1557,23 +1557,6 @@ minimum-jaxlib = ["jaxlib (==0.4.30)"]
 tpu = ["jaxlib (==0.4.31)", "libtpu-nightly (==0.1.dev20240729)", "requests"]
 
 [[package]]
-name = "jax-metal"
-version = "0.1.0"
-description = "JAX acceleration for Mac GPUs."
-optional = false
-python-versions = "*"
-files = [
-    {file = "jax_metal-0.1.0-py3-none-macosx_10_14_x86_64.whl", hash = "sha256:6cbd62a2068fcadea9c22689c12905e6fe0f58da2230fe2beba263132258cc54"},
-    {file = "jax_metal-0.1.0-py3-none-macosx_11_0_arm64.whl", hash = "sha256:68006a39d331674880265361f612fcb0e3314a220245c05b8c27d204077de085"},
-]
-
-[package.dependencies]
-jax = ">=0.4.26"
-jaxlib = ">=0.4.26"
-six = ">=1.15.0"
-wheel = ">=0.35,<1.0"
-
-[[package]]
 name = "jax-tqdm"
 version = "0.2.2"
 description = "Tqdm progress bar for JAX scans and loops"
@@ -4548,20 +4531,6 @@ files = [
 ]
 
 [[package]]
-name = "wheel"
-version = "0.44.0"
-description = "A built-package format for Python"
-optional = false
-python-versions = ">=3.8"
-files = [
-    {file = "wheel-0.44.0-py3-none-any.whl", hash = "sha256:2376a90c98cc337d18623527a97c31797bd02bad0033d41547043a1cbfbe448f"},
-    {file = "wheel-0.44.0.tar.gz", hash = "sha256:a29c3f2817e95ab89aa4660681ad547c0e9547f20e75b0562fe7723c9a2a9d49"},
-]
-
-[package.extras]
-test = ["pytest (>=6.0.0)", "setuptools (>=65)"]
-
-[[package]]
 name = "widgetsnbextension"
 version = "4.0.13"
 description = "Jupyter interactive widgets for Jupyter Notebook"
@@ -4575,4 +4544,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.11,<3.13"
-content-hash = "b85e1ae51f8bd0643a6031cfe859279696153f11bf18df41e5b22c29373a88b8"
+content-hash = "16afe68752be7ce40a115aa6648512fc7a2a40e2ad22526a26a566efebfd0b57"
