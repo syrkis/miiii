@@ -15,7 +15,7 @@ import matplotlib.pyplot as plt
 p = 113
 
 # %% Training
-cfg = mi.utils.cfg_fn(depth=3, lr=1e-3, heads=4, n=p**2, base=p, latent_dim=128, epochs=1000, dropout=0.1, l2=0.1)
+cfg = mi.utils.cfg_fn(depth=3, lr=1e-4, heads=4, n=p**2, base=p, latent_dim=128, epochs=4000, dropout=0.1, l2=0.1)
 keys = random.split(random.PRNGKey(0))
 ds = mi.prime.prime_fn(cfg, keys[0])
 (params, *_), metrics = mi.train.train(keys[1], cfg, ds)
