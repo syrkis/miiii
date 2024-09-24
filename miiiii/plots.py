@@ -33,6 +33,9 @@ plt.rcParams["mathtext.fontset"] = "cm"
 # %% functions
 def plot_run(metrics, ds: mi.kinds.Dataset, cfg: mi.kinds.Conf, activations=None):
     # make run folder in figs/runs folder
+    metrics = mi.utils.metrics_to_dict(metrics)
+    # print(metrics["train"]["loss"].shape)
+    # exit()
     time_stamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     path = f"paper/figs/runs/{time_stamp}"  # _{name_run(cfg)}"
     os.makedirs(path, exist_ok=True)
@@ -48,10 +51,6 @@ def plot_run(metrics, ds: mi.kinds.Dataset, cfg: mi.kinds.Conf, activations=None
     for split in ["train", "valid"]:
         for metric in metrics[split]:
             curve_plot(metrics[split][metric], metric, path, split)
-            plt.close()
-    if activations is not None:
-        for i, act in enumerate(activations):
-            hinton_activations(act, path)
             plt.close()
 
 
@@ -125,14 +124,32 @@ def hinton_metric(
     plt.savefig(f"{path}/{split}_{metric}_hinton.svg")
 
 
-def hinton_fn(data, ax, scale: float = 1.0):  # <- Hinton atomic
+def plot_head_activations(acts):
+    fig, axes = plt.subplots(ncols=acts.shape[0], figsize=(12, 4))
+    for i, ax in enumerate(axes):  # type: ignore
+        # sns.heatmap(acts[i], ax=ax, square=True, cbar=False, cmap="grey")
+        mi.plots.hinton_fn((acts[i] / acts[i].max() - acts[i].min()), ax)
+        # ax.set_title(f"Head {i}")
+
+    # black line separating heads
+    for i in range(1, acts.shape[0]):
+        axes[i].axvline(-1, color="black", lw=1)  # type: ignore
+
+    axes[0].set_ylabel("Head weights")  # type: ignore
+    # move y label back a bit
+    axes[0].yaxis.set_label_coords(-0.1, 0.5)  # type: ignore
+    plt.show()
+
+
+def hinton_fn(data, ax=None, scale: float = 1.0):  # <- Hinton atomic
     """Plot a matrix of data in a hinton diagram."""
+    ax = ax or plt.gca()
     for (y, x), w in np.ndenumerate(data):
         c = bg if w < 0 else fg  # color
         s = np.sqrt(np.abs(w) / scale) * 0.8
         if s == jnp.nan:
             s = 0
-        s = jnp.clip(s, 0, 0.9).item()
+        s = jnp.clip(s, 0, 0.85).item()
         ax.add_patch(Rectangle((x - s / 2, y - s / 2), s, s, facecolor=c, edgecolor=fg))
 
     # ax modifications

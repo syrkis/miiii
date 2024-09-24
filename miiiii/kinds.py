@@ -20,6 +20,16 @@ class Metrics:
 
 
 @dataclass
+class Activation:
+    q: Array
+    k: Array
+    v: Array
+    qk: Array
+    wei: Array
+    weiv: Array
+
+
+@dataclass
 class Conf:
     # task is either "prime" or "prose"
     vocab_size: int
@@ -50,9 +60,9 @@ class State:
 @dataclass
 class Feedforward:
     w1: Array
-    b1: Array
     w2: Array
-    b2: Array
+    # b1: Array
+    # b2: Array
 
 
 @dataclass
@@ -61,6 +71,7 @@ class Attention:
     k: Array
     v: Array
     p: Array
+
 
 @dataclass
 class LayerNorm:
@@ -72,7 +83,7 @@ class LayerNorm:
 class Block:
     ffwd: Feedforward
     attn: Attention
-    norm: LayerNorm
+    # norm: LayerNorm
 
 
 @dataclass
@@ -86,7 +97,7 @@ class Embedding:
 class Params:
     embeds: Embedding
     blocks: Block
-    lm_out: Feedforward  # should be a linear layer ?
+    unbeds: Array  # should be a linear layer ?
 
 
 # %% data dataclasses ##############################################################
@@ -100,6 +111,7 @@ class Datasplit:
 class Datainfo:
     alpha: Array  # for a given tasks, the alpha probabilities of each class
     tasks: List[str]
+    idxs: Array  # idxs with which the dataset was shuffled
 
 
 @dataclass

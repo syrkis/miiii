@@ -31,7 +31,7 @@ def cfg_fn(
     lr=3e-4,
     dropout=0.5,
     latent_dim=64,
-    heads=8,
+    heads=4,
     depth=4,
     task="prime",
     batch_size=32,
@@ -80,3 +80,9 @@ def track_metrics(metrics, ds, cfg):
             for split in ["train", "valid"]:
                 to_log = {k: v[epoch][idx] for k, v in metrics[split].items()}
                 run.track(to_log, epoch=epoch + 1, context={"task": task, "split": split})
+
+
+def metrics_to_dict(metrics):
+    train_metrics = dict(loss=metrics.train_loss.T, f1=metrics.train_f1.T)
+    valid_metrics = dict(loss=metrics.valid_loss.T, f1=metrics.valid_f1.T)
+    return dict(train=train_metrics, valid=valid_metrics)

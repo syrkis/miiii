@@ -15,23 +15,28 @@ from typing import Tuple
 # functions
 @partial(vmap, in_axes=(1, 1, 0))  # vmap across task (not sample)
 def loss_fn(logits, y, alpha):
+    # logits = logits.astype(jnp.float64)
     return optax.sigmoid_focal_loss(logits, y, alpha=alpha).mean()  # do not take mean (task loss vector)
 
 
 def update_fn(opt, ds, cfg):
+    apply = mi.model.apply_fn(cfg)
+
     def update(params, opt_state, emas, key):
-        loss, losses, logits, grads = grad_fn(params, key, ds, cfg)
+        loss, losses, logits, grads = grad_fn(params, key, ds, cfg, apply)
         grads, emas = filter_fn(grads, emas, 0.98, 2)  # grokfast values
         updates, opt_state = opt.update(grads, opt_state, params)
         params = optax.apply_updates(params, updates)
         return (params, opt_state, emas), (loss, losses, logits)
 
-    return update
+    return update, apply
 
 
-def grad_fn(params: mi.kinds.Params, rng: jnp.ndarray, ds: mi.kinds.Dataset, cfg: mi.kinds.Conf) -> Tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray, jnp.ndarray]:
+def grad_fn(
+    params: mi.kinds.Params, rng: jnp.ndarray, ds: mi.kinds.Dataset, cfg: mi.kinds.Conf, apply
+) -> Tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray, jnp.ndarray]:
     def loss_and_logits(params: mi.kinds.Params) -> Tuple[jnp.ndarray, Tuple[jnp.ndarray, jnp.ndarray]]:
-        logits = mi.model.apply(params, rng, ds.train.x, cfg.dropout)
+        logits = apply(params, rng, ds.train.x, cfg.dropout)
         losses = loss_fn(logits, ds.train.y, ds.info.alpha)  # mean for optimization
         return losses.mean(), (losses, logits)
 
@@ -47,13 +52,13 @@ def filter_fn(grads, emas, alpha: float, lamb: float):
 
 def step_fn(ds, cfg, opt):
     evaluate = evaluate_fn(ds, cfg)
-    update = update_fn(opt, ds, cfg)
+    update, apply = update_fn(opt, ds, cfg)
 
     @scan_tqdm(cfg.epochs)
     def step(state, args):
         (params, opt_state, emas), (epoch, key) = state, args
         (params, opt_state, emas), (loss, losses, logits) = update(params, opt_state, emas, key)
-        metrics = evaluate(params, key, logits, losses)
+        metrics = evaluate(params, key, logits, losses, apply)
         return (params, opt_state, emas), metrics
 
     return step
@@ -67,20 +72,18 @@ def init_state(rng, cfg, opt):
 
 
 def train(rng, cfg, ds):
-    opt = optax.adamw(cfg.lr, weight_decay=cfg.l2)
+    opt = optax.adamw(cfg.lr, weight_decay=cfg.l2, b1=0.9, b2=0.98)
     state = init_state(rng, cfg, opt)
     step = step_fn(ds, cfg, opt)
     rngs = random.split(rng, cfg.epochs)
-
     state, metrics = lax.scan(step, state, (jnp.arange(cfg.epochs), rngs))
-    # metrics = {k: v.__dict__.items() for k, v in metrics.__dict__.items()}
     return state, metrics
 
 
 # Evaluation #########################################################################
 def evaluate_fn(ds, cfg):
-    def evaluate(params, key, train_logits, train_losses):
-        valid_logits = mi.model.apply(params, key, ds.valid.x, cfg.dropout)
+    def evaluate(params, key, train_logits, train_losses, apply):
+        valid_logits = apply(params, key, ds.valid.x, cfg.dropout)
         valid_losses = mi.train.loss_fn(valid_logits, ds.valid.y, ds.info.alpha)
         train_f1 = f1_score(train_logits, ds.train.y)
         valid_f1 = f1_score(valid_logits, ds.valid.y)

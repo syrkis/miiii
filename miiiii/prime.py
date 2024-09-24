@@ -42,10 +42,16 @@ def prime_fn(cfg: mi.kinds.Conf, key: Array | None = None) -> mi.kinds.Dataset:
     # dataset
     train = mi.kinds.Datasplit(x=x[:sep], y=y[:sep])
     valid = mi.kinds.Datasplit(x=x[sep:], y=y[sep:])
-    info = mi.kinds.Datainfo(alpha=alpha, tasks=tasks)
+    info = mi.kinds.Datainfo(alpha=alpha, tasks=tasks, idxs=idxs)
     ds = mi.kinds.Dataset(train=train, valid=valid, info=info)
 
     return ds
+
+
+def unsplit_fn(ds: mi.kinds.Dataset) -> mi.kinds.Datasplit:
+    x = jnp.concat([ds.train.x, ds.valid.x], axis=0)[jnp.argsort(ds.info.idxs)]
+    y = jnp.concat([ds.train.y, ds.valid.y], axis=0)[jnp.argsort(ds.info.idxs)]
+    return mi.kinds.Datasplit(x=x, y=y)
 
 
 def primes_fn(n: int) -> Array:

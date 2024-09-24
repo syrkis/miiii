@@ -80,6 +80,33 @@ The task is referred to as $cal(T)$, with a subscript indicating the task number
 = Methods
 
 Like #cite(<nanda2023>, form: "prose"), $cal(D)$ is constructed from the first 12 769 natural numbers ($113^2$).
+113 was chosen as it allows for a small dataset that can fit in memory, while still being large enough to be interesting.
+Indeed, their model was able to generalize modular addition to the held-out test set.
+
+While #cite(<nanda2023>, form: "prose") follows the template $a + b mod 113 = x$ for all $a, b < 113$,
+this paper, when using base `113` numbers, follows the template $a times 113 + b times 1 in PP$ for all $a, b < 113$.
+The choice of $113$ as a base (when n is $113^2$) ensures that the structure of our dataset is similar to that of #cite(<nanda2023>, form: "prose").
+Using the cube-root one could extend the task to include a $c * 113^2$-term. However, as the cartestian product of 113 and 113
+lends itself much better to visualization (than the 113, 113, 113 cube), we choose to stick with the square, usoing base-113 numbers,
+in the initial phase of our experiment.
+
+#figure(
+  image("attention_one.svg"),
+  caption: "Attenion from digit b to itself",
+)
+
+#figure(
+  image("attention_layer_0.svg"),
+  caption: "Attenion from digit a to digit b",
+)
+
+#figure(
+  image("attention_layer_1.svg"),
+  caption: "Attenion from digit a to digit b",
+)
+
+
+
 The model, $cal(M)$, is trained to predict if a given natural number $n$ is prime ($cal(T)_1$) and what primes it can be factorized by if it is not prime ($cal(T)_2)$. $cal(T)_1$ is strictly harder than $cal(T)_2$, as $cal(T)_1$ is a binary classification indicating failure to factorize by all primes tested for in Task 2. A Task 3, predicting the remainder of the division of $n$ by the prime it is attempted to factorize by, is also defined, but not used in this paper.
 
 Architectural decisions are made to align with #cite(<lee2024a>, form: "prose") and #cite(<nanda2023>, form: "prose").
