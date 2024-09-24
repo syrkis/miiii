@@ -31,7 +31,7 @@ plt.rcParams["mathtext.fontset"] = "cm"
 
 
 # %% functions
-def plot_run(metrics: Dict[str, Dict[str, Array]], ds: mi.kinds.Dataset, cfg: mi.kinds.Conf, activations=None):
+def plot_run(metrics, ds: mi.kinds.Dataset, cfg: mi.kinds.Conf, activations=None):
     # make run folder in figs/runs folder
     time_stamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     path = f"paper/figs/runs/{time_stamp}"  # _{name_run(cfg)}"
@@ -39,8 +39,8 @@ def plot_run(metrics: Dict[str, Dict[str, Array]], ds: mi.kinds.Dataset, cfg: mi
     os.makedirs(f"{path}/", exist_ok=True)
 
     # hinton plots of all metrics
-    for split in ["train", "valid"]:
-        for metric in metrics[split]:
+    for split in ["train", "valid"]:  # if metrics is dictionary
+        for metric in metrics[split]:  # if metrics is dictionary
             max_val = 1 if "f1" in metric else metrics["train"]["loss"].max().item()
             hinton_metric(metrics[split][metric], metric, ds, path, split, max_val, cfg)
             plt.close()

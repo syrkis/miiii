@@ -4,15 +4,11 @@
 
 # %% Imports
 import miiiii as mi
-import jax
 from jax import random, jit, value_and_grad, vmap, nn, lax, tree
-import optax
 import jax.numpy as jnp
-from functools import partial
-from aim import Run, Figure
 from jax_tqdm import scan_tqdm
-from tqdm import tqdm
-import numpy as np
+import optax
+from functools import partial
 
 
 # functions
@@ -23,11 +19,11 @@ def loss_fn(logits, y, alpha):
 
 def update_fn(opt, ds, cfg):
     def update(params, opt_state, emas, key):
-        losses, logits, grads = mi.train.grad_fn(params, key, ds, cfg)
-        grads, emas = filter_fn(grads, emas, 0.98, 2)
+        loss, losses, logits, grads = grad_fn(params, key, ds, cfg)
+        grads, emas = filter_fn(grads, emas, 0.98, 2)  # grokfast values
         updates, opt_state = opt.update(grads, opt_state, params)
         params = optax.apply_updates(params, updates)
-        return params, opt_state, emas, losses, logits
+        return (params, opt_state, emas), (loss, losses, logits)
 
     return update
 
@@ -38,8 +34,8 @@ def grad_fn(params, rng, ds, cfg):  # maybe add allow_int flag below
         losses = loss_fn(logits, ds.train.y, ds.info.alpha)  # mean for optimization
         return losses.mean(), (losses, logits)
 
-    (_, (losses, logits)), grads = value_and_grad(loss_and_logits, has_aux=True)(params)
-    return losses, logits, grads
+    (loss, (losses, logits)), grads = value_and_grad(loss_and_logits, has_aux=True)(params)
+    return loss, losses, logits, grads
 
 
 def filter_fn(grads, emas, alpha, lamb):
@@ -55,44 +51,29 @@ def step_fn(ds, cfg, opt):
     @scan_tqdm(cfg.epochs)
     @jit
     def step(state, args):
-        params, opt_state, emas = state
-        _, key = args
-        params, opt_state, emas, losses, logits = update(params, opt_state, emas, key)
+        (params, opt_state, emas), (epoch, key) = state, args
+        (params, opt_state, emas), (loss, losses, logits) = update(params, opt_state, emas, key)
         metrics = evaluate(params, key, logits, losses)
         return (params, opt_state, emas), metrics
 
     return step
 
 
-def train(rng, cfg, ds):
+def init_state(rng, cfg, opt):
     params = mi.model.init_fn(rng, cfg)
     emas = tree.map(lambda x: jnp.zeros_like(x), params)
-    opt = optax.adamw(cfg.lr, b1=0.9, b2=0.98, weight_decay=cfg.l2)
     opt_state = opt.init(params)  # type: ignore
+    return params, opt_state, emas
+
+
+def train(rng, cfg, ds):
+    opt = optax.adamw(cfg.lr, weight_decay=cfg.l2)
+    state = init_state(rng, cfg, opt)
     step = step_fn(ds, cfg, opt)
     rngs = random.split(rng, cfg.epochs)
-    state = (params, opt_state, emas)
 
-    # state, metrics = lax.scan(step, state, rngs)  # sometimes getting GPU metal shader error
-    return lax.scan(step, state, (jnp.arange(cfg.epochs), rngs))  # sometimes getting GPU metal shader error
-
-    # #########################################
-    # metrics = []
-    # for key in (pbar := tqdm(rngs)):
-    #     state, metric = step(state, key)
-    #     metrics.append(metric)
-
-    # metrics = {
-    #     "train": {
-    #         "f1": np.array([m.train_f1 for m in metrics]).T,
-    #         "loss": np.array([m.train_loss for m in metrics]).T,
-    #     },
-    #     "valid": {
-    #         "f1": np.array([m.valid_f1 for m in metrics]).T,
-    #         "loss": np.array([m.valid_loss for m in metrics]).T,
-    #     },
-    # }
-    # #########################################
+    state, metrics = lax.scan(step, state, (jnp.arange(cfg.epochs), rngs))
+    # metrics = {k: v.__dict__.items() for k, v in metrics.__dict__.items()}
     return state, metrics
 
 

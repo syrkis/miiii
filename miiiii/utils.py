@@ -27,16 +27,16 @@ def check_nan(pytree, name):
 def cfg_fn(
     base=37,
     n=1024,  # 113 ^ 2 @nanda2023 shoutout
-    epochs=1000,
+    epochs=10000,
     lr=3e-4,
-    dropout=0.1,
+    dropout=0.5,
     latent_dim=64,
     heads=8,
     depth=4,
     task="prime",
     batch_size=32,
     seq_len=32,
-    l2=0.1,
+    l2=1.0,
 ):
     vocab_size = base if task == "prime" else 118  # hardocded vocab size of borges' ficciones
     seq_len = prime.digit_fn(n, base).item() if task == "prime" else seq_len

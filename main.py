@@ -5,25 +5,18 @@
 # %% Imports
 import miiiii as mi  # test
 from jax import random, vmap, lax
-import optax
 import jax.numpy as jnp
 from functools import partial
-from tqdm import tqdm
 from oeis import A000040 as primes
-from chex import dataclass
-from typing import List, Tuple
 import seaborn as sns
 import matplotlib.pyplot as plt
 
 
 # %% Training
-cfg = mi.utils.cfg_fn(epochs=100, depth=3, lr=1e-3, n=1024, base=2, latent_dim=32)
-rng, key = random.split(random.PRNGKey(0))
-ds = mi.prime.prime_fn(cfg, rng)
-state, metrics = mi.train.train(rng, cfg, ds)
-mi.utils.save_params(state, "model.pkl")
-# state = mi.utils.load_params("model.pkl")
-params = state[0]
+cfg = mi.utils.cfg_fn(depth=3, lr=1e-3, n=12_769, base=2, latent_dim=128, epochs=100)
+keys = random.split(random.PRNGKey(0))
+ds = mi.prime.prime_fn(cfg, keys[0])
+(params, *_), metrics = mi.train.train(keys[1], cfg, ds)
 
 
 # %%
@@ -35,14 +28,14 @@ def block_fn(z, param):
 
 @partial(vmap, in_axes=(None, 0))
 def scope_fn(params: mi.kinds.Params, x):
-    embeds = mi.model.embed_fn(params.embeddings, x)
+    embeds = mi.model.embed_fn(params.embeds, x)
     z, acts = lax.scan(block_fn, embeds, params.blocks)
-    logits = jnp.mean(z, axis=0) @ params.lm_head
+    logits = jnp.mean(z, axis=0) @ params.lm_out
     return embeds, acts, logits
 
 
 # %%
-embeds, (attn_acts, ffwd_acts), logits = scope_fn(params, ds.train.x)
+# embeds, (attn_acts, ffwd_acts), logits = scope_fn(params, ds.train.x)
 # mi.plots.hinton_activations(attn_acts[0], "./")
 # mi.plots.hinton_activations(ffwd_acts[0], "./")
 

@@ -24,11 +24,11 @@ init = nn.initializers.glorot_uniform()
 
 # %% Model #####################################################################
 @partial(vmap, in_axes=(None, None, 0, None))
-def apply(params, rng: Array, x: Array, dropout: float) -> Array:
-    keys = random.split(rng, params.blocks.ffwd.w1.shape[0] * 2).reshape(params.blocks.ffwd.w1.shape[0], 2, 2)
-    z = embed_fn(params.embeddings, x)  # z: seq_len x emb_dim
-    z = lax.scan(partial(block_fn, dropout=dropout), z, (keys, params.blocks))[0]
-    return jnp.mean(z, axis=0) @ params.lm_head
+def apply(p, rng: Array, x: Array, dropout: float) -> Array:
+    z = embed_fn(p.embeds, x)
+    step_fn = partial(block_fn, dropout=dropout)
+    z = lax.scan(step_fn, z, (key_fn(p, rng), p.blocks))[0]
+    return jnp.mean(z, axis=0) @ p.lm_out
 
 
 def block_fn(z, args, dropout):
@@ -60,10 +60,10 @@ def embed_fn(p: mi.kinds.Embedding, x: Array) -> Array:
     return tok_emb + pos_emb  # z: seq_len x emb_dim
 
 
-def layer_norm(params: mi.kinds.LayerNorm, x: Array) -> Array:
-    mean = jnp.mean(x, axis=-1, keepdims=True)
-    std = jnp.std(x, axis=-1, keepdims=True)
-    return params.gamma * (x - mean) / (std + 1e-5) + params.beta
+# def layer_norm(params: mi.kinds.LayerNorm, x: Array) -> Array:
+#     mean = jnp.mean(x, axis=-1, keepdims=True)
+#     std = jnp.std(x, axis=-1, keepdims=True)
+#     return params.gamma * (x - mean) / (std + 1e-5) + params.beta
 
 
 # %% Initializers ###########################################################
@@ -102,7 +102,7 @@ def init_fn(rng: Array, cfg: mi.kinds.Conf):  # x: Array, y: Array) -> mi.kinds.
     embeds = init_embed_fn(keys[0], cfg)
     lm_head = init(keys[1], (cfg.latent_dim, y_fn(cfg)))
     blocks = lax.map(partial(init_block, cfg), keys[2:])
-    return mi.kinds.Params(embeddings=embeds, lm_head=lm_head, blocks=blocks)
+    return mi.kinds.Params(embeds=embeds, lm_out=lm_head, blocks=blocks)
 
 
 # %% Functions #################################################################
@@ -114,3 +114,8 @@ def y_fn(cfg: mi.kinds.Conf) -> int:  # infers the number of tasks we are solvin
 
 def dropout_fn(key: Array, x: Array, dropout: float) -> Array:
     return jnp.where(dropout == 0.0, x, x * random.bernoulli(key, 1 - dropout, x.shape) / (1 - dropout))
+
+
+def key_fn(p, rng):  # split key for dropout
+    depth = p.blocks.ffwd.w1.shape[0]
+    return random.split(rng, depth * 2).reshape(depth, 2, 2)

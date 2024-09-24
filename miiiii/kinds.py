@@ -10,6 +10,7 @@ import jax.numpy as jnp
 from jax import Array
 
 
+# %% training dataclasses ##############################################################
 @dataclass
 class Metrics:
     train_loss: Array
@@ -26,7 +27,6 @@ class Conf:
     seq_len: int
     task: str = "prime"  # "prose"
     causal: bool = False
-    # initialixation scale for weights
     base: int = 2
     n: int = 1024
     latent_dim: int = 128
@@ -39,13 +39,7 @@ class Conf:
     dropout: float = 0.1
 
 
-# %% Model classes
-@dataclass
-class LayerNorm:
-    gamma: Array
-    beta: Array
-
-
+# %% model dataclasses ##############################################################
 @dataclass
 class Feedforward:
     w1: Array
@@ -76,19 +70,12 @@ class Embedding:
 
 @dataclass
 class Params:
-    embeddings: Embedding
+    embeds: Embedding
     blocks: Block
-    lm_head: Array
+    lm_out: Array  # should be a linear layer ?
 
 
-# %% Train classes
-@dataclass
-class State:  # replace with chex and put in types
-    params: Params
-    opt_state: optax.OptState
-
-
-# %% Data classes
+# %% data dataclasses ##############################################################
 @dataclass
 class Datasplit:
     x: Array
