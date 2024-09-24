@@ -12,14 +12,14 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 
 
-p = 37
+p = 113
 
 # %% Training
-cfg = mi.utils.cfg_fn(depth=1, lr=1e-3, heads=4, n=p**2, base=p, latent_dim=64, epochs=1000, dropout=0.0, l2=0.0)
+cfg = mi.utils.cfg_fn(depth=2, lr=1e-3, heads=4, n=p**2, base=p, latent_dim=128, epochs=10000, dropout=0.5, l2=1.0)
 keys = random.split(random.PRNGKey(0))
-train_ds = mi.prime.prime_fn(cfg, keys[0])
-(params, *_), metrics = mi.train.train(keys[1], cfg, train_ds)
-ds = mi.prime.unsplit_fn(train_ds)
+ds = mi.prime.prime_fn(cfg, keys[0])
+(params, *_), metrics = mi.train.train(keys[1], cfg, ds)
+# ds = mi.prime.unsplit_fn(train_ds)
 
 
 # %% Model
@@ -38,14 +38,14 @@ def scope_fn(params, x):
 
 
 # %% Hinton plots
-embeds, (attn_acts, ffwd_acts), logits = scope_fn(params, ds.x)
+# embeds, (attn_acts, ffwd_acts), logits = scope_fn(params, ds.x)
 # mi.plots.hinton_fn(attn_acts.k)
 
 # plot_head_activations(attn_acts.k.mean(axis=0)[0])
-mi.plots.plot_head_activations(attn_acts.wei.mean(axis=0)[0])
-mi.plots.plot_head_activations(attn_acts.wei.mean(axis=0)[1])
+# mi.plots.plot_head_activations(attn_acts.wei.mean(axis=0)[0])
+# mi.plots.plot_head_activations(attn_acts.wei.mean(axis=0)[1])
 # %%
-mi.plots.hinton_fn(attn_acts.wei.mean(axis=0)[0].mean(axis=-1))
+# mi.plots.hinton_fn(attn_acts.wei.mean(axis=0)[0].mean(axis=-1))
 
 
 # %%
@@ -66,13 +66,13 @@ def attention_hintons(attn_acts, layer, a, b):
     plt.close()
 
 
-attention_hintons(attn_acts, 0, 1, 1)
-attention_hintons(attn_acts, 0, 0, 1)
-fig, ax = plt.subplots(figsize=(8, 8))
-mi.plots.hinton_fn(attn_acts.wei[:, 0, 1, 1, 1].reshape(p, p), ax)
-ax.set_yticks([0, p - 1])
-ax.set_xticks([0, p - 1])
-plt.savefig("paper/figs/attention_one.svg", format="svg", bbox_inches="tight")
+# attention_hintons(attn_acts, 0, 1, 1)
+# attention_hintons(attn_acts, 0, 0, 1)
+# fig, ax = plt.subplots(figsize=(8, 8))
+# mi.plots.hinton_fn(attn_acts.wei[:, 0, 1, 1, 1].reshape(p, p), ax)
+# ax.set_yticks([0, p - 1])
+# ax.set_xticks([0, p - 1])
+# plt.savefig("paper/figs/attention_one.svg", format="svg", bbox_inches="tight")
 
 
 # %%
@@ -127,7 +127,7 @@ def plot_sample_activations(embeds, attn_acts, ffwd_acts, logits, ds, i=0):
 
 
 # %%
-# mi.plots.plot_run(metrics, ds, cfg)  # type: ignore
+mi.plots.plot_run(metrics, ds, cfg)  # type: ignore
 # %%
 # state, metrics = train(cfg.epochs, rng, state)
 # state = train(cfg.epochs, rng, state)
