@@ -11,13 +11,12 @@ from oeis import A000040 as primes
 import seaborn as sns
 import matplotlib.pyplot as plt
 
-
 p = 113
 
 # %% Training
 cfg = mi.utils.cfg_fn(depth=3, lr=1e-4, heads=4, n=p**2, base=p, latent_dim=128, epochs=10_000, dropout=0.1, l2=1.0)
 keys = random.split(random.PRNGKey(0))
-ds = mi.prime.prime_fn(cfg, keys[0])
+ds = mi.tasks.prime_fn(cfg, keys[0])
 (params, *_), metrics = mi.train.train(keys[1], cfg, ds)
 # ds = mi.prime.unsplit_fn(train_ds)
 
@@ -52,7 +51,7 @@ def scope_fn(params, x):
 def attention_hintons(attn_acts, layer, a, b):
     wei = attn_acts.wei
     fig, axes = plt.subplots(ncols=cfg.heads, figsize=(14, 8))
-    for i, ax in enumerate(axes):
+    for i, ax in enumerate(axes):  # type: ignore
         x = wei[:, layer, i, a, b].reshape(p, p)
         mi.plots.hinton_fn(x, ax, scale=1)
         # ax.set_title(f"Head {i}")
@@ -96,7 +95,7 @@ def plot_sample_activations(embeds, attn_acts, ffwd_acts, logits, ds, i=0):
     # Plot 2: Attention Activations
     fig, axes = plt.subplots(cfg.depth, 1, figsize=(12, 4 * cfg.depth))
     fig.suptitle("Attention Activations", fontsize=16)
-    for j, ax in enumerate(axes):
+    for j, ax in enumerate(axes):  # type: ignore
         plot_block(attn_acts[i][j], ax)
         ax.set_title(f"Attn Layer {j+1}")
     plt.tight_layout()
@@ -105,7 +104,7 @@ def plot_sample_activations(embeds, attn_acts, ffwd_acts, logits, ds, i=0):
     # Plot 3: Feedforward Activations
     fig, axes = plt.subplots(cfg.depth, 1, figsize=(12, 4 * cfg.depth))
     fig.suptitle("Feedforward Activations", fontsize=16)
-    for j, ax in enumerate(axes):
+    for j, ax in enumerate(axes):  # type: ignore
         plot_block(ffwd_acts[i][j], ax)
         ax.set_title(f"FFWD Layer {j+1}")
     plt.tight_layout()

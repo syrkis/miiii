@@ -3,15 +3,13 @@
 # by: Noah Syrkis
 
 # %% imports
-import miiiii.kinds as kinds
-import miiiii.prime as prime
-import argparse
 import os
 import jax.numpy as jnp
 from jax import tree
 import yaml
 import pickle
 from aim import Run
+from chex import dataclass
 
 
 # %% constants
@@ -21,6 +19,30 @@ blue = "#002fa7"
 
 def check_nan(pytree, name):
     return jnp.array(tree.flatten(tree.map(lambda x: jnp.isnan(x).any(), pytree))[0]).any()
+
+
+@dataclass
+class Conf:
+    # task is either "prime" or "prose"
+    vocab_size: int
+    batch_size: int
+    seq_len: int
+    task: str = "prime"  # "prose"
+    causal: bool = False
+    base: int = 2
+    n: int = 1024
+    latent_dim: int = 128
+    depth: int = 2
+    heads: int = 4
+    epochs: int = 100
+    lr: float = 1e-3
+    block: str = "vaswani"
+    l2: float = 0.1
+    dropout: float = 0.1
+
+
+def digit_fn(n, base):
+    return jnp.ceil(jnp.log(n + 1) / jnp.log(base)).astype(jnp.int32)
 
 
 # %% functions
@@ -39,8 +61,8 @@ def cfg_fn(
     l2=1.0,
 ):
     vocab_size = base if task == "prime" else 118  # hardocded vocab size of borges' ficciones
-    seq_len = prime.digit_fn(n, base).item() if task == "prime" else seq_len
-    cfg = kinds.Conf(
+    seq_len = digit_fn(n, base).item() if task == "prime" else seq_len
+    cfg = Conf(
         batch_size=batch_size,  # only used for prose
         causal=True if task == "prose" else False,
         base=base,

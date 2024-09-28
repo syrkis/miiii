@@ -31,7 +31,7 @@ plt.rcParams["mathtext.fontset"] = "cm"
 
 
 # %% functions
-def plot_run(metrics, ds: mi.kinds.Dataset, cfg: mi.kinds.Conf, activations=None):
+def plot_run(metrics, ds: mi.tasks.Dataset, cfg: mi.utils.Conf, activations=None):
     # make run folder in figs/runs folder
     metrics = mi.utils.metrics_to_dict(metrics)
     # print(metrics["train"]["loss"].shape)
@@ -54,7 +54,7 @@ def plot_run(metrics, ds: mi.kinds.Dataset, cfg: mi.kinds.Conf, activations=None
             plt.close()
 
 
-def name_run(cfg: mi.kinds.Conf):
+def name_run(cfg: mi.utils.Conf):
     datum_name = f"base_{cfg.base}_n_{cfg.n}"
     model_name = f"emb_{cfg.latent_dim}_heads_{cfg.heads}_depth_{cfg.depth}"
     train_name = f"lr_{cfg.lr}_epochs_{cfg.epochs}_l2_{cfg.l2}_dropout_{cfg.dropout}"
@@ -62,7 +62,7 @@ def name_run(cfg: mi.kinds.Conf):
     return name
 
 
-def title_fn(cfg: mi.kinds.Conf):
+def title_fn(cfg: mi.utils.Conf):
     title = f"base : {cfg.base} | emb : {cfg.latent_dim} | heads : {cfg.heads} | depth : {cfg.depth} | lr : {cfg.lr} | l2 : {cfg.l2} | dropout : {cfg.dropout}"
     # replce " | " with "    |    "
     title = title.replace(" | ", "   |   ")
@@ -90,7 +90,7 @@ def hinton_activations(acts: Array, path: str):
 
 
 def hinton_metric(
-    data: Array, metric: str, ds: mi.kinds.Dataset, path: str, split: str, max_val: float, cfg: mi.kinds.Conf
+    data: Array, metric: str, ds: mi.tasks.Dataset, path: str, split: str, max_val: float, cfg: mi.utils.Conf
 ):
     fig, ax = plt.subplots(figsize=(12, 5))
     pool_data = horizontal_mean_pooling(data)
