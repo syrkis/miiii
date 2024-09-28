@@ -92,8 +92,13 @@ def base_ns(x, base):
 
 # nanda task  ################################################################
 def nanda_fn():
+    # modular adition modulo 113
     p = 113
-    a, b = jnp.meshgrid(jnp.arange(p), jnp.arange(p))
+    a = jnp.arange(p).repeat(p)
+    b = jnp.tile(jnp.arange(p), p)
+    y = (a + b) % p
+    data = jnp.stack([a, b, y], axis=-1)
+    return data.shape
 
 
 # prose related to the tasks #############################################
