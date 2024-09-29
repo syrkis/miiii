@@ -66,13 +66,13 @@ class Params:
 
 
 # %% Model #####################################################################
-def apply_fn(cfg):
+def apply_fn(cfg: Conf):
     @partial(vmap, in_axes=(None, None, 0, None))
     def apply(p: Params, rng: Array, x: Array, dropout: float) -> Array:
         embed = embed_fn(p.embeds, x)
         step_fn = partial(block_fn, dropout=dropout)
         z = lax.scan(step_fn, embed, (key_fn(p, rng), p.blocks))[0]
-        logits = base_n_pos_weigh((z @ p.unbeds), cfg.base)
+        logits = base_n_pos_weigh((z @ p.unbeds), cfg.prime)
         return logits.sum(axis=0)
 
     return apply
@@ -119,22 +119,22 @@ def layer_norm(params: LayerNorm, x: Array) -> Array:
 # %% Initializers ###########################################################
 def init_embed_fn(rng: Array, cfg: Conf):
     keys = random.split(rng, 2)
-    tok_emb = init(keys[0], (cfg.vocab_size, cfg.latent_dim))
-    pos_emb = init(keys[1], (cfg.seq_len, cfg.latent_dim))
+    tok_emb = init(keys[0], (cfg.prime, cfg.hyper.latent_dim))
+    pos_emb = init(keys[1], (2, cfg.hyper.latent_dim))  # two is hardcoded cos base is p
     return Embedding(tok_emb=tok_emb, pos_emb=pos_emb)
 
 
 def init_attn_fn(rng: Array, cfg: Conf) -> Attention:
     keys = random.split(rng, 4)
-    shape = (cfg.heads, cfg.latent_dim, cfg.latent_dim // cfg.heads)
+    shape = (cfg.hyper.heads, cfg.hyper.latent_dim, cfg.hyper.latent_dim // cfg.hyper.heads)
     q, k, v = init(keys[0], shape), init(keys[1], shape), init(keys[2], shape)
-    p = init(keys[3], (cfg.latent_dim, cfg.latent_dim))
+    p = init(keys[3], (cfg.hyper.latent_dim, cfg.hyper.latent_dim))
     return Attention(q=q, k=k, v=v, p=p)
 
 
 def init_ffwd_fn(rng: Array, cfg: Conf) -> Feedforward:
-    w1 = init(rng, (cfg.latent_dim, cfg.latent_dim * 4))
-    w2 = init(rng, (cfg.latent_dim * 4, cfg.latent_dim))
+    w1 = init(rng, (cfg.hyper.latent_dim, cfg.hyper.latent_dim * 4))
+    w2 = init(rng, (cfg.hyper.latent_dim * 4, cfg.hyper.latent_dim))
     return Feedforward(w1=w1, w2=w2)
 
 
@@ -147,12 +147,12 @@ def init_block(cfg: Conf, rng: jnp.ndarray) -> Block:
 
 def init_unbeds(rng: Array, cfg: Conf) -> Array:
     keys = random.split(rng, 2)
-    unbeds = init(keys[0], (cfg.latent_dim, y_fn(cfg)))
+    unbeds = init(keys[0], (cfg.hyper.latent_dim, y_fn(cfg)))
     return unbeds
 
 
 def init_fn(rng: Array, cfg: Conf):  # x: Array, y: Array) -> mi.types.Params:
-    keys = random.split(rng, 2 + cfg.depth)
+    keys = random.split(rng, 2 + cfg.hyper.depth)
     embeds = init_embed_fn(keys[0], cfg)
     unbeds = init_unbeds(keys[1], cfg)
     blocks = lax.map(partial(init_block, cfg), keys[2:])
@@ -161,8 +161,8 @@ def init_fn(rng: Array, cfg: Conf):  # x: Array, y: Array) -> mi.types.Params:
 
 # %% Functions #################################################################
 def y_fn(cfg: Conf) -> int:  # infers the number of tasks we are solving
-    primes = jnp.array(A000040[1 : cfg.n * 2])
-    primes = primes[primes < jnp.sqrt(cfg.n)]
+    primes = jnp.array(A000040[1 : cfg.prime**2 * 2])
+    primes = primes[primes < jnp.sqrt(cfg.prime**2)]
     return primes.shape[0] + 1  #  if cfg.task == "prime" else cfg.vocab_size
 
 

@@ -13,10 +13,12 @@ import matplotlib.pyplot as plt
 
 
 # %% Training
-kwargs = dict(heads=4, latent_dim=32, dropout=0.1, p=37)
+# hyper_kwargs = dict(epochs=10, lr=1e-3, batch_size=32, dropout=0.1, p=37)
+kwargs = dict(task="prime", prime=37)
 cfg = mi.utils.cfg_fn(kwargs)
 keys = random.split(random.PRNGKey(0))
 ds = mi.tasks.prime_fn(cfg, keys[0])
+# ds = mi.tasks.nanda_fn(37)
 (params, *_), metrics = mi.train.train(keys[1], cfg, ds)
 # ds = mi.prime.unsplit_fn(train_ds)
 
@@ -34,7 +36,7 @@ def block_fn(z, param):
 def scope_fn(params, x):
     embeds = mi.model.embed_fn(params.embeds, x)
     z, acts = lax.scan(block_fn, embeds, params.blocks)
-    logits = mi.model.base_n_pos_weigh(z @ params.unbeds, cfg.base)
+    logits = mi.model.base_n_pos_weigh(z @ params.unbeds, cfg.prime)
     return embeds, acts, logits
 
 
@@ -52,9 +54,9 @@ def scope_fn(params, x):
 # %%
 def attention_hintons(attn_acts, layer, a, b):
     wei = attn_acts.wei
-    fig, axes = plt.subplots(ncols=cfg.heads, figsize=(14, 8))
+    fig, axes = plt.subplots(ncols=cfg.hyper.heads, figsize=(14, 8))
     for i, ax in enumerate(axes):  # type: ignore
-        x = wei[:, layer, i, a, b].reshape(p, p)
+        x = wei[:, layer, i, a, b].reshape(cfg.prime, cfg.prime)
         mi.plots.hinton_fn(x, ax, scale=1)
         # ax.set_title(f"Head {i}")
         # ax.set_ylabel("First digit")
@@ -95,7 +97,7 @@ def plot_sample_activations(embeds, attn_acts, ffwd_acts, logits, ds, i=0):
     plt.show()
 
     # Plot 2: Attention Activations
-    fig, axes = plt.subplots(cfg.depth, 1, figsize=(12, 4 * cfg.depth))
+    fig, axes = plt.subplots(cfg.hyper.depth, 1, figsize=(12, 4 * cfg.hyper.depth))
     fig.suptitle("Attention Activations", fontsize=16)
     for j, ax in enumerate(axes):  # type: ignore
         plot_block(attn_acts[i][j], ax)
@@ -104,7 +106,7 @@ def plot_sample_activations(embeds, attn_acts, ffwd_acts, logits, ds, i=0):
     plt.show()
 
     # Plot 3: Feedforward Activations
-    fig, axes = plt.subplots(cfg.depth, 1, figsize=(12, 4 * cfg.depth))
+    fig, axes = plt.subplots(cfg.hyper.depth, 1, figsize=(12, 4 * cfg.hyper.depth))
     fig.suptitle("Feedforward Activations", fontsize=16)
     for j, ax in enumerate(axes):  # type: ignore
         plot_block(ffwd_acts[i][j], ax)

@@ -20,9 +20,9 @@ class Datasplit:
 
 @dataclass
 class Datainfo:
-    alpha: Array  # for a given tasks, the alpha probabilities of each class
-    tasks: List[str]
     idxs: Array  # idxs with which the dataset was shuffled
+    alpha: Array | None = None  # for a given tasks, the alpha probabilities of each class
+    tasks: List[str] | None = None  # list of tasks
 
 
 @dataclass
@@ -33,24 +33,16 @@ class Dataset:
 
 
 # %% Functions
-def source_fn(n: int, base: int, ns: Callable) -> Array:
-    x = ns(jnp.arange(n), base)
-    return x
-
-
-def target_fn(x: Array) -> Tuple[Array, List[str]]:
-    all_primes = primes_fn(len(x))
-    target_primes = all_primes[all_primes < len(x)]  # target primes
-    test_primes = all_primes[all_primes < jnp.sqrt(len(x))]  # source primes
-    is_prime = jnp.zeros(len(x)).at[target_primes].set(1).astype(jnp.int32)[:, None]
-    is_multiple = (jnp.arange(len(x))[:, None] % test_primes == 0).astype(jnp.int32)
-    y = jnp.concatenate([is_multiple, is_prime], axis=-1)
-    tasks = list(map(str, test_primes.tolist())) + ["prime"]
-    return y, tasks
+def task_fn(cfg: Conf, key: Array | None = None) -> Dataset:
+    # if cfg.task == "prose":
+    # return prose_fn(cfg, key)
+    if cfg.task == "nanda":
+        return nanda_fn(cfg, key)
+    return prime_fn(cfg, key)
 
 
 def prime_fn(cfg: Conf, key: Array | None = None) -> Dataset:
-    n, base = cfg.n, cfg.base
+    n, base = cfg.prime**2, cfg.prime
     x = source_fn(n, base, base_ns)  # get source
     y, tasks = target_fn(x)  # get target and tasks
 
@@ -68,6 +60,22 @@ def prime_fn(cfg: Conf, key: Array | None = None) -> Dataset:
     ds = Dataset(train=train, valid=valid, info=info)
 
     return ds
+
+
+def source_fn(n: int, base: int, ns: Callable) -> Array:
+    x = ns(jnp.arange(n), base)
+    return x
+
+
+def target_fn(x: Array) -> Tuple[Array, List[str]]:
+    all_primes = primes_fn(len(x))
+    target_primes = all_primes[all_primes < len(x)]  # target primes
+    test_primes = all_primes[all_primes < jnp.sqrt(len(x))]  # source primes
+    is_prime = jnp.zeros(len(x)).at[target_primes].set(1).astype(jnp.int32)[:, None]
+    is_multiple = (jnp.arange(len(x))[:, None] % test_primes == 0).astype(jnp.int32)
+    y = jnp.concatenate([is_multiple, is_prime], axis=-1)
+    tasks = list(map(str, test_primes.tolist())) + ["prime"]
+    return y, tasks
 
 
 def unsplit_fn(ds: Dataset) -> Datasplit:
@@ -91,44 +99,50 @@ def base_ns(x, base):
 
 
 # nanda task  ################################################################
-def nanda_fn():
+def nanda_fn(cfg, key) -> Dataset:
     # modular adition modulo 113
-    p = 113
-    a = jnp.arange(p).repeat(p)
-    b = jnp.tile(jnp.arange(p), p)
-    e = jnp.array(p).repeat(p**2)  # nanda uses equality, which I am not sure what does but lets replicate
-    y = (a + b) % p
-    data = jnp.stack([a, b, e, y], axis=-1)
-    return data
+    a = jnp.arange(cfg.prime).repeat(cfg.prime)
+    b = jnp.tile(jnp.arange(cfg.prime), cfg.prime)
+    # e = jnp.array(cfg.prime).repeat(cfg.prime**2) # nanda does this, but i don't
+    y = (a + b) % cfg.prime
+    data = jnp.stack([a, b, y], axis=-1)
+    idxs = random.permutation(key, len(data))
+    data = data[idxs]
+    x = data[:, :2]
+    y = data[:, 2][:, None]
+    x_train, y_train = x[: int(len(data) * 0.8)], y[: int(len(data) * 0.8)]
+    x_valid, y_valid = x[int(len(data) * 0.8) :], y[int(len(data) * 0.8) :]
+    train_ds, valid_ds = Datasplit(x=x_train, y=y_train), Datasplit(x=x_valid, y=y_valid)
+    return Dataset(train=train_ds, valid=valid_ds, info=Datainfo(idxs=idxs))
 
 
 # prose related to the tasks #############################################
 # %% ## Ficciones function for testing
-def prose_fn(rng, cfg, path: str = "data/ficciones.txt"):
-    with open(path, "r") as f:
-        text = f.read()
+# def prose_fn(rng, cfg: Conf, path: str = "data/ficciones.txt"):
+#     with open(path, "r") as f:
+#         text = f.read()
 
-    c2i = {c: i for i, c in enumerate(sorted(list(set(text))))}
-    data = encode_fn(text, c2i)
-    train_data = data[: int(len(data) * 0.8)]
-    eval_data = data[int(len(data) * 0.8) :]
+#     c2i = {c: i for i, c in enumerate(sorted(list(set(text))))}
+#     data = encode_fn(text, c2i)
+#     train_data = data[: int(len(data) * 0.8)]
+#     eval_data = data[int(len(data) * 0.8) :]
 
-    def batch_fn(rng, split):
-        while True:
-            rng, key = random.split(rng)
-            length_limit = (len(split) - cfg.seq_len - 1) // cfg.batch_size * cfg.batch_size
-            idxs = random.permutation(key, jnp.arange(length_limit))
-            idxs = idxs[: len(idxs) - len(idxs) % cfg.batch_size].reshape(-1, cfg.batch_size)
-            idxs = idxs[:, :, None] + jnp.arange(cfg.seq_len)
-            for idx in idxs:
-                x = split[idx]
-                y = split[idx + 1]
-                yield x, y
+#     def batch_fn(rng, split):
+#         while True:
+#             rng, key = random.split(rng)
+#             length_limit = (len(split) - cfg.seq_len - 1) // cfg.batch_size * cfg.batch_size
+#             idxs = random.permutation(key, jnp.arange(length_limit))
+#             idxs = idxs[: len(idxs) - len(idxs) % cfg.batch_size].reshape(-1, cfg.batch_size)
+#             idxs = idxs[:, :, None] + jnp.arange(cfg.seq_len)
+#             for idx in idxs:
+#                 x = split[idx]
+#                 y = split[idx + 1]
+#                 yield x, y
 
-    i2c = {i: c for c, i in c2i.items()}
-    cfg.vocab_size = len(c2i)
-    rng, key = random.split(rng)
-    return batch_fn(rng, train_data), batch_fn(key, eval_data), c2i, i2c, cfg
+#     i2c = {i: c for c, i in c2i.items()}
+#     cfg.vocab_size = len(c2i)
+#     rng, key = random.split(rng)
+#     return batch_fn(rng, train_data), batch_fn(key, eval_data), c2i, i2c, cfg
 
 
 def encode_fn(text: str, c2i: dict) -> Array:
@@ -137,7 +151,3 @@ def encode_fn(text: str, c2i: dict) -> Array:
 
 def decode_fn(x: Array, i2c: dict) -> str:
     return "".join([i2c[i] for i in x.tolist()])
-
-
-if __name__ == "__main__":
-    nanda_fn()

@@ -10,6 +10,7 @@ import yaml
 import pickle
 from aim import Run
 from chex import dataclass
+from typing import Literal
 
 
 # %% constants
@@ -22,12 +23,7 @@ def check_nan(pytree, name):
 
 
 @dataclass
-class Conf:
-    vocab_size: int  # compute from p
-    seq_len: int  # compute from p
-    n: int  # compute from p
-    base: int
-
+class Hyper:
     latent_dim: int = 128
     depth: int = 2
     heads: int = 4
@@ -35,7 +31,18 @@ class Conf:
     lr: float = 1e-3
     l2: float = 0.1
     dropout: float = 0.1
-    p: int = 113
+    # seq_len: int  # if task is prose
+    # vocab_size: int  # if task is prose
+
+
+@dataclass
+class Conf:
+    hyper: Hyper
+    task: str = "prime"
+    prime: int = 113
+
+    # base: int
+    # power: int = 2 # if we should use a different base.
     # task: str = "prime"  # "prose"
     # block: str = "vaswani"
     # causal: bool = False
@@ -46,11 +53,8 @@ def digit_fn(n, base):
 
 
 # %% functions
-def cfg_fn(kwargs):
-    n = kwargs["p"] ** 2
-    seq_len = digit_fn(n, kwargs["p"]).item()
-    base = kwargs["p"]
-    cfg = Conf(**kwargs | {"seq_len": seq_len, "n": n, "vocab_size": kwargs["p"], "base": base})
+def cfg_fn(kwargs, hyper_kwargs={}):
+    cfg = Conf(**kwargs, hyper=Hyper(**hyper_kwargs))
     return cfg
 
 
