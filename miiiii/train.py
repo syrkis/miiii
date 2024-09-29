@@ -3,7 +3,6 @@
 # by: Noah Syrkis
 
 # %% Imports
-# import miiiii as mi
 from miiiii.model import Params, apply_fn, init_fn
 from miiiii.tasks import Dataset
 from miiiii.utils import Conf
@@ -15,13 +14,14 @@ import optax
 from functools import partial
 from typing import Tuple
 from chex import dataclass, Array
+import aim
 
 
 @dataclass
 class State:
-    params: Array
-    opt_state: Array
-    emas: Array
+    params: Params | optax.Params
+    opt_state: optax.OptState
+    emas: Params
 
 
 @dataclass
@@ -52,12 +52,13 @@ def update_fn(opt, ds, cfg: Conf):
     apply = apply_fn(cfg)
     loss_fn = focal_loss_fn if cfg.task == "prime" else cross_entropy_loss_fn
 
-    def update(params, opt_state, emas, key):
-        loss, losses, logits, grads = grad_fn(params, key, ds, cfg, apply, loss_fn)
-        grads, emas = filter_fn(grads, emas, 0.98, 2)  # grokfast values
-        updates, opt_state = opt.update(grads, opt_state, params)
-        params = optax.apply_updates(params, updates)
-        return (params, opt_state, emas), (loss, losses, logits)
+    def update(state, key):
+        loss, losses, logits, grads = grad_fn(state.params, key, ds, cfg, apply, loss_fn)
+        grads, emas = filter_fn(grads, state.emas, 0.98, 2)  # grokfast values
+        updates, opt_state = opt.update(grads, state.opt_state, state.params)
+        params = optax.apply_updates(state.params, updates)
+        state = State(params=params, emas=emas, opt_state=opt_state)
+        return state, (loss, losses, logits)
 
     return update, apply, loss_fn
 
@@ -84,10 +85,10 @@ def step_fn(ds, cfg: Conf, opt):
 
     @scan_tqdm(cfg.hyper.epochs)
     def step(state, args):
-        (params, opt_state, emas), (epoch, key) = state, args
-        (params, opt_state, emas), (loss, losses, logits) = update(params, opt_state, emas, key)
-        metrics = evaluate(params, key, losses, logits)
-        return (params, opt_state, emas), metrics
+        epoch, key = args
+        state, (loss, losses, logits) = update(state, key)
+        metrics = evaluate(state.params, key, losses, logits)
+        return state, metrics
 
     return step
 
@@ -95,8 +96,8 @@ def step_fn(ds, cfg: Conf, opt):
 def init_state(rng, cfg: Conf, opt):
     params = init_fn(rng, cfg)
     emas = tree.map(lambda x: jnp.zeros_like(x), params)
-    opt_state = opt.init(params)  # type: ignore
-    return params, opt_state, emas
+    opt_state = opt.init(params)
+    return State(params=params, opt_state=opt_state, emas=emas)
 
 
 def train(rng, cfg: Conf, ds):
@@ -105,16 +106,30 @@ def train(rng, cfg: Conf, ds):
     step = step_fn(ds, cfg, opt)
     rngs = random.split(rng, cfg.hyper.epochs)
     state, metrics = lax.scan(step, state, (jnp.arange(cfg.hyper.epochs), rngs))
+    run_fn(cfg, ds, metrics)
     return state, metrics
+
+
+def run_fn(cfg: Conf, ds: Dataset, metrics: Metrics):
+    hyper = cfg.hyper
+    cfg.__dict__.__delitem__("hyper")
+    run = aim.Run()
+    run["hyper"] = hyper.__dict__
+    run["cfg"] = cfg.__dict__
+    for epoch in range(hyper.epochs):
+        run.track(metrics.train.loss[epoch], name="train_loss", epoch=epoch)  # type: ignore
+        run.track(metrics.train.f1[epoch], name="train_f1", epoch=epoch)  # type: ignore
+        run.track(metrics.train.acc[epoch], name="train_acc", epoch=epoch)  # type: ignore
+        run.track(metrics.valid.loss[epoch], name="valid_loss", epoch=epoch)  # type: ignore
+        run.track(metrics.valid.f1[epoch], name="valid_f1", epoch=epoch)  # type: ignore
+        run.track(metrics.valid.acc[epoch], name="valid_acc", epoch=epoch)  # type: ignore
 
 
 # Evaluation #########################################################################
 def evaluate_fn(ds, cfg: Conf, apply, loss_fn):
     f1_score = vmap(f1_score_fn, in_axes=(1, 1)) if cfg.task == "prime" else f1_score_fn
     accuracy = vmap(accuracy_fn, in_axes=(1, 1)) if cfg.task == "prime" else accuracy_fn
-    pred_fn = (
-        (lambda l: (nn.sigmoid(l) > 0.5).astype(jnp.int32)) if cfg.task == "prime" else lambda l: jnp.argmax(l, axis=-1)
-    )
+    pred_fn = (lambda l: (nn.sigmoid(l) > 0.5).astype(int)) if cfg.task == "prime" else lambda l: jnp.argmax(l, axis=-1)
 
     def aux_fn(logits, y, loss):
         pred = pred_fn(logits)
@@ -134,6 +149,7 @@ def evaluate_fn(ds, cfg: Conf, apply, loss_fn):
 
 
 def accuracy_fn(y_pred, y_true):
+    y_pred, y_true = y_pred.flatten().astype(int), y_true.flatten().astype(int)
     return (y_pred == y_true).mean()
 
 

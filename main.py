@@ -13,10 +13,11 @@ import matplotlib.pyplot as plt
 
 
 # %% Training
-cfg = mi.utils.cfg_fn(kwargs={"task": "nanda", "prime": 37})
+args, hyper_kwargs = {"task": "nanda", "prime": 37}, {"epochs": 10000, "dropout": 0.5, "l2": 1.0}
+cfg = mi.utils.cfg_fn(args, hyper_kwargs)
 keys = random.split(random.PRNGKey(0))
 ds = mi.tasks.task_fn(cfg, keys[0])
-(params, *_), metrics = mi.train.train(keys[1], cfg, ds)
+state, metrics = mi.train.train(keys[1], cfg, ds)
 
 exit()
 
@@ -50,21 +51,21 @@ def scope_fn(params, x):
 
 
 # %%
-def attention_hintons(attn_acts, layer, a, b):
-    wei = attn_acts.wei
-    fig, axes = plt.subplots(ncols=cfg.hyper.heads, figsize=(14, 8))
-    for i, ax in enumerate(axes):  # type: ignore
-        x = wei[:, layer, i, a, b].reshape(cfg.prime, cfg.prime)
-        mi.plots.hinton_fn(x, ax, scale=1)
-        # ax.set_title(f"Head {i}")
-        # ax.set_ylabel("First digit")
-        # ax.set_xlabel("Second digit")
-        # add y ticks at 0 and 36 with those numbers
-    # add text to the right side of plot (rotated 90) giving the description hellow world
-    # fig.text(1, 0.5, f"Attention from digit a to b", va="center", rotation=90)
-    plt.tight_layout()
-    plt.savefig(f"paper/figs/attention_layer_{layer}.svg", format="svg", bbox_inches="tight")
-    plt.close()
+# def attention_hintons(attn_acts, layer, a, b):
+# wei = attn_acts.wei
+# fig, axes = plt.subplots(ncols=cfg.hyper.heads, figsize=(14, 8))
+# for i, ax in enumerate(axes):  # type: ignore
+# x = wei[:, layer, i, a, b].reshape(cfg.prime, cfg.prime)
+# mi.plots.hinton_fn(x, ax, scale=1)
+# ax.set_title(f"Head {i}")
+# ax.set_ylabel("First digit")
+# ax.set_xlabel("Second digit")
+# add y ticks at 0 and 36 with those numbers
+# add text to the right side of plot (rotated 90) giving the description hellow world
+# fig.text(1, 0.5, f"Attention from digit a to b", va="center", rotation=90)
+# plt.tight_layout()
+# plt.savefig(f"paper/figs/attention_layer_{layer}.svg", format="svg", bbox_inches="tight")
+# plt.close()
 
 
 # attention_hintons(attn_acts, 0, 1, 1)
@@ -80,47 +81,47 @@ def attention_hintons(attn_acts, layer, a, b):
 # %%
 
 
-def plot_sample_activations(embeds, attn_acts, ffwd_acts, logits, ds, i=0):
-    def plot_block(acts, ax):
-        mi.plots.hinton_fn(acts, ax)
+# def plot_sample_activations(embeds, attn_acts, ffwd_acts, logits, ds, i=0):
+# def plot_block(acts, ax):
+# mi.plots.hinton_fn(acts, ax)
 
-    # Plot 1: Embeddings
-    plt.figure(figsize=(12, 4))
-    plt.title("Embeddings")
-    plot_block(embeds[i], plt.gca())
-    # plt.ylabel(ds.train.x[i])
-    plt.yticks(range(len(ds.train.x[i])), ds.train.x[i])
-    plt.gca().tick_params(axis="y", length=0)
-    plt.tight_layout()
-    plt.show()
+# Plot 1: Embeddings
+# plt.figure(figsize=(12, 4))
+# plt.title("Embeddings")
+# plot_block(embeds[i], plt.gca())
+# plt.ylabel(ds.train.x[i])
+# plt.yticks(range(len(ds.train.x[i])), ds.train.x[i])
+# plt.gca().tick_params(axis="y", length=0)
+# plt.tight_layout()
+# plt.show()
 
-    # Plot 2: Attention Activations
-    fig, axes = plt.subplots(cfg.hyper.depth, 1, figsize=(12, 4 * cfg.hyper.depth))
-    fig.suptitle("Attention Activations", fontsize=16)
-    for j, ax in enumerate(axes):  # type: ignore
-        plot_block(attn_acts[i][j], ax)
-        ax.set_title(f"Attn Layer {j+1}")
-    plt.tight_layout()
-    plt.show()
-
-    # Plot 3: Feedforward Activations
-    fig, axes = plt.subplots(cfg.hyper.depth, 1, figsize=(12, 4 * cfg.hyper.depth))
-    fig.suptitle("Feedforward Activations", fontsize=16)
-    for j, ax in enumerate(axes):  # type: ignore
-        plot_block(ffwd_acts[i][j], ax)
-        ax.set_title(f"FFWD Layer {j+1}")
-    plt.tight_layout()
-    plt.show()
-
-    # Plot 4: Z
-    plt.figure(figsize=(12, 4))
-    plot_block(logits[i][::-1], plt.gca())  # IMPORANT: MATRIX INDEX AND HINTON PLOT have different indexing
-    # the x-ticks should be ds.train.y[i]
-    plt.xticks(range(len(ds.info.tasks)), ds.info.tasks[:-1] + ["ℙ"])
-    # plt.gca().tick_params(axis='x', rotation=90)
-    plt.yticks(range(len(ds.train.x[i])), ds.train.x[i][::-1])
-    plt.tight_layout()
-    plt.show()
+# Plot 2: Attention Activations
+# fig, axes = plt.subplots(cfg.hyper.depth, 1, figsize=(12, 4 * cfg.hyper.depth))
+# fig.suptitle("Attention Activations", fontsize=16)
+# for j, ax in enumerate(axes):  # type: ignore
+# plot_block(attn_acts[i][j], ax)
+# ax.set_title(f"Attn Layer {j+1}")
+# plt.tight_layout()
+# plt.show()
+#
+# Plot 3: Feedforward Activations
+# fig, axes = plt.subplots(cfg.hyper.depth, 1, figsize=(12, 4 * cfg.hyper.depth))
+# fig.suptitle("Feedforward Activations", fontsize=16)
+# for j, ax in enumerate(axes):  # type: ignore
+# plot_block(ffwd_acts[i][j], ax)
+# ax.set_title(f"FFWD Layer {j+1}")
+# plt.tight_layout()
+# plt.show()
+#
+# Plot 4: Z
+# plt.figure(figsize=(12, 4))
+# plot_block(logits[i][::-1], plt.gca())  # IMPORANT: MATRIX INDEX AND HINTON PLOT have different indexing
+# the x-ticks should be ds.train.y[i]
+# plt.xticks(range(len(ds.info.tasks)), ds.info.tasks[:-1] + ["ℙ"])
+# plt.gca().tick_params(axis='x', rotation=90)
+# plt.yticks(range(len(ds.train.x[i])), ds.train.x[i][::-1])
+# plt.tight_layout()
+# plt.show()
 
 
 # %%
@@ -128,7 +129,7 @@ def plot_sample_activations(embeds, attn_acts, ffwd_acts, logits, ds, i=0):
 
 
 # %%
-mi.plots.plot_run(metrics, ds, cfg)  # type: ignore
+# mi.plots.plot_run(metrics, ds, cfg)  # type: ignore
 # %%
 # state, metrics = train(cfg.epochs, rng, state)
 # state = train(cfg.epochs, rng, state)
