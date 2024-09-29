@@ -25,11 +25,16 @@ class State:
 
 
 @dataclass
+class Split:
+    loss: Array
+    f1: Array
+    acc: Array
+
+
+@dataclass
 class Metrics:
-    train_loss: Array
-    valid_loss: Array
-    train_f1: Array
-    valid_f1: Array
+    train: Split
+    valid: Split
 
 
 # functions
@@ -57,9 +62,7 @@ def update_fn(opt, ds, cfg: Conf):
     return update, apply, loss_fn
 
 
-def grad_fn(
-    params: Params, rng: jnp.ndarray, ds: Dataset, cfg: Conf, apply, loss_fn
-) -> Tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray, jnp.ndarray]:
+def grad_fn(params: Params, rng, ds: Dataset, cfg: Conf, apply, loss_fn) -> Tuple[Array, Array, Array, Array]:
     def loss_and_logits(params: Params) -> Tuple[jnp.ndarray, Tuple[jnp.ndarray, jnp.ndarray]]:
         logits = apply(params, rng, ds.train.x, cfg.hyper.dropout)
         losses = loss_fn(logits, ds.train.y, ds.info.alpha)  # mean for optimization
@@ -83,7 +86,7 @@ def step_fn(ds, cfg: Conf, opt):
     def step(state, args):
         (params, opt_state, emas), (epoch, key) = state, args
         (params, opt_state, emas), (loss, losses, logits) = update(params, opt_state, emas, key)
-        metrics = evaluate(params, key, logits, losses)
+        metrics = evaluate(params, key, losses, logits)
         return (params, opt_state, emas), metrics
 
     return step
@@ -107,19 +110,34 @@ def train(rng, cfg: Conf, ds):
 
 # Evaluation #########################################################################
 def evaluate_fn(ds, cfg: Conf, apply, loss_fn):
-    def evaluate(params, key, train_logits, train_losses):
+    f1_score = vmap(f1_score_fn, in_axes=(1, 1)) if cfg.task == "prime" else f1_score_fn
+    accuracy = vmap(accuracy_fn, in_axes=(1, 1)) if cfg.task == "prime" else accuracy_fn
+    pred_fn = (
+        (lambda l: (nn.sigmoid(l) > 0.5).astype(jnp.int32)) if cfg.task == "prime" else lambda l: jnp.argmax(l, axis=-1)
+    )
+
+    def aux_fn(logits, y, loss):
+        pred = pred_fn(logits)
+        f1, acc = f1_score(pred, y), accuracy(pred, y)
+        return Split(loss=loss, f1=f1, acc=acc)
+
+    def evaluate(params, key, train_loss, train_logits):
         valid_logits = apply(params, key, ds.valid.x, cfg.hyper.dropout)
-        valid_losses = loss_fn(valid_logits, ds.valid.y, ds.info.alpha)
-        train_f1 = f1_score(train_logits, ds.train.y)
-        valid_f1 = f1_score(valid_logits, ds.valid.y)
-        return Metrics(train_f1=train_f1, valid_f1=valid_f1, train_loss=train_losses, valid_loss=valid_losses)
+        valid_loss = loss_fn(valid_logits, ds.valid.y, ds.info.alpha)
+
+        valid_metrics = aux_fn(valid_logits, ds.valid.y, valid_loss)
+        train_metrics = aux_fn(train_logits, ds.train.y, train_loss)
+
+        return Metrics(train=train_metrics, valid=valid_metrics)
 
     return evaluate
 
 
-@partial(vmap, in_axes=(1, 1))
-def f1_score(y_logits, y_true):
-    y_pred = (nn.sigmoid(y_logits) > 0.5).astype(jnp.int32)  # 0.5 threshold
+def accuracy_fn(y_pred, y_true):
+    return (y_pred == y_true).mean()
+
+
+def f1_score_fn(y_pred, y_true):
     confusion = jnp.eye(2)[y_pred].T @ jnp.eye(2)[y_true]
     tp, fp, fn = confusion[1, 1], confusion[1, 0], confusion[0, 1]
     precision, recall = tp / (tp + fp + 1e-8), tp / (tp + fn + 1e-8)
