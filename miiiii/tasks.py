@@ -50,7 +50,7 @@ def prime_fn(cfg: Conf, key: Array | None = None) -> Dataset:
     idxs = random.permutation(key, len(x)) if key is not None else jnp.arange(len(x))
     x, y = x[idxs], y[idxs]  # shuffle data
 
-    sep = int(len(x) * 0.5)  # 50/50 split
+    sep = int(len(x) * cfg.hyper.split)  # 50/50 split
     alpha = (1 - y[:sep].mean(axis=0)) ** 2  # for focal loss
 
     # dataset
@@ -100,7 +100,7 @@ def base_ns(x, base):
 
 # nanda task  ################################################################
 def nanda_fn(cfg, key) -> Dataset:
-    # modular adition modulo 113
+    # modular adition modulo prime
     a = jnp.arange(cfg.prime).repeat(cfg.prime)
     b = jnp.tile(jnp.arange(cfg.prime), cfg.prime)
     # e = jnp.array(cfg.prime).repeat(cfg.prime**2) # nanda does this, but i don't
@@ -109,9 +109,9 @@ def nanda_fn(cfg, key) -> Dataset:
     idxs = random.permutation(key, len(data))
     data = data[idxs]
     x = data[:, :2]
-    y = data[:, 2][:, None]
-    x_train, y_train = x[: int(len(data) * 0.8)], y[: int(len(data) * 0.8)]
-    x_valid, y_valid = x[int(len(data) * 0.8) :], y[int(len(data) * 0.8) :]
+    y = data[:, 2]
+    x_train, x_valid = x[: int(len(x) * cfg.hyper.split)], x[int(len(x) * cfg.hyper.split) :]
+    y_train, y_valid = y[: int(len(y) * cfg.hyper.split)], y[int(len(y) * cfg.hyper.split) :]
     train_ds, valid_ds = Datasplit(x=x_train, y=y_train), Datasplit(x=x_valid, y=y_valid)
     return Dataset(train=train_ds, valid=valid_ds, info=Datainfo(idxs=idxs))
 

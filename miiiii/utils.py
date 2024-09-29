@@ -31,6 +31,7 @@ class Hyper:
     lr: float = 1e-3
     l2: float = 0.1
     dropout: float = 0.1
+    split: float = 0.5
     # seq_len: int  # if task is prose
     # vocab_size: int  # if task is prose
 

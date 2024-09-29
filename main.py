@@ -13,16 +13,14 @@ import matplotlib.pyplot as plt
 
 
 # %% Training
-# hyper_kwargs = dict(epochs=10, lr=1e-3, batch_size=32, dropout=0.1, p=37)
-kwargs = dict(task="prime", prime=37)
-cfg = mi.utils.cfg_fn(kwargs)
+cfg = mi.utils.cfg_fn(kwargs={"task": "nanda", "prime": 37})
 keys = random.split(random.PRNGKey(0))
-ds = mi.tasks.prime_fn(cfg, keys[0])
-# ds = mi.tasks.nanda_fn(37)
+ds = mi.tasks.task_fn(cfg, keys[0])
 (params, *_), metrics = mi.train.train(keys[1], cfg, ds)
-# ds = mi.prime.unsplit_fn(train_ds)
 
 exit()
+
+# ds = mi.prime.unsplit_fn(train_ds)
 
 
 # %% Model

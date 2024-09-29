@@ -145,16 +145,10 @@ def init_block(cfg: Conf, rng: jnp.ndarray) -> Block:
     return Block(attn=attn, ffwd=ffwd)  # , norm=norm)
 
 
-def init_unbeds(rng: Array, cfg: Conf) -> Array:
-    keys = random.split(rng, 2)
-    unbeds = init(keys[0], (cfg.hyper.latent_dim, y_fn(cfg)))
-    return unbeds
-
-
 def init_fn(rng: Array, cfg: Conf):  # x: Array, y: Array) -> mi.types.Params:
     keys = random.split(rng, 2 + cfg.hyper.depth)
     embeds = init_embed_fn(keys[0], cfg)
-    unbeds = init_unbeds(keys[1], cfg)
+    unbeds = init(keys[1], (cfg.hyper.latent_dim, y_fn(cfg)))
     blocks = lax.map(partial(init_block, cfg), keys[2:])
     return Params(embeds=embeds, unbeds=unbeds, blocks=blocks)
 
@@ -163,7 +157,9 @@ def init_fn(rng: Array, cfg: Conf):  # x: Array, y: Array) -> mi.types.Params:
 def y_fn(cfg: Conf) -> int:  # infers the number of tasks we are solving
     primes = jnp.array(A000040[1 : cfg.prime**2 * 2])
     primes = primes[primes < jnp.sqrt(cfg.prime**2)]
-    return primes.shape[0] + 1  #  if cfg.task == "prime" else cfg.vocab_size
+    tasks = primes.shape[0] + 1  #  if cfg.task == "prime" else cfg.vocab_size
+    # TODO: adapt to work with prose
+    return tasks if cfg.task == "prime" else cfg.prime  # if task is nanda we wanna guess the mod
 
 
 def dropout_fn(key: Array, x: Array, dropout: float) -> Array:

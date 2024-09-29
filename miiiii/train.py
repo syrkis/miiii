@@ -34,26 +34,31 @@ class Metrics:
 
 # functions
 @partial(vmap, in_axes=(1, 1, 0))  # vmap across task (not sample)
-def loss_fn(logits, y, alpha):
+def focal_loss_fn(logits, y, alpha):
     # logits = logits.astype(jnp.float64)  # enable with some jax bullshit to avoid slingshot
     return optax.sigmoid_focal_loss(logits, y, alpha=alpha).mean()  # mean across samples
 
 
+def cross_entropy_loss_fn(logits, y, _):
+    return optax.softmax_cross_entropy_with_integer_labels(logits, y).mean()
+
+
 def update_fn(opt, ds, cfg: Conf):
     apply = apply_fn(cfg)
+    loss_fn = focal_loss_fn if cfg.task == "prime" else cross_entropy_loss_fn
 
     def update(params, opt_state, emas, key):
-        loss, losses, logits, grads = grad_fn(params, key, ds, cfg, apply)
+        loss, losses, logits, grads = grad_fn(params, key, ds, cfg, apply, loss_fn)
         grads, emas = filter_fn(grads, emas, 0.98, 2)  # grokfast values
         updates, opt_state = opt.update(grads, opt_state, params)
         params = optax.apply_updates(params, updates)
         return (params, opt_state, emas), (loss, losses, logits)
 
-    return update, apply
+    return update, apply, loss_fn
 
 
 def grad_fn(
-    params: Params, rng: jnp.ndarray, ds: Dataset, cfg: Conf, apply
+    params: Params, rng: jnp.ndarray, ds: Dataset, cfg: Conf, apply, loss_fn
 ) -> Tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray, jnp.ndarray]:
     def loss_and_logits(params: Params) -> Tuple[jnp.ndarray, Tuple[jnp.ndarray, jnp.ndarray]]:
         logits = apply(params, rng, ds.train.x, cfg.hyper.dropout)
@@ -71,14 +76,14 @@ def filter_fn(grads, emas, alpha: float, lamb: float):
 
 
 def step_fn(ds, cfg: Conf, opt):
-    evaluate = evaluate_fn(ds, cfg)
-    update, apply = update_fn(opt, ds, cfg)
+    update, apply, loss_fn = update_fn(opt, ds, cfg)
+    evaluate = evaluate_fn(ds, cfg, apply, loss_fn)
 
     @scan_tqdm(cfg.hyper.epochs)
     def step(state, args):
         (params, opt_state, emas), (epoch, key) = state, args
         (params, opt_state, emas), (loss, losses, logits) = update(params, opt_state, emas, key)
-        metrics = evaluate(params, key, logits, losses, apply)
+        metrics = evaluate(params, key, logits, losses)
         return (params, opt_state, emas), metrics
 
     return step
@@ -101,8 +106,8 @@ def train(rng, cfg: Conf, ds):
 
 
 # Evaluation #########################################################################
-def evaluate_fn(ds, cfg: Conf):
-    def evaluate(params, key, train_logits, train_losses, apply):
+def evaluate_fn(ds, cfg: Conf, apply, loss_fn):
+    def evaluate(params, key, train_logits, train_losses):
         valid_logits = apply(params, key, ds.valid.x, cfg.hyper.dropout)
         valid_losses = loss_fn(valid_logits, ds.valid.y, ds.info.alpha)
         train_f1 = f1_score(train_logits, ds.train.y)
