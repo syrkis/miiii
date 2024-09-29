@@ -96,9 +96,10 @@ def nanda_fn():
     p = 113
     a = jnp.arange(p).repeat(p)
     b = jnp.tile(jnp.arange(p), p)
+    e = jnp.array(p).repeat(p**2)  # nanda uses equality, which I am not sure what does but lets replicate
     y = (a + b) % p
-    data = jnp.stack([a, b, y], axis=-1)
-    return data.shape
+    data = jnp.stack([a, b, e, y], axis=-1)
+    return data
 
 
 # prose related to the tasks #############################################

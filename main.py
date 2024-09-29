@@ -11,18 +11,16 @@ from oeis import A000040 as primes
 import seaborn as sns
 import matplotlib.pyplot as plt
 
-p = 37
 
-
-print(mi.tasks.nanda_fn())
-
-exit()
 # %% Training
-cfg = mi.utils.cfg_fn(depth=3, lr=1e-4, heads=4, n=p**2, base=p, latent_dim=32, epochs=100, dropout=0.1, l2=1.0)
+kwargs = dict(heads=4, latent_dim=32, dropout=0.1, p=37)
+cfg = mi.utils.cfg_fn(kwargs)
 keys = random.split(random.PRNGKey(0))
 ds = mi.tasks.prime_fn(cfg, keys[0])
 (params, *_), metrics = mi.train.train(keys[1], cfg, ds)
 # ds = mi.prime.unsplit_fn(train_ds)
+
+exit()
 
 
 # %% Model

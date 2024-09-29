@@ -23,22 +23,22 @@ def check_nan(pytree, name):
 
 @dataclass
 class Conf:
-    # task is either "prime" or "prose"
-    vocab_size: int
-    batch_size: int
-    seq_len: int
-    task: str = "prime"  # "prose"
-    causal: bool = False
-    base: int = 2
-    n: int = 1024
+    vocab_size: int  # compute from p
+    seq_len: int  # compute from p
+    n: int  # compute from p
+    base: int
+
     latent_dim: int = 128
     depth: int = 2
     heads: int = 4
-    epochs: int = 100
+    epochs: int = 1000
     lr: float = 1e-3
-    block: str = "vaswani"
     l2: float = 0.1
     dropout: float = 0.1
+    p: int = 113
+    # task: str = "prime"  # "prose"
+    # block: str = "vaswani"
+    # causal: bool = False
 
 
 def digit_fn(n, base):
@@ -46,38 +46,11 @@ def digit_fn(n, base):
 
 
 # %% functions
-def cfg_fn(
-    base=37,
-    n=1024,  # 113 ^ 2 @nanda2023 shoutout
-    epochs=10000,
-    lr=3e-4,
-    dropout=0.5,
-    latent_dim=64,
-    heads=4,
-    depth=4,
-    task="prime",
-    batch_size=32,
-    seq_len=32,
-    l2=1.0,
-):
-    vocab_size = base if task == "prime" else 118  # hardocded vocab size of borges' ficciones
-    seq_len = digit_fn(n, base).item() if task == "prime" else seq_len
-    cfg = Conf(
-        batch_size=batch_size,  # only used for prose
-        causal=True if task == "prose" else False,
-        base=base,
-        n=n,  # Number of
-        epochs=epochs,
-        lr=lr,
-        dropout=dropout,
-        latent_dim=latent_dim,
-        heads=heads,
-        depth=depth,
-        task=task,
-        vocab_size=vocab_size,
-        seq_len=seq_len,
-        l2=l2,
-    )
+def cfg_fn(kwargs):
+    n = kwargs["p"] ** 2
+    seq_len = digit_fn(n, kwargs["p"]).item()
+    base = kwargs["p"]
+    cfg = Conf(**kwargs | {"seq_len": seq_len, "n": n, "vocab_size": kwargs["p"], "base": base})
     return cfg
 
 

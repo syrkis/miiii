@@ -117,12 +117,6 @@ def layer_norm(params: LayerNorm, x: Array) -> Array:
 
 
 # %% Initializers ###########################################################
-def init_norm_fn(cfg: Conf) -> LayerNorm:
-    gamma = jnp.ones(cfg.latent_dim)
-    beta = jnp.zeros(cfg.latent_dim)
-    return LayerNorm(gamma=gamma, beta=beta)
-
-
 def init_embed_fn(rng: Array, cfg: Conf):
     keys = random.split(rng, 2)
     tok_emb = init(keys[0], (cfg.vocab_size, cfg.latent_dim))
@@ -140,17 +134,14 @@ def init_attn_fn(rng: Array, cfg: Conf) -> Attention:
 
 def init_ffwd_fn(rng: Array, cfg: Conf) -> Feedforward:
     w1 = init(rng, (cfg.latent_dim, cfg.latent_dim * 4))
-    # b1 = jnp.zeros(cfg.latent_dim * 4)
     w2 = init(rng, (cfg.latent_dim * 4, cfg.latent_dim))
-    # b2 = jnp.zeros(cfg.latent_dim)
-    return Feedforward(w1=w1, w2=w2)  # , b1=b1, w2=w2, b2=b2)
+    return Feedforward(w1=w1, w2=w2)
 
 
 def init_block(cfg: Conf, rng: jnp.ndarray) -> Block:
     keys = random.split(rng)
     attn = init_attn_fn(keys[0], cfg)
     ffwd = init_ffwd_fn(keys[1], cfg)
-    # norm = init_norm_fn(cfg)
     return Block(attn=attn, ffwd=ffwd)  # , norm=norm)
 
 
@@ -172,7 +163,7 @@ def init_fn(rng: Array, cfg: Conf):  # x: Array, y: Array) -> mi.types.Params:
 def y_fn(cfg: Conf) -> int:  # infers the number of tasks we are solving
     primes = jnp.array(A000040[1 : cfg.n * 2])
     primes = primes[primes < jnp.sqrt(cfg.n)]
-    return primes.shape[0] + 1 if cfg.task == "prime" else cfg.vocab_size
+    return primes.shape[0] + 1  #  if cfg.task == "prime" else cfg.vocab_size
 
 
 def dropout_fn(key: Array, x: Array, dropout: float) -> Array:
