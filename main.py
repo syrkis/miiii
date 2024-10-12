@@ -9,11 +9,11 @@ import jax.numpy as jnp
 from functools import partial
 from oeis import A000040 as primes
 import seaborn as sns
-import matplotlib.pyplot as plt
+import matplotlib.pyplot as ptl
 
 
 # %% Training
-args, hyper_kwargs = {"task": "nanda", "prime": 37}, {"epochs": 10000, "dropout": 0.5, "l2": 1.0}
+args, hyper_kwargs = {"task": "nanda", "prime": 37}, {"epochs": 1000, "dropout": 0.5, "l2": 1.0}
 cfg = mi.utils.cfg_fn(args, hyper_kwargs)
 keys = random.split(random.PRNGKey(0))
 ds = mi.tasks.task_fn(cfg, keys[0])
@@ -78,9 +78,6 @@ def scope_fn(params, x):
 
 
 # %%
-# %%
-
-
 # def plot_sample_activations(embeds, attn_acts, ffwd_acts, logits, ds, i=0):
 # def plot_block(acts, ax):
 # mi.plots.hinton_fn(acts, ax)

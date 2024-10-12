@@ -80,6 +80,7 @@ def filter_fn(grads, emas, alpha: float, lamb: float):
 
 
 def step_fn(ds, cfg: Conf, opt):
+    opt = optax.adamw(cfg.hyper.lr, weight_decay=cfg.hyper.l2, b1=0.9, b2=0.98)
     update, apply, loss_fn = update_fn(opt, ds, cfg)
     evaluate = evaluate_fn(ds, cfg, apply, loss_fn)
 

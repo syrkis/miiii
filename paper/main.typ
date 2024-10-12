@@ -29,7 +29,10 @@
     An attention-based deep learning model $cal(M)$ is trained to solve tasks related to prime numbers.
     Specifically, $cal(M)$ is trained to predict if a given natural number $n$ is prime and what, if any,
     prime numbers it can be factorized by. The model is then reverse engineered to understand the
-    learned algorithms for the tasks for which it generalizes well.
+    learned algorithms for the tasks for which it generalizes well. Similar to #cite(<nanda2023>, form: "prose"),
+    who trained a transformer model to perform modular addition ($a + b$ mod $113$ for all $a, b < 113$),
+    focuses on the task "is $a * n^1 + b * n^0$ prime?" for all $a, b < n$. Setting $n$ to 113 yields
+    a dataset of size 12,769.
   ],
   bibliography: bibliography("zotero.bib"),
 )
@@ -37,7 +40,7 @@
 
 = Introduction
 
-It is well established that deep learning models can function as both archives and algorithms, with more recent work focusing on the transition between these two modes @nanda2023, @power2022, @conmy2023. This work aims to further understand this dynamic, by training a deep learning model to solve a set of tasks, whose difficulty are evenly spaced on a gradient. Specifucally, the tasks asks if a given natural number $n_0$ is a multiple of every prime number less than $sqrt(n)$, or if the number is prime. Given that the generelized solution to each varries in difficulty, the model will have varying degrees of generalization for any of the tasks, at given point during traing.
+It is well established that deep learning models can function as both archives (overfitting to training data) and algorithms (learning a generalizing rule), with more recent work focusing on the transition between these two modes @power2022, @nanda2023, @conmy2023. This work aims to further understand this dynamic, by training a deep learning model to solve a set of tasks, whose difficulty are spaced on a gradient. Specifucally, the tasks asks if a given natural number $n_0$ less than $n$ is a multiple of every prime number less than $sqrt(n)$, or if $n_0$ is prime. Given that the generelized solution to each varries in difficulty, the model will have varying degrees of generalization for any of the tasks, at given point during traing. The goal is to explore, and perhaps understand, the transition between overfitting and generalization.
 
 = Related work
 
