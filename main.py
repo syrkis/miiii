@@ -4,12 +4,22 @@
 
 # %% Imports
 import miiiii as mi  # test
-from jax import random, vmap, lax, nn
+from jax import random, vmap, lax, nn, tree
 import jax.numpy as jnp
 from functools import partial
 from oeis import A000040 as primes
 import seaborn as sns
-import matplotlib.pyplot as ptl
+import matplotlib.pyplot as plt
+
+import esch
+import numpy as np
+
+
+# x = np.random.rand((100, 10, 10))
+rng = random.PRNGKey(0)
+x = random.normal(rng, (100, 10, 10))
+dwg = esch.hinton(x)
+dwg.saveas("hinton.svg")
 
 
 # %% Training
@@ -19,24 +29,27 @@ keys = random.split(random.PRNGKey(0))
 ds = mi.tasks.task_fn(cfg, keys[0])
 state, metrics, outputs = mi.train.train(keys[1], cfg, ds)
 
+print(tree.map(jnp.shape, outputs))
+
 exit()
 
 # ds = mi.prime.unsplit_fn(train_ds)
 
 
 # %% Model
-def block_fn(z, param):
-    attn, attn_acts = mi.model.attn_fn(param.attn, z)
-    ffwd, ffwd_acts = mi.model.ffwd_fn(param.ffwd, z + attn)
-    return z + ffwd, (attn_acts, ffwd_acts)  # <-- return activations from inside the ffwd block
+# def block_fn(z, param):
+#     attn, attn_acts = mi.model.attn_fn(param.attn, z)
+#     ffwd, ffwd_acts = mi.model.ffwd_fn(param.ffwd, z + attn)
+#     return z + ffwd, (attn_acts, ffwd_acts)  # <-- return activations from inside the ffwd block
 
 
-@partial(vmap, in_axes=(None, 0))
-def scope_fn(params, x):
-    embeds = mi.model.embed_fn(params.embeds, x)
-    z, acts = lax.scan(block_fn, embeds, params.blocks)
-    logits = mi.model.base_n_pos_weigh(z @ params.unbeds, cfg.prime)
-    return embeds, acts, logits  # reorder
+# @partial(vmap, in_axes=(None, 0))
+# def scope_fn(params, x):
+#     embeds = mi.model.embed_fn(params.embeds, x)
+#     step_fn = partial(mi.model.block_fn, dropout=0.0)
+#     z, acts = lax.scan(step_fn, embeds, params.blocks)
+#     logits = mi.model.base_n_pos_weigh(z @ params.unbeds, cfg.prime)
+#     return embeds, acts, logits  # reorder
 
 
 # %% Hinton plots
