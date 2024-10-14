@@ -21,7 +21,7 @@ from typing import Callable, Optional, Tuple
 from chex import dataclass
 
 # %% Constants #################################################################
-init = nn.initializers.glorot_uniform()
+init_array = nn.initializers.glorot_uniform()
 
 
 @dataclass
@@ -68,7 +68,7 @@ class Params:
 @dataclass
 class Output:
     logits: Array
-    acts: Tuple[Array, Array]
+    acts: Tuple[Activation, Activation]
     embeds: Array
 
 
@@ -125,22 +125,22 @@ def layer_norm(params: LayerNorm, x: Array) -> Array:
 # %% Initializers ###########################################################
 def init_embed_fn(rng: Array, cfg: Conf):
     keys = random.split(rng, 2)
-    tok_emb = init(keys[0], (cfg.prime, cfg.hyper.latent_dim))  # type: ignore
-    pos_emb = init(keys[1], (2, cfg.hyper.latent_dim))  # type: ignore
+    tok_emb = init_array(keys[0], (cfg.prime, cfg.hyper.latent_dim))  # type: ignore
+    pos_emb = init_array(keys[1], (2, cfg.hyper.latent_dim))  # type: ignore
     return Embedding(tok_emb=tok_emb, pos_emb=pos_emb)
 
 
 def init_attn_fn(rng: Array, cfg: Conf) -> Attention:
     keys = random.split(rng, 4)
     shape = (cfg.hyper.heads, cfg.hyper.latent_dim, cfg.hyper.latent_dim // cfg.hyper.heads)
-    q, k, v = init(keys[0], shape), init(keys[1], shape), init(keys[2], shape)  # type: ignore
-    p = init(keys[3], (cfg.hyper.latent_dim, cfg.hyper.latent_dim))  # type: ignore
+    q, k, v = init_array(keys[0], shape), init_array(keys[1], shape), init_array(keys[2], shape)  # type: ignore
+    p = init_array(keys[3], (cfg.hyper.latent_dim, cfg.hyper.latent_dim))  # type: ignore
     return Attention(q=q, k=k, v=v, p=p)
 
 
 def init_ffwd_fn(rng: Array, cfg: Conf) -> Feedforward:
-    w1 = init(rng, (cfg.hyper.latent_dim, cfg.hyper.latent_dim * 4))  # type: ignore
-    w2 = init(rng, (cfg.hyper.latent_dim * 4, cfg.hyper.latent_dim))  # type: ignore
+    w1 = init_array(rng, (cfg.hyper.latent_dim, cfg.hyper.latent_dim * 4))  # type: ignore
+    w2 = init_array(rng, (cfg.hyper.latent_dim * 4, cfg.hyper.latent_dim))  # type: ignore
     return Feedforward(w1=w1, w2=w2)
 
 
@@ -154,7 +154,7 @@ def init_block(cfg: Conf, rng: jnp.ndarray) -> Block:
 def init_fn(rng: Array, cfg: Conf):  # x: Array, y: Array) -> mi.types.Params:
     keys = random.split(rng, 2 + cfg.hyper.depth)
     embeds = init_embed_fn(keys[0], cfg)
-    unbeds = init(keys[1], (cfg.hyper.latent_dim, y_fn(cfg)))  # type: ignore
+    unbeds = init_array(keys[1], (cfg.hyper.latent_dim, y_fn(cfg)))  # type: ignore
     blocks = lax.map(partial(init_block, cfg), keys[2:])
     return Params(embeds=embeds, unbeds=unbeds, blocks=blocks)
 
