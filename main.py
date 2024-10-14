@@ -17,7 +17,7 @@ args, hyper_kwargs = {"task": "nanda", "prime": 37}, {"epochs": 1000, "dropout":
 cfg = mi.utils.cfg_fn(args, hyper_kwargs)
 keys = random.split(random.PRNGKey(0))
 ds = mi.tasks.task_fn(cfg, keys[0])
-state, metrics = mi.train.train(keys[1], cfg, ds)
+state, metrics, outputs = mi.train.train(keys[1], cfg, ds)
 
 exit()
 
@@ -36,7 +36,7 @@ def scope_fn(params, x):
     embeds = mi.model.embed_fn(params.embeds, x)
     z, acts = lax.scan(block_fn, embeds, params.blocks)
     logits = mi.model.base_n_pos_weigh(z @ params.unbeds, cfg.prime)
-    return embeds, acts, logits
+    return embeds, acts, logits  # reorder
 
 
 # %% Hinton plots

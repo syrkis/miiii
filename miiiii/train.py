@@ -3,7 +3,7 @@
 # by: Noah Syrkis
 
 # %% Imports
-from miiiii.model import Params, apply_fn, init_fn
+from miiiii.model import Params, apply_fn, init_fn, Output
 from miiiii.tasks import Dataset
 from miiiii.utils import Conf
 
@@ -38,7 +38,7 @@ class Metrics:
 
 
 # functions
-@partial(vmap, in_axes=(1, 1, 0))  # vmap across task (not sample)
+@partial(vmap, in_axes=(1, 1, 0))  # type: ignore vmap across task (not sample)
 def focal_loss_fn(logits, y, alpha):
     # logits = logits.astype(jnp.float64)  # enable with some jax bullshit to avoid slingshot
     return optax.sigmoid_focal_loss(logits, y, alpha=alpha).mean()  # mean across samples
@@ -53,24 +53,24 @@ def update_fn(opt, ds, cfg: Conf):
     loss_fn = focal_loss_fn if cfg.task == "prime" else cross_entropy_loss_fn
 
     def update(state, key):
-        loss, losses, logits, grads = grad_fn(state.params, key, ds, cfg, apply, loss_fn)
+        loss, losses, output, grads = grad_fn(state.params, key, ds, cfg, apply, loss_fn)
         grads, emas = filter_fn(grads, state.emas, 0.98, 2)  # grokfast values
         updates, opt_state = opt.update(grads, state.opt_state, state.params)
         params = optax.apply_updates(state.params, updates)
         state = State(params=params, emas=emas, opt_state=opt_state)
-        return state, (loss, losses, logits)
+        return state, (loss, losses, output)
 
     return update, apply, loss_fn
 
 
-def grad_fn(params: Params, rng, ds: Dataset, cfg: Conf, apply, loss_fn) -> Tuple[Array, Array, Array, Array]:
-    def loss_and_logits(params: Params) -> Tuple[jnp.ndarray, Tuple[jnp.ndarray, jnp.ndarray]]:
-        logits = apply(params, rng, ds.train.x, cfg.hyper.dropout)
-        losses = loss_fn(logits, ds.train.y, ds.info.alpha)  # mean for optimization
-        return losses.mean(), (losses, logits)
+def grad_fn(params: Params, rng, ds: Dataset, cfg: Conf, apply, loss_fn) -> Tuple[Array, Array, Output, Array]:
+    def loss_and_logits(params: Params) -> Tuple[jnp.ndarray, Tuple[Array, Output]]:
+        output: Output = apply(params, rng, ds.train.x, cfg.hyper.dropout)
+        losses = loss_fn(output.logits, ds.train.y, ds.info.alpha)  # mean for optimization
+        return losses.mean(), (losses, output)
 
-    (loss, (losses, logits)), grads = value_and_grad(loss_and_logits, has_aux=True)(params)
-    return loss, losses, logits, grads
+    (loss, (losses, output)), grads = value_and_grad(loss_and_logits, has_aux=True)(params)
+    return loss, losses, output, grads
 
 
 def filter_fn(grads, emas, alpha: float, lamb: float):
@@ -87,9 +87,9 @@ def step_fn(ds, cfg: Conf, opt):
     @scan_tqdm(cfg.hyper.epochs)
     def step(state, args):
         epoch, key = args
-        state, (loss, losses, logits) = update(state, key)
-        metrics = evaluate(state.params, key, losses, logits)
-        return state, metrics
+        state, (loss, losses, output) = update(state, key)
+        metrics = evaluate(state.params, key, losses, output.logits)
+        return state, (metrics, output)
 
     return step
 
@@ -106,9 +106,9 @@ def train(rng, cfg: Conf, ds):
     state = init_state(rng, cfg, opt)
     step = step_fn(ds, cfg, opt)
     rngs = random.split(rng, cfg.hyper.epochs)
-    state, metrics = lax.scan(step, state, (jnp.arange(cfg.hyper.epochs), rngs))
+    state, (metrics, outputs) = lax.scan(step, state, (jnp.arange(cfg.hyper.epochs), rngs))
     run_fn(cfg, ds, metrics)
-    return state, metrics
+    return state, metrics, outputs
 
 
 def run_fn(cfg: Conf, ds: Dataset, metrics: Metrics):
@@ -128,8 +128,8 @@ def run_fn(cfg: Conf, ds: Dataset, metrics: Metrics):
 
 # Evaluation #########################################################################
 def evaluate_fn(ds, cfg: Conf, apply, loss_fn):
-    f1_score = vmap(f1_score_fn, in_axes=(1, 1)) if cfg.task == "prime" else f1_score_fn
-    accuracy = vmap(accuracy_fn, in_axes=(1, 1)) if cfg.task == "prime" else accuracy_fn
+    f1_score = vmap(f1_score_fn, in_axes=(1, 1)) if cfg.task == "prime" else f1_score_fn  # type: ignore
+    accuracy = vmap(accuracy_fn, in_axes=(1, 1)) if cfg.task == "prime" else accuracy_fn  # type: ignore
     pred_fn = (lambda l: (nn.sigmoid(l) > 0.5).astype(int)) if cfg.task == "prime" else lambda l: jnp.argmax(l, axis=-1)
 
     def aux_fn(logits, y, loss):
@@ -138,10 +138,10 @@ def evaluate_fn(ds, cfg: Conf, apply, loss_fn):
         return Split(loss=loss, f1=f1, acc=acc)
 
     def evaluate(params, key, train_loss, train_logits):
-        valid_logits = apply(params, key, ds.valid.x, cfg.hyper.dropout)
-        valid_loss = loss_fn(valid_logits, ds.valid.y, ds.info.alpha)
+        valid_output = apply(params, key, ds.valid.x, cfg.hyper.dropout)
+        valid_loss = loss_fn(valid_output.logits, ds.valid.y, ds.info.alpha)
 
-        valid_metrics = aux_fn(valid_logits, ds.valid.y, valid_loss)
+        valid_metrics = aux_fn(valid_output.logits, ds.valid.y, valid_loss)
         train_metrics = aux_fn(train_logits, ds.train.y, train_loss)
 
         return Metrics(train=train_metrics, valid=valid_metrics)

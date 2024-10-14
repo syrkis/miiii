@@ -65,27 +65,33 @@ class Params:
     unbeds: Array  # should be a linear layer ?
 
 
+@dataclass
+class Output:
+    logits: Array
+    acts: Tuple[Array, Array]
+    embeds: Array
+
+
 # %% Model #####################################################################
 def apply_fn(cfg: Conf):
-    @partial(vmap, in_axes=(None, None, 0, None))
-    def apply(p: Params, rng: Array, x: Array, dropout: float) -> Array:
-        embed = embed_fn(p.embeds, x)
+    @partial(vmap, in_axes=(None, None, 0, None))  # type: ignore
+    def apply(p: Params, rng: Array, x: Array, dropout: float) -> Output:
+        embeds = embed_fn(p.embeds, x)
         step_fn = partial(block_fn, dropout=dropout)
-        z = lax.scan(step_fn, embed, (key_fn(p, rng), p.blocks))[0]
-        logits = base_n_pos_weigh((z @ p.unbeds), cfg.prime)
-        return logits.sum(axis=0)
+        z, acts = lax.scan(step_fn, embeds, (key_fn(p, rng), p.blocks))
+        logits = (z @ p.unbeds).sum(axis=0)
+        return Output(logits=logits, acts=acts, embeds=embeds)
 
     return apply
 
 
 def block_fn(z, args, dropout):
     keys, param = args
-    z = z + attn_fn(param.attn, z)[0]
-    z = dropout_fn(keys[0], z, dropout)
-    z = z + ffwd_fn(param.ffwd, z)[0]
-    z = dropout_fn(keys[1], z, dropout)
-    # z = layer_norm(param.norm, z)
-    return z, None
+    attn, attn_acts = attn_fn(param.attn, z)
+    z = dropout_fn(keys[0], z + attn, dropout)
+    ffwd, ffwd_acts = ffwd_fn(param.ffwd, z)[0]
+    z = dropout_fn(keys[1], z + ffwd, dropout)
+    return z, (attn_acts, ffwd_acts)
 
 
 def attn_fn(p: Attention, x: Array):
@@ -100,7 +106,7 @@ def attn_fn(p: Attention, x: Array):
 
 def ffwd_fn(p: Feedforward, x: Array) -> Tuple[Array, Array]:
     z = jnp.dot(x, p.w1)  # + p.b1  # z: seq_len x emb_dim
-    z = jax.nn.tanh(z)  # grokfast
+    z = jax.nn.tanh(z)  # grokfast tanh to things are around 0
     return z @ p.w2, z  # + p.b2  # disable biases as per @nanda2023
 
 
@@ -119,22 +125,22 @@ def layer_norm(params: LayerNorm, x: Array) -> Array:
 # %% Initializers ###########################################################
 def init_embed_fn(rng: Array, cfg: Conf):
     keys = random.split(rng, 2)
-    tok_emb = init(keys[0], (cfg.prime, cfg.hyper.latent_dim))
-    pos_emb = init(keys[1], (2, cfg.hyper.latent_dim))  # two is hardcoded cos base is p
+    tok_emb = init(keys[0], (cfg.prime, cfg.hyper.latent_dim))  # type: ignore
+    pos_emb = init(keys[1], (2, cfg.hyper.latent_dim))  # type: ignore
     return Embedding(tok_emb=tok_emb, pos_emb=pos_emb)
 
 
 def init_attn_fn(rng: Array, cfg: Conf) -> Attention:
     keys = random.split(rng, 4)
     shape = (cfg.hyper.heads, cfg.hyper.latent_dim, cfg.hyper.latent_dim // cfg.hyper.heads)
-    q, k, v = init(keys[0], shape), init(keys[1], shape), init(keys[2], shape)
-    p = init(keys[3], (cfg.hyper.latent_dim, cfg.hyper.latent_dim))
+    q, k, v = init(keys[0], shape), init(keys[1], shape), init(keys[2], shape)  # type: ignore
+    p = init(keys[3], (cfg.hyper.latent_dim, cfg.hyper.latent_dim))  # type: ignore
     return Attention(q=q, k=k, v=v, p=p)
 
 
 def init_ffwd_fn(rng: Array, cfg: Conf) -> Feedforward:
-    w1 = init(rng, (cfg.hyper.latent_dim, cfg.hyper.latent_dim * 4))
-    w2 = init(rng, (cfg.hyper.latent_dim * 4, cfg.hyper.latent_dim))
+    w1 = init(rng, (cfg.hyper.latent_dim, cfg.hyper.latent_dim * 4))  # type: ignore
+    w2 = init(rng, (cfg.hyper.latent_dim * 4, cfg.hyper.latent_dim))  # type: ignore
     return Feedforward(w1=w1, w2=w2)
 
 
@@ -148,7 +154,7 @@ def init_block(cfg: Conf, rng: jnp.ndarray) -> Block:
 def init_fn(rng: Array, cfg: Conf):  # x: Array, y: Array) -> mi.types.Params:
     keys = random.split(rng, 2 + cfg.hyper.depth)
     embeds = init_embed_fn(keys[0], cfg)
-    unbeds = init(keys[1], (cfg.hyper.latent_dim, y_fn(cfg)))
+    unbeds = init(keys[1], (cfg.hyper.latent_dim, y_fn(cfg)))  # type: ignore
     blocks = lax.map(partial(init_block, cfg), keys[2:])
     return Params(embeds=embeds, unbeds=unbeds, blocks=blocks)
 
