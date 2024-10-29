@@ -45,6 +45,7 @@ def focal_loss_fn(logits, y, alpha):
 
 
 def cross_entropy_loss_fn(logits, y, _):
+    # logits = logits.astype(jnp.float64)  # enable with some jax bullshit to avoid slingshot
     return optax.softmax_cross_entropy_with_integer_labels(logits, y).mean()
 
 
@@ -80,7 +81,7 @@ def filter_fn(grads, emas, alpha: float, lamb: float):
 
 
 def step_fn(ds, cfg: Conf, opt, scope):  # scope is for showing activations during trainig
-    opt = optax.adamw(cfg.hyper.lr, weight_decay=cfg.hyper.l2, b1=0.9, b2=0.98)
+    opt = optax.adamw(cfg.hyper.lr, weight_decay=cfg.hyper.l2)  # b1=0.9, b2=0.98)
     update, apply, loss_fn = update_fn(opt, ds, cfg)
     evaluate = evaluate_fn(ds, cfg, apply, loss_fn)
 
@@ -126,10 +127,7 @@ def log_fn(cfg: Conf, ds: Dataset, metrics: Metrics):
                 "valid_f1": metrics.valid.f1[epoch].item(),  # type: ignore
                 "valid_acc": metrics.valid.acc[epoch].item(),  # type: ignore
             },
-            step=epoch,
         )
-
-    # sync wandb
     wandb.finish()
 
 
