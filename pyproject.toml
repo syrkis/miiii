@@ -15,21 +15,18 @@ tqdm = "^4.66.4"
 requests = "^2.32.2"
 einops = "^0.8.0"
 matplotlib = "^3.9.0"
-streamlit = "^1.35.0"          # remove maybe
 pyyaml = "^6.0.1"
-numpy-hilbert-curve = "^1.0.1" # remove probably
 seaborn = "^0.13.2"
 scikit-learn = "^1.5.0"
 jupyterlab = "^4.2.2"
 jax = "^0.4.31"
 optax = "^0.2.3"
-numpy = "<2.0.0"
-aim = "^3.24.0"
 jaxtyping = "^0.2.33"
 jaxlib = "0.4.31"
 jax-tqdm = "^0.2.2"
 ipywidgets = "^8.1.5"
-esch = "^0.2.1"
+esch = "^0.2.4"
+cairosvg = "^2.7.1"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3.2"

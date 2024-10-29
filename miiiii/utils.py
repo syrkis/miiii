@@ -8,7 +8,8 @@ import jax.numpy as jnp
 from jax import tree
 import yaml
 import pickle
-from aim import Run
+
+# from aim import Run
 from chex import dataclass
 from typing import Literal
 
@@ -71,15 +72,15 @@ def load_params(fname):
         return pickle.load(file)
 
 
-def track_metrics(metrics, ds, cfg):
-    run = Run(experiment="miiiii")
-    run["cfg"] = cfg.__dict__
+# def track_metrics(metrics, ds, cfg):
+#     run = Run(experiment="miiiii")
+#     run["cfg"] = cfg.__dict__
 
-    for epoch in range(cfg.epochs):
-        for idx, task in enumerate(ds.info.tasks):
-            for split in ["train", "valid"]:
-                to_log = {k: v[epoch][idx] for k, v in metrics[split].items()}
-                run.track(to_log, epoch=epoch + 1, context={"task": task, "split": split})
+#     for epoch in range(cfg.epochs):
+#         for idx, task in enumerate(ds.info.tasks):
+#             for split in ["train", "valid"]:
+#                 to_log = {k: v[epoch][idx] for k, v in metrics[split].items()}
+#                 run.track(to_log, epoch=epoch + 1, context={"task": task, "split": split})
 
 
 def metrics_to_dict(metrics):

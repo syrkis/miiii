@@ -14,7 +14,6 @@ import optax
 from functools import partial
 from typing import Tuple
 from chex import dataclass, Array
-import aim
 
 
 @dataclass
@@ -54,10 +53,10 @@ def update_fn(opt, ds, cfg: Conf):
 
     def update(state, key):
         loss, losses, output, grads = grad_fn(state.params, key, ds, cfg, apply, loss_fn)
-        grads, emas = filter_fn(grads, state.emas, 0.98, 2)  # grokfast values
+        # grads, emas = filter_fn(grads, state.emas, 0.98, 2)  # grokfast values
         updates, opt_state = opt.update(grads, state.opt_state, state.params)
         params = optax.apply_updates(state.params, updates)
-        state = State(params=params, emas=emas, opt_state=opt_state)
+        state = State(params=params, emas=state.emas, opt_state=opt_state)
         return state, (loss, losses, output)
 
     return update, apply, loss_fn
@@ -79,17 +78,18 @@ def filter_fn(grads, emas, alpha: float, lamb: float):
     return grads, emas
 
 
-def step_fn(ds, cfg: Conf, opt):
+def step_fn(ds, cfg: Conf, opt, scope):
     opt = optax.adamw(cfg.hyper.lr, weight_decay=cfg.hyper.l2, b1=0.9, b2=0.98)
     update, apply, loss_fn = update_fn(opt, ds, cfg)
     evaluate = evaluate_fn(ds, cfg, apply, loss_fn)
+    scope_fn = (lambda x: x) if scope else (lambda x: None)
 
     @scan_tqdm(cfg.hyper.epochs)
     def step(state, args):
         epoch, key = args
         state, (loss, losses, output) = update(state, key)
         metrics = evaluate(state.params, key, losses, output.logits)
-        return state, (metrics, output)
+        return state, (metrics, scope_fn(output))
 
     return step
 
@@ -101,29 +101,28 @@ def init_state(rng, cfg: Conf, opt):
     return State(params=params, opt_state=opt_state, emas=emas)
 
 
-def train(rng, cfg: Conf, ds):
+def train(rng, cfg: Conf, ds, scope=False):
     opt = optax.adamw(cfg.hyper.lr, weight_decay=cfg.hyper.l2, b1=0.9, b2=0.98)
     state = init_state(rng, cfg, opt)
-    step = step_fn(ds, cfg, opt)
+    step = step_fn(ds, cfg, opt, scope)
     rngs = random.split(rng, cfg.hyper.epochs)
     state, (metrics, outputs) = lax.scan(step, state, (jnp.arange(cfg.hyper.epochs), rngs))
-    run_fn(cfg, ds, metrics)
     return state, metrics, outputs
 
 
-def run_fn(cfg: Conf, ds: Dataset, metrics: Metrics):
-    hyper = cfg.hyper
-    cfg.__dict__.__delitem__("hyper")
-    run = aim.Run()
-    run["hyper"] = hyper.__dict__
-    run["cfg"] = cfg.__dict__
-    for epoch in range(hyper.epochs):
-        run.track(metrics.train.loss[epoch], name="train_loss", epoch=epoch)  # type: ignore
-        run.track(metrics.train.f1[epoch], name="train_f1", epoch=epoch)  # type: ignore
-        run.track(metrics.train.acc[epoch], name="train_acc", epoch=epoch)  # type: ignore
-        run.track(metrics.valid.loss[epoch], name="valid_loss", epoch=epoch)  # type: ignore
-        run.track(metrics.valid.f1[epoch], name="valid_f1", epoch=epoch)  # type: ignore
-        run.track(metrics.valid.acc[epoch], name="valid_acc", epoch=epoch)  # type: ignore
+# def run_fn(cfg: Conf, ds: Dataset, metrics: Metrics):
+#     hyper = cfg.hyper
+#     cfg.__dict__.__delitem__("hyper")
+#     run = aim.Run()
+#     run["hyper"] = hyper.__dict__
+#     run["cfg"] = cfg.__dict__
+#     for epoch in range(hyper.epochs):
+#         run.track(metrics.train.loss[epoch], name="train_loss", epoch=epoch)  # type: ignore
+#         run.track(metrics.train.f1[epoch], name="train_f1", epoch=epoch)  # type: ignore
+#         run.track(metrics.train.acc[epoch], name="train_acc", epoch=epoch)  # type: ignore
+#         run.track(metrics.valid.loss[epoch], name="valid_loss", epoch=epoch)  # type: ignore
+#         run.track(metrics.valid.f1[epoch], name="valid_f1", epoch=epoch)  # type: ignore
+#         run.track(metrics.valid.acc[epoch], name="valid_acc", epoch=epoch)  # type: ignore
 
 
 # Evaluation #########################################################################

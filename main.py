@@ -10,39 +10,33 @@ from functools import partial
 from oeis import A000040 as primes
 import seaborn as sns
 import matplotlib.pyplot as plt
-
-import esch
 import numpy as np
+import esch
 
-
-# x = np.random.rand((100, 10, 10))
-rng = random.PRNGKey(0)
-x = random.normal(rng, (100, 10, 10))
-dwg = esch.hinton(x)
-dwg.saveas("hinton.svg")
+# esch.plot(x)
 
 
 # %% Training
-args, hyper_kwargs = {"task": "nanda", "prime": 37}, {"epochs": 1000, "dropout": 0.5, "l2": 1.0}
+args = {"task": "nanda", "prime": 113}
+hyper_kwargs = {"epochs": 1000, "dropout": 0.5, "l2": 1.0}
 cfg = mi.utils.cfg_fn(args, hyper_kwargs)
 keys = random.split(random.PRNGKey(0))
 ds = mi.tasks.task_fn(cfg, keys[0])
 state, metrics, outputs = mi.train.train(keys[1], cfg, ds)
-
-print(tree.map(jnp.shape, outputs))
-
-exit()
-
 # ds = mi.prime.unsplit_fn(train_ds)
 
+# %%
+plt.plot(metrics.train.loss)
+plt.plot(metrics.valid.loss)
+plt.show()
 
-# %% Model
-# def block_fn(z, param):
-#     attn, attn_acts = mi.model.attn_fn(param.attn, z)
-#     ffwd, ffwd_acts = mi.model.ffwd_fn(param.ffwd, z + attn)
-#     return z + ffwd, (attn_acts, ffwd_acts)  # <-- return activations from inside the ffwd block
+# %%
 
 
+# %%
+attn_acts.k[0].shape
+
+# %%
 # @partial(vmap, in_axes=(None, 0))
 # def scope_fn(params, x):
 #     embeds = mi.model.embed_fn(params.embeds, x)
