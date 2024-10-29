@@ -17,24 +17,19 @@ import esch
 
 
 # %% Training
-args = {"task": "nanda", "prime": 113}
+args = {"task": "nanda", "prime": 37}
 hyper_kwargs = {"epochs": 1000, "dropout": 0.5, "l2": 1.0}
 cfg = mi.utils.cfg_fn(args, hyper_kwargs)
 keys = random.split(random.PRNGKey(0))
 ds = mi.tasks.task_fn(cfg, keys[0])
-state, metrics, outputs = mi.train.train(keys[1], cfg, ds)
+state, metrics, _ = mi.train.train(keys[1], cfg, ds, log=True)
 # ds = mi.prime.unsplit_fn(train_ds)
 
 # %%
-plt.plot(metrics.train.loss)
-plt.plot(metrics.valid.loss)
-plt.show()
-
 # %%
 
 
 # %%
-attn_acts.k[0].shape
 
 # %%
 # @partial(vmap, in_axes=(None, 0))

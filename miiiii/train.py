@@ -14,6 +14,7 @@ import optax
 from functools import partial
 from typing import Tuple
 from chex import dataclass, Array
+import wandb
 
 
 @dataclass
@@ -78,18 +79,17 @@ def filter_fn(grads, emas, alpha: float, lamb: float):
     return grads, emas
 
 
-def step_fn(ds, cfg: Conf, opt, scope):
+def step_fn(ds, cfg: Conf, opt, scope):  # scope is for showing activations during trainig
     opt = optax.adamw(cfg.hyper.lr, weight_decay=cfg.hyper.l2, b1=0.9, b2=0.98)
     update, apply, loss_fn = update_fn(opt, ds, cfg)
     evaluate = evaluate_fn(ds, cfg, apply, loss_fn)
-    scope_fn = (lambda x: x) if scope else (lambda x: None)
 
     @scan_tqdm(cfg.hyper.epochs)
     def step(state, args):
         epoch, key = args
         state, (loss, losses, output) = update(state, key)
         metrics = evaluate(state.params, key, losses, output.logits)
-        return state, (metrics, scope_fn(output))
+        return state, (metrics, output if scope else None)
 
     return step
 
@@ -101,28 +101,35 @@ def init_state(rng, cfg: Conf, opt):
     return State(params=params, opt_state=opt_state, emas=emas)
 
 
-def train(rng, cfg: Conf, ds, scope=False):
+def train(rng, cfg: Conf, ds, scope=False, log=False):
     opt = optax.adamw(cfg.hyper.lr, weight_decay=cfg.hyper.l2, b1=0.9, b2=0.98)
     state = init_state(rng, cfg, opt)
     step = step_fn(ds, cfg, opt, scope)
     rngs = random.split(rng, cfg.hyper.epochs)
     state, (metrics, outputs) = lax.scan(step, state, (jnp.arange(cfg.hyper.epochs), rngs))
+    log_fn(cfg, ds, metrics) if log else None
     return state, metrics, outputs
 
 
-# def run_fn(cfg: Conf, ds: Dataset, metrics: Metrics):
-#     hyper = cfg.hyper
-#     cfg.__dict__.__delitem__("hyper")
-#     run = aim.Run()
-#     run["hyper"] = hyper.__dict__
-#     run["cfg"] = cfg.__dict__
-#     for epoch in range(hyper.epochs):
-#         run.track(metrics.train.loss[epoch], name="train_loss", epoch=epoch)  # type: ignore
-#         run.track(metrics.train.f1[epoch], name="train_f1", epoch=epoch)  # type: ignore
-#         run.track(metrics.train.acc[epoch], name="train_acc", epoch=epoch)  # type: ignore
-#         run.track(metrics.valid.loss[epoch], name="valid_loss", epoch=epoch)  # type: ignore
-#         run.track(metrics.valid.f1[epoch], name="valid_f1", epoch=epoch)  # type: ignore
-#         run.track(metrics.valid.acc[epoch], name="valid_acc", epoch=epoch)  # type: ignore
+def log_fn(cfg: Conf, ds: Dataset, metrics: Metrics):
+    hyper = cfg.hyper
+    cfg.__dict__.__delitem__("hyper")
+    config = cfg.__dict__ | hyper.__dict__
+    wandb.init(project="miiii", config=config, entity="syrkis")
+    for epoch in range(hyper.epochs):
+        wandb.log(
+            {
+                "train_loss": metrics.train.loss[epoch].item(),  # type: ignore
+                "train_f1": metrics.train.f1[epoch].item(),  # type: ignore
+                "train_acc": metrics.train.acc[epoch].item(),  # type: ignore
+                "valid_loss": metrics.valid.loss[epoch].item(),  # type: ignore
+                "valid_f1": metrics.valid.f1[epoch].item(),  # type: ignore
+                "valid_acc": metrics.valid.acc[epoch].item(),  # type: ignore
+                "epoch": epoch,
+            },
+            step=epoch,
+        )
+    wandb.finish()
 
 
 # Evaluation #########################################################################
