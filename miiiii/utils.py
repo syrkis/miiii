@@ -40,7 +40,7 @@ class Hyper:
 @dataclass
 class Conf:
     hyper: Hyper
-    task: str = "prime"
+    task: str = "miiii"
     prime: int = 113
 
     # base: int

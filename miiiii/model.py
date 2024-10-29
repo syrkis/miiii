@@ -165,7 +165,7 @@ def y_fn(cfg: Conf) -> int:  # infers the number of tasks we are solving
     primes = primes[primes < jnp.sqrt(cfg.prime**2)]
     tasks = primes.shape[0] + 1  #  if cfg.task == "prime" else cfg.vocab_size
     # TODO: adapt to work with prose
-    return tasks if cfg.task == "prime" else cfg.prime  # if task is nanda we wanna guess the mod
+    return tasks if cfg.task == "miiii" else cfg.prime  # if task is nanda we wanna guess the mod
 
 
 def dropout_fn(key: Array, x: Array, dropout: float) -> Array:

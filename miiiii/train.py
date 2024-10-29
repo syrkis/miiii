@@ -50,7 +50,7 @@ def cross_entropy_loss_fn(logits, y, _):
 
 def update_fn(opt, ds, cfg: Conf):
     apply = apply_fn(cfg)
-    loss_fn = focal_loss_fn if cfg.task == "prime" else cross_entropy_loss_fn
+    loss_fn = focal_loss_fn if cfg.task == "miiii" else cross_entropy_loss_fn
 
     def update(state, key):
         loss, losses, output, grads = grad_fn(state.params, key, ds, cfg, apply, loss_fn)
@@ -115,7 +115,7 @@ def log_fn(cfg: Conf, ds: Dataset, metrics: Metrics):
     hyper = cfg.hyper
     cfg.__dict__.__delitem__("hyper")
     config = cfg.__dict__ | hyper.__dict__
-    wandb.init(project="miiii", config=config, entity="syrkis")
+    wandb.init(project=cfg.task, config=config, entity="syrkis", mode="offline")
     for epoch in range(hyper.epochs):
         wandb.log(
             {
@@ -125,18 +125,19 @@ def log_fn(cfg: Conf, ds: Dataset, metrics: Metrics):
                 "valid_loss": metrics.valid.loss[epoch].item(),  # type: ignore
                 "valid_f1": metrics.valid.f1[epoch].item(),  # type: ignore
                 "valid_acc": metrics.valid.acc[epoch].item(),  # type: ignore
-                "epoch": epoch,
             },
             step=epoch,
         )
+
+    # sync wandb
     wandb.finish()
 
 
 # Evaluation #########################################################################
 def evaluate_fn(ds, cfg: Conf, apply, loss_fn):
-    f1_score = vmap(f1_score_fn, in_axes=(1, 1)) if cfg.task == "prime" else f1_score_fn  # type: ignore
-    accuracy = vmap(accuracy_fn, in_axes=(1, 1)) if cfg.task == "prime" else accuracy_fn  # type: ignore
-    pred_fn = (lambda l: (nn.sigmoid(l) > 0.5).astype(int)) if cfg.task == "prime" else lambda l: jnp.argmax(l, axis=-1)
+    f1_score = vmap(f1_score_fn, in_axes=(1, 1)) if cfg.task == "miiii" else f1_score_fn  # type: ignore
+    accuracy = vmap(accuracy_fn, in_axes=(1, 1)) if cfg.task == "miiii" else accuracy_fn  # type: ignore
+    pred_fn = (lambda l: (nn.sigmoid(l) > 0.5).astype(int)) if cfg.task == "miiii" else lambda l: jnp.argmax(l, axis=-1)
 
     def aux_fn(logits, y, loss):
         pred = pred_fn(logits)
