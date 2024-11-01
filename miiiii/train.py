@@ -5,7 +5,7 @@
 # %% Imports
 from miiiii.model import Params, apply_fn, init_fn, Output
 from miiiii.tasks import Dataset
-from miiiii.utils import Conf
+from miiiii.utils import Conf, log_fn
 
 from jax import random, jit, value_and_grad, vmap, nn, lax, tree
 import jax.numpy as jnp
@@ -109,28 +109,6 @@ def train(rng, cfg: Conf, ds, scope=False, log=False):
     state, (metrics, outputs) = lax.scan(step, state, (jnp.arange(cfg.hyper.epochs), rngs))
     log_fn(cfg, ds, metrics) if log else None
     return state, metrics, outputs
-
-
-def log_fn(cfg: Conf, ds: Dataset, metrics: Metrics):
-    hyper = cfg.hyper
-    cfg.__dict__.__delitem__("hyper")
-    config = cfg.__dict__ | hyper.__dict__
-    wandb.init(project=cfg.task, config=config, entity="syrkis", mode="offline")
-    for epoch in range(hyper.epochs):
-        wandb.log(
-            {
-                "train_loss": metrics.train.loss[epoch].item(),  # type: ignore
-                "train_f1": metrics.train.f1[epoch].item(),  # type: ignore
-                "train_acc": metrics.train.acc[epoch].item(),  # type: ignore
-                "valid_loss": metrics.valid.loss[epoch].item(),  # type: ignore
-                "valid_f1": metrics.valid.f1[epoch].item(),  # type: ignore
-                "valid_acc": metrics.valid.acc[epoch].item(),  # type: ignore
-            },
-            step=epoch,
-        )
-
-    # sync wandb
-    wandb.finish()
 
 
 # Evaluation #########################################################################

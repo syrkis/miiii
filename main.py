@@ -8,23 +8,27 @@ from jax import random, vmap, lax, nn, tree
 import jax.numpy as jnp
 from functools import partial
 from oeis import A000040 as primes
-import seaborn as sns
-import matplotlib.pyplot as plt
 import numpy as np
 import esch
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 # esch.plot(x)
 
 
 # %% Training
 args = {"task": "nanda", "prime": 113}
-hyper_kwargs = {"epochs": 10000, "dropout": 0.0, "l2": 1.0}
+hyper_kwargs = {"epochs": 1000, "dropout": 0.0, "l2": 1.0}
 cfg = mi.utils.cfg_fn(args, hyper_kwargs)
 keys = random.split(random.PRNGKey(0))
 ds = mi.tasks.task_fn(cfg, keys[0])
-state, metrics, _ = mi.train.train(keys[1], cfg, ds, log=True)
-# ds = mi.prime.unsplit_fn(train_ds)
+state, metrics, _ = mi.train.train(keys[1], cfg, ds)
 
+
+# %%
+plt.plot(metrics.train.loss)
+plt.plot(metrics.valid.loss)
+# %% Logging stuff
 # %%
 # @partial(vmap, in_axes=(None, 0))
 # def scope_fn(params, x):
