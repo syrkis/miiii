@@ -12,18 +12,16 @@ import numpy as np
 import esch
 from einops import rearrange
 
-# esch.plot(x)
-
 
 # %% Training
-args = {"project": "nanda", "prime": 37}
-hyper_kwargs = {"epochs": 800, "dropout": 0.5, "l2": 1.0, "depth": 1, "train_frac": 0.3}
+args = {"project": "miiii", "prime": 113}
+hyper_kwargs = {"epochs": 10000, "dropout": 0.5, "l2": 1.0, "depth": 1, "train_frac": 0.3}
 cfg = mi.utils.cfg_fn(args, hyper_kwargs)
 keys = random.split(random.PRNGKey(0))
 ds = mi.tasks.task_fn(cfg, keys[0])
 
 # %%
-state, metrics, acts = mi.train.train(keys[1], cfg, ds, log=True, scope=True)
+state, metrics, acts = mi.train.train(keys[1], cfg, ds, log=True) # scope=True)
 
 
 # %% blah blah
@@ -66,18 +64,19 @@ state, metrics, acts = mi.train.train(keys[1], cfg, ds, log=True, scope=True)
 #     return wei
 
 # wei = wei_fn(acts)
-esch.plot(
-    rearrange(acts.wei, "time (a b) layer head fst snd -> time a b layer head fst snd", a=cfg.prime, b=cfg.prime)[
-        :, :, :, 0, 0, 0, 1  # time, a, b, layer, head, fst, snd
-    ],
-    animated=True,
-    path="noah.svg",
-    xlabel="First digit (a)",
-    ylabel="Second digit (b)",
-    xticks=[(0, str(0)), (cfg.prime - 1, str(cfg.prime - 1))],
-    yticks=[(0, str(0)), (cfg.prime - 1, str(cfg.prime - 1))],
-    rate=100
-)
+#
+# esch.plot(
+    # rearrange(acts.wei, "time (a b) layer head fst snd -> time a b layer head fst snd", a=cfg.prime, b=cfg.prime)[
+        # :, :, :, 0, 0, 0, 1  # time, a, b, layer, head, fst, snd
+    # ],
+    # animated=True,
+    # path="noah.svg",
+    # xlabel="First digit (a)",
+    # ylabel="Second digit (b)",
+    # xticks=[(0, str(0)), (cfg.prime - 1, str(cfg.prime - 1))],
+    # yticks=[(0, str(0)), (cfg.prime - 1, str(cfg.prime - 1))],
+    # rate=100
+# )
 
 # %%
 # def attention_hintons(attn_acts, layer, a, b):

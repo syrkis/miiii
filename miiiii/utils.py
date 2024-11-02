@@ -13,6 +13,7 @@ import sqlite3
 from pathlib import Path
 import numpy as np
 from aim import Run
+from tqdm import tqdm
 
 
 # from aim import Run
@@ -71,24 +72,10 @@ def load_params(fname):
         return pickle.load(file)
 
 
-# def track_metrics(metrics, ds, cfg):
-#     run = Run(experiment="miiiii")
-#     run["cfg"] = cfg.__dict__
-
-#     for epoch in range(cfg.epochs):
-#         for idx, task in enumerate(ds.info.tasks):
-#             for split in ["train", "valid"]:
-#                 to_log = {k: v[epoch][idx] for k, v in metrics[split].items()}
-#                 run.track(to_log, epoch=epoch + 1, context={"task": task, "split": split})
-
-
 def metrics_to_dict(metrics):
     train_metrics = dict(loss=metrics.train_loss.T, f1=metrics.train_f1.T)
     valid_metrics = dict(loss=metrics.valid_loss.T, f1=metrics.valid_f1.T)
     return dict(train=train_metrics, valid=valid_metrics)
-
-
-from aim import Run
 
 
 def log_fn(cfg: Conf, ds, metrics):
@@ -108,7 +95,7 @@ def log_fn(cfg: Conf, ds, metrics):
     }
 
     # Log metrics for each epoch
-    for epoch in range(cfg.epochs):
+    for epoch in tqdm(range(cfg.epochs)):
         for metric_name, (train_values, valid_values) in metrics_arrays.items():
             # Log individual task metrics
             for i, task in enumerate(ds.info.tasks if cfg.project == "miiii" else range(1)):
@@ -154,95 +141,3 @@ def name_run_fn(cfg: Conf) -> str:
         f"_dr{cfg.dropout:g}"
         f"_ep{cfg.epochs}"
     )
-
-
-def init_db():
-    """Initialize SQLite database with schema."""
-    db_path = Path("metrics.db")
-    db_path.parent.mkdir(parents=True, exist_ok=True)
-
-    with sqlite3.connect(db_path) as conn:
-        with open("ddl.sql", "r") as f:
-            conn.executescript(f.read())
-
-
-def log_metrics_sql(metrics, cfg):
-    """Log metrics to SQLite database, creating it if needed."""
-    db_path = Path("metrics.db")
-    ddl_path = Path("ddl.sql")
-
-    # Initialize db if it doesn't exist
-    if not db_path.exists():
-        with sqlite3.connect(db_path) as conn:
-            with open(ddl_path) as f:
-                conn.executescript(f.read())
-
-    with sqlite3.connect(db_path) as conn:
-        # Ensure task exists in tasks table
-        conn.execute(
-            """
-            INSERT OR IGNORE INTO tasks (task, description)
-            VALUES (?, ?)
-            """,
-            (cfg.task, "Auto-inserted task"),  # You might want to add proper descriptions
-        )
-
-        # Log run config and get the run_id
-        cursor = conn.execute(
-            """
-            INSERT INTO runs
-            (task, prime, latent_dim, depth, heads, lr, l2, dropout, epochs)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-            RETURNING run_id
-            """,
-            (
-                cfg.task,
-                cfg.prime,
-                cfg.latent_dim,
-                cfg.depth,
-                cfg.heads,
-                cfg.lr,
-                cfg.l2,
-                cfg.dropout,
-                cfg.epochs,
-            ),
-        )
-        run_id = cursor.fetchone()[0]
-
-        # Prepare all metrics records
-        records = []
-        for split_name, split_data in [("train", metrics.train), ("valid", metrics.valid)]:
-            for epoch in range(len(split_data.loss)):
-                for task_id in range(split_data.loss.shape[1]):
-                    task_name = f"{cfg.task}_{task_id}"  # Create unique task name for each task_id
-
-                    # Ensure this task exists in tasks table
-                    conn.execute(
-                        """
-                        INSERT OR IGNORE INTO tasks (task, description)
-                        VALUES (?, ?)
-                        """,
-                        (task_name, f"Task {task_id} for {cfg.task}"),
-                    )
-
-                    records.append(
-                        (
-                            run_id,
-                            task_name,
-                            epoch,
-                            split_name,
-                            float(split_data.loss[epoch, task_id]),
-                            float(split_data.f1[epoch, task_id]),
-                            float(split_data.acc[epoch, task_id]),
-                        )
-                    )
-
-        # Bulk insert metrics
-        conn.executemany(
-            """
-            INSERT INTO metrics
-            (run_id, task, epoch, split, loss, f1, acc)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-            """,
-            records,
-        )
