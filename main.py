@@ -11,23 +11,32 @@ from oeis import A000040 as primes
 import numpy as np
 import esch
 import matplotlib.pyplot as plt
+from einops import rearrange
 import seaborn as sns
 
 # esch.plot(x)
 
 
 # %% Training
-args = {"task": "nanda", "prime": 113}
-hyper_kwargs = {"epochs": 1000, "dropout": 0.0, "l2": 1.0}
+args = {"project": "nanda", "prime": 113}
+hyper_kwargs = {"epochs": 1000, "dropout": 0.5, "l2": 1.0, "depth": 1, "train_frac": 0.3}
 cfg = mi.utils.cfg_fn(args, hyper_kwargs)
 keys = random.split(random.PRNGKey(0))
 ds = mi.tasks.task_fn(cfg, keys[0])
-state, metrics, _ = mi.train.train(keys[1], cfg, ds)
-
 
 # %%
-plt.plot(metrics.train.loss)
-plt.plot(metrics.valid.loss)
+state, metrics, outputs = mi.train.train(keys[1], cfg, ds, log=True, scope=True)
+
+# %% blah blah
+# fig, axes = plt.subplots(ncols=2, figsize=(12, 4), dpi=100)
+# axes[0].plot(metrics.train.loss, c="black")
+# axes[0].plot(metrics.valid.loss, c="forestgreen", ls=":")
+# axes[1].plot(metrics.train.acc, c="black")
+# axes[1].plot(metrics.valid.acc, c="forestgreen", ls=":")
+# plt.show()
+
+
+# def plot_a_b_activations(
 # %% Logging stuff
 # %%
 # @partial(vmap, in_axes=(None, 0))
@@ -49,6 +58,19 @@ plt.plot(metrics.valid.loss)
 # %%
 # mi.plots.hinton_fn(attn_acts.wei.mean(axis=0)[0].mean(axis=-1))
 
+
+attn_acts, ffwd_acts = outputs.activation  # type: ignore
+esch.plot(
+    rearrange(attn_acts.wei, "time (a b) layer head fst snd -> time a b layer head fst snd", a=cfg.prime, b=cfg.prime)[
+        :, :, :, 0, 0, 0, 1  # time, a, b, layer, head, fst, snd
+    ],
+    animated=True,
+    path="noah.svg",
+    xlabel="First digit (a)",
+    ylabel="Second digit (b)",
+    xticks=[(0, str(0)), (cfg.prime - 1, str(cfg.prime - 1))],
+    yticks=[(0, str(0)), (cfg.prime - 1, str(cfg.prime - 1))],
+)
 
 # %%
 # def attention_hintons(attn_acts, layer, a, b):

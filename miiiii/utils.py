@@ -11,6 +11,8 @@ import pickle
 import wandb
 import sqlite3
 from pathlib import Path
+import numpy as np
+from aim import Run
 
 
 # from aim import Run
@@ -28,24 +30,17 @@ def check_nan(pytree, name):
 
 
 @dataclass
-class Hyper:
+class Conf:
+    project: str = "miiii"
+    prime: int = 113
     latent_dim: int = 128
-    depth: int = 2
+    depth: int = 1
     heads: int = 4
     epochs: int = 1000
     lr: float = 1e-3
     l2: float = 0.1
     dropout: float = 0.1
-    split: float = 0.5
-    # seq_len: int  # if task is prose
-    # vocab_size: int  # if task is prose
-
-
-@dataclass
-class Conf:
-    hyper: Hyper
-    task: str = "miiii"
-    prime: int = 113
+    train_frac: float = 0.3  # @nanda2023
 
     # base: int
     # power: int = 2 # if we should use a different base.
@@ -60,7 +55,7 @@ def digit_fn(n, base):
 
 # %% functions
 def cfg_fn(kwargs, hyper_kwargs={}):
-    cfg = Conf(**kwargs, hyper=Hyper(**hyper_kwargs))
+    cfg = Conf(**kwargs, **hyper_kwargs)
     return cfg
 
 
@@ -93,27 +88,54 @@ def metrics_to_dict(metrics):
     return dict(train=train_metrics, valid=valid_metrics)
 
 
-def log_fn(cfg: Conf, ds, metrics):
-    hyper = cfg.hyper
-    cfg.__dict__.__delitem__("hyper")
-    config = cfg.__dict__ | hyper.__dict__
-    wandb.init(project=cfg.task, config=config, entity="syrkis", mode="offline")
-    for epoch in range(hyper.epochs):
-        for idx, task in enumerate(ds.info.tasks):  # type: ignore
-            wandb.log(
-                {
-                    "train_loss": metrics.train.loss[epoch].item(),  # type: ignore
-                    "train_f1": metrics.train.f1[epoch].item(),  # type: ignore
-                    "train_acc": metrics.train.acc[epoch].item(),  # type: ignore
-                    "valid_loss": metrics.valid.loss[epoch].item(),  # type: ignore
-                    "valid_f1": metrics.valid.f1[epoch].item(),  # type: ignore
-                    "valid_acc": metrics.valid.acc[epoch].item(),  # type: ignore
-                },
-                step=epoch,
-            )
+from aim import Run
 
-    # sync wandb
-    wandb.finish()
+
+def log_fn(cfg: Conf, ds, metrics):
+    # Initialize Aim run
+    run = Run(
+        experiment=cfg.project,
+        system_tracking_interval=None,  # Disable system tracking
+    )
+
+    # Log config
+    run["hparams"] = cfg.__dict__
+
+    metrics_arrays = {
+        "loss": (np.array(metrics.train.loss), np.array(metrics.valid.loss)),
+        "f1": (np.array(metrics.train.f1), np.array(metrics.valid.f1)),
+        "acc": (np.array(metrics.train.acc), np.array(metrics.valid.acc)),
+    }
+
+    # Log metrics for each epoch
+    for epoch in range(cfg.epochs):
+        for metric_name, (train_values, valid_values) in metrics_arrays.items():
+            # Log individual task metrics
+            for i, task in enumerate(ds.info.tasks if cfg.project == "miiii" else range(1)):
+                # Train metrics
+                run.track(
+                    train_values[epoch, i] if cfg.project == "miiii" else train_values[epoch],
+                    name=metric_name,
+                    epoch=epoch,
+                    context={
+                        "project": cfg.project,
+                        "split": "train",
+                        "task": task,
+                    },
+                )
+                # Valid metrics
+                run.track(
+                    valid_values[epoch, i] if cfg.project == "miiii" else valid_values[epoch],
+                    name=metric_name,
+                    epoch=epoch,
+                    context={
+                        "project": cfg.project,
+                        "split": "valid",
+                        "task": task,
+                    },
+                )
+
+    run.close()
 
 
 def name_run_fn(cfg: Conf) -> str:
@@ -122,15 +144,15 @@ def name_run_fn(cfg: Conf) -> str:
     Example: miiii_ld128_de2_he4_lr1e-3_l20.1_dr0.1
     """
     return (
-        f"{cfg.task}"
+        # f"{cfg.task}"
         f"_pm{cfg.prime}"
-        f"_ld{cfg.hyper.latent_dim}"
-        f"_de{cfg.hyper.depth}"
-        f"_he{cfg.hyper.heads}"
-        f"_lr{cfg.hyper.lr:g}"  # :g removes trailing zeros
-        f"_l2{cfg.hyper.l2:g}"
-        f"_dr{cfg.hyper.dropout:g}"
-        f"_ep{cfg.hyper.epochs}"
+        f"_ld{cfg.latent_dim}"
+        f"_de{cfg.depth}"
+        f"_he{cfg.heads}"
+        f"_lr{cfg.lr:g}"  # :g removes trailing zeros
+        f"_l2{cfg.l2:g}"
+        f"_dr{cfg.dropout:g}"
+        f"_ep{cfg.epochs}"
     )
 
 
@@ -176,13 +198,13 @@ def log_metrics_sql(metrics, cfg):
             (
                 cfg.task,
                 cfg.prime,
-                cfg.hyper.latent_dim,
-                cfg.hyper.depth,
-                cfg.hyper.heads,
-                cfg.hyper.lr,
-                cfg.hyper.l2,
-                cfg.hyper.dropout,
-                cfg.hyper.epochs,
+                cfg.latent_dim,
+                cfg.depth,
+                cfg.heads,
+                cfg.lr,
+                cfg.l2,
+                cfg.dropout,
+                cfg.epochs,
             ),
         )
         run_id = cursor.fetchone()[0]

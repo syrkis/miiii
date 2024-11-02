@@ -21,6 +21,7 @@ class Datasplit:
 @dataclass
 class Datainfo:
     idxs: Array  # idxs with which the dataset was shuffled
+    udxs: Array  # idxs to undo the shuffled idxs
     alpha: Array | None = None  # for a given tasks, the alpha probabilities of each class
     tasks: List[str] | None = None  # list of tasks
 
@@ -34,9 +35,9 @@ class Dataset:
 
 # %% Functions
 def task_fn(cfg: Conf, key: Array | None = None) -> Dataset:
-    # if cfg.task == "prose":
+    # if cfg.project == "prose":
     # return prose_fn(cfg, key)
-    if cfg.task == "nanda":
+    if cfg.project == "nanda":
         return nanda_fn(cfg, key)
     return prime_fn(cfg, key)
 
@@ -50,13 +51,14 @@ def prime_fn(cfg: Conf, key: Array | None = None) -> Dataset:
     idxs = random.permutation(key, len(x)) if key is not None else jnp.arange(len(x))
     x, y = x[idxs], y[idxs]  # shuffle data
 
-    sep = int(len(x) * cfg.hyper.split)  # 50/50 split
+    sep = int(len(x) * cfg.train_frac)  # 50/50 split
     alpha = (1 - y[:sep].mean(axis=0)) ** 2  # for focal loss
 
     # dataset
     train = Datasplit(x=x[:sep], y=y[:sep])
     valid = Datasplit(x=x[sep:], y=y[sep:])
-    info = Datainfo(alpha=alpha, tasks=tasks, idxs=idxs)
+    udxs = jnp.argsort(idxs)
+    info = Datainfo(alpha=alpha, tasks=tasks, idxs=idxs, udxs=udxs)
     ds = Dataset(train=train, valid=valid, info=info)
 
     return ds
@@ -99,7 +101,7 @@ def base_ns(x, base):
 
 
 # nanda task  ################################################################
-def nanda_fn(cfg, key) -> Dataset:
+def nanda_fn(cfg: Conf, key) -> Dataset:
     # modular adition modulo prime
     a = jnp.arange(cfg.prime).repeat(cfg.prime)
     b = jnp.tile(jnp.arange(cfg.prime), cfg.prime)
@@ -110,10 +112,11 @@ def nanda_fn(cfg, key) -> Dataset:
     data = data[idxs]
     x = data[:, :2]
     y = data[:, 2]
-    x_train, x_valid = x[: int(len(x) * cfg.hyper.split)], x[int(len(x) * cfg.hyper.split) :]
-    y_train, y_valid = y[: int(len(y) * cfg.hyper.split)], y[int(len(y) * cfg.hyper.split) :]
+    x_train, x_valid = x[: int(len(x) * cfg.train_frac)], x[int(len(x) * cfg.train_frac) :]
+    y_train, y_valid = y[: int(len(y) * cfg.train_frac)], y[int(len(y) * cfg.train_frac) :]
     train_ds, valid_ds = Datasplit(x=x_train, y=y_train), Datasplit(x=x_valid, y=y_valid)
-    return Dataset(train=train_ds, valid=valid_ds, info=Datainfo(idxs=idxs))
+    udxs = jnp.argsort(idxs)
+    return Dataset(train=train_ds, valid=valid_ds, info=Datainfo(idxs=idxs, udxs=udxs))
 
 
 # prose related to the tasks #############################################
