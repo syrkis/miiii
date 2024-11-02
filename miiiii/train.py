@@ -3,7 +3,7 @@
 # by: Noah Syrkis
 
 # %% Imports
-from miiiii.model import Params, apply_fn, init_fn, Output
+from miiiii.model import Params, apply_fn, init_fn, Activation
 from miiiii.tasks import Dataset
 from miiiii.utils import Conf, log_fn
 
@@ -64,9 +64,9 @@ def update_fn(opt, ds, cfg: Conf):
     return update, apply, loss_fn
 
 
-def grad_fn(params: Params, rng, ds: Dataset, cfg: Conf, apply, loss_fn) -> Tuple[Array, Array, Output, Array]:
-    def loss_and_logits(params: Params) -> Tuple[jnp.ndarray, Tuple[Array, Output]]:
-        output: Output = apply(params, rng, ds.train.x, cfg.dropout)
+def grad_fn(params: Params, rng, ds: Dataset, cfg: Conf, apply, loss_fn) -> Tuple[Array, Array, Activation, Array]:
+    def loss_and_logits(params: Params) -> Tuple[jnp.ndarray, Tuple[Array, Activation]]:
+        output: Activation = apply(params, rng, ds.train.x, cfg.dropout)
         losses = loss_fn(output.logits, ds.train.y, ds.info.alpha)  # mean for optimization
         return losses.mean(), (losses, output)
 
@@ -90,7 +90,7 @@ def step_fn(ds, cfg: Conf, opt, scope):  # scope is for showing activations duri
         epoch, key = args
         state, (loss, losses, train_output) = update(state, key)
         metrics, valid_output = evaluate(state.params, key, losses, train_output.logits)
-        output = tree.map(lambda a, b: jnp.concat((a, b))[ds.info.udxs], train_output, valid_output)
+        output = tree.map(lambda a, b: jnp.concat((a, b))[ds.info.udxs].astype(jnp.float16), train_output, valid_output)
         return state, (metrics, output if scope else None)
 
     return step
