@@ -5,7 +5,8 @@
 # %% Imports
 # import miiiii as mi
 from miiiii.utils import Conf, digit_fn
-from miiiii.scope import Activation
+from dataclasses import field
+
 
 import jax
 import optax
@@ -64,44 +65,46 @@ class Params:
     blocks: Block
     unbeds: Array  # should be a linear layer ?
 
-
 @dataclass
-class Output:
-    logits: Array
-    activation: Tuple[Activation, Activation]
-    embeds: Array
+class Activation:
+    # q: Array
+    # k: Array
+    # v: Array
+    wei: Array
+    ffwd: Array = field(default_factory=lambda: jnp.array([]))  # Use default_factory
+    logits: Array = field(default_factory=lambda: jnp.array([]))  # Use default_factory
 
 
 # %% Model #####################################################################
 def apply_fn(cfg: Conf):
     @partial(vmap, in_axes=(None, None, 0, None))  # type: ignore
-    def apply(p: Params, rng: Array, x: Array, dropout: float) -> Output:
+    def apply(p: Params, rng: Array, x: Array, dropout: float) -> Activation:
         embeds = embed_fn(p.embeds, x)
         step_fn = partial(block_fn, dropout=dropout)
-        z, activation = lax.scan(step_fn, embeds, (key_fn(p, rng), p.blocks))
-        logits = (z @ p.unbeds).sum(axis=0)
-        return Output(logits=logits, activation=activation, embeds=embeds)
+        z, acts = lax.scan(step_fn, embeds, (key_fn(p, rng), p.blocks))
+        acts.logits = (z @ p.unbeds).sum(axis=0)
+        return acts
 
     return apply
 
 
 def block_fn(z, args, dropout):
     keys, param = args
-    attn, attn_acts = attn_fn(param.attn, z)
+    attn, acts = attn_fn(param.attn, z)
     z = dropout_fn(keys[0], z + attn, dropout)
-    ffwd, ffwd_acts = ffwd_fn(param.ffwd, z)[0]
+    ffwd, acts.ffwd = ffwd_fn(param.ffwd, z)[0]
     z = dropout_fn(keys[1], z + ffwd, dropout)
-    return z, (attn_acts, ffwd_acts)
+    return z, acts
 
 
-def attn_fn(p: Attention, x: Array):
+def attn_fn(p, x: Array):
     q, k, v = x @ p.q, x @ p.k, x @ p.v
     qk = q @ rearrange(k, "b t c -> b c t")
     qk /= jnp.sqrt(p.k.shape[-1])
     wei = nn.softmax(qk, axis=-1)
     weiv = rearrange(wei @ v, "h t d -> t (h d)")
     weivp = weiv @ p.p
-    return weivp, Activation(q=q, k=k, v=v, qk=qk, wei=wei, weiv=weiv)
+    return weivp, Activation(wei=wei)
 
 
 def ffwd_fn(p: Feedforward, x: Array) -> Tuple[Array, Array]:

@@ -10,22 +10,21 @@ from functools import partial
 from oeis import A000040 as primes
 import numpy as np
 import esch
-import matplotlib.pyplot as plt
 from einops import rearrange
-import seaborn as sns
 
 # esch.plot(x)
 
 
 # %% Training
-args = {"project": "nanda", "prime": 113}
-hyper_kwargs = {"epochs": 1000, "dropout": 0.5, "l2": 1.0, "depth": 1, "train_frac": 0.3}
+args = {"project": "nanda", "prime": 37}
+hyper_kwargs = {"epochs": 800, "dropout": 0.5, "l2": 1.0, "depth": 1, "train_frac": 0.3}
 cfg = mi.utils.cfg_fn(args, hyper_kwargs)
 keys = random.split(random.PRNGKey(0))
 ds = mi.tasks.task_fn(cfg, keys[0])
 
 # %%
-state, metrics, outputs = mi.train.train(keys[1], cfg, ds, log=True, scope=True)
+state, metrics, acts = mi.train.train(keys[1], cfg, ds, log=True, scope=True)
+
 
 # %% blah blah
 # fig, axes = plt.subplots(ncols=2, figsize=(12, 4), dpi=100)
@@ -59,9 +58,16 @@ state, metrics, outputs = mi.train.train(keys[1], cfg, ds, log=True, scope=True)
 # mi.plots.hinton_fn(attn_acts.wei.mean(axis=0)[0].mean(axis=-1))
 
 
-attn_acts, ffwd_acts = outputs.activation  # type: ignore
+
+# def wei_fn(acts): # t: time, s: sample, l: layer, h: head
+#     qk = acts.q @ rearrange(acts.k, "t s l h tok c -> t s l h c tok")
+#     qk /= jnp.sqrt(acts.k.shape[-1])
+#     wei = nn.softmax(qk, axis=-1)
+#     return wei
+
+# wei = wei_fn(acts)
 esch.plot(
-    rearrange(attn_acts.wei, "time (a b) layer head fst snd -> time a b layer head fst snd", a=cfg.prime, b=cfg.prime)[
+    rearrange(acts.wei, "time (a b) layer head fst snd -> time a b layer head fst snd", a=cfg.prime, b=cfg.prime)[
         :, :, :, 0, 0, 0, 1  # time, a, b, layer, head, fst, snd
     ],
     animated=True,
@@ -70,6 +76,7 @@ esch.plot(
     ylabel="Second digit (b)",
     xticks=[(0, str(0)), (cfg.prime - 1, str(cfg.prime - 1))],
     yticks=[(0, str(0)), (cfg.prime - 1, str(cfg.prime - 1))],
+    rate=100
 )
 
 # %%
