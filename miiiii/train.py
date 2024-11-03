@@ -55,10 +55,10 @@ def update_fn(opt, ds, cfg: Conf):
 
     def update(state, key):
         loss, losses, output, grads = grad_fn(state.params, key, ds, cfg, apply, loss_fn)
-        # grads, emas = filter_fn(grads, state.emas, 0.98, 2)  # grokfast values
+        grads, emas = filter_fn(grads, state.emas, cfg.alpha, cfg.lamb)  # grokfast values
         updates, opt_state = opt.update(grads, state.opt_state, state.params)
         params = optax.apply_updates(state.params, updates)
-        state = State(params=params, emas=state.emas, opt_state=opt_state)
+        state = State(params=params, emas=emas, opt_state=opt_state)
         return state, (loss, losses, output)
 
     return update, apply, loss_fn

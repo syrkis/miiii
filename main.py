@@ -14,9 +14,19 @@ from einops import rearrange
 
 
 # %% Training
-args = {"project": "miiii", "prime": 113}
-hyper_kwargs = {"epochs": 10000, "dropout": 0.5, "l2": 1.0, "depth": 1, "train_frac": 0.3}
-cfg = mi.utils.cfg_fn(args, hyper_kwargs)
+args = {
+    "project": "nanda",
+    "prime": 113,
+    "epochs": 10000,
+    "dropout": 0.5,
+    "l2": 1.0,
+    "depth": 1,
+    "train_frac": 0.3,
+    "lamb": 2  # grokfast
+}
+
+# %%
+cfg = mi.utils.cfg_fn(args)
 keys = random.split(random.PRNGKey(0))
 ds = mi.tasks.task_fn(cfg, keys[0])
 
