@@ -8,6 +8,7 @@ from miiiii.tasks import Dataset
 from miiiii.utils import Conf, log_fn
 
 from jax import random, jit, value_and_grad, vmap, nn, lax, tree
+from jax.experimental import io_callback
 import jax.numpy as jnp
 from jax_tqdm import scan_tqdm
 import optax
@@ -41,12 +42,12 @@ class Metrics:
 @partial(vmap, in_axes=(1, 1, 0))  # type: ignore vmap across task (not sample)
 def focal_loss_fn(logits, y, alpha):
     logits = logits.astype(jnp.float64)  # enable with some jax bullshit to avoid slingshot
-    return optax.sigmoid_focal_loss(logits, y, alpha=alpha).mean().astype(jnp.float32)  # mean across samples
+    return optax.sigmoid_focal_loss(logits, y, alpha=alpha).mean()  # mean across samples
 
 
 def cross_entropy_loss_fn(logits, y, _):
     logits = logits.astype(jnp.float64)  # enable with some jax bullshit to avoid slingshot
-    return optax.softmax_cross_entropy_with_integer_labels(logits, y).mean().astype(jnp.float32)
+    return optax.softmax_cross_entropy_with_integer_labels(logits, y).mean()
 
 
 def update_fn(opt, ds, cfg: Conf):
@@ -68,7 +69,9 @@ def grad_fn(params: Params, rng, ds: Dataset, cfg: Conf, apply, loss_fn) -> Tupl
     def loss_and_logits(params: Params) -> Tuple[jnp.ndarray, Tuple[Array, Activation]]:
         output: Activation = apply(params, rng, ds.train.x, cfg.dropout)
         losses = loss_fn(output.logits, ds.train.y, ds.info.alpha)  # mean for optimization
-        return losses.mean(), (losses, output)
+        # print(losses.shape, ds.info.task.shape)
+        # exit()
+        return (losses * ds.info.task).sum(), (losses, output)
 
     (loss, (losses, output)), grads = value_and_grad(loss_and_logits, has_aux=True)(params)
     return loss, losses, output, grads

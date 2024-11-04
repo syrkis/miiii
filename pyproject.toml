@@ -28,6 +28,7 @@ cairosvg = "^2.7.1"
 jax = "^0.4.35"
 wandb = "^0.18.5"
 aim = "^3.25.0"
+omegaconf = "^2.3.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3.2"

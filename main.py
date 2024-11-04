@@ -11,22 +11,14 @@ from oeis import A000040 as primes
 import numpy as np
 import esch
 from einops import rearrange
+from omegaconf import OmegaConf
+# conf = OmegaConf.create()
+# print(OmegaConf.to_yaml(conf))
 
 
+# exit()
 # %% Training
-args = {
-    "project": "nanda",
-    "prime": 113,
-    "epochs": 10000,
-    "dropout": 0.5,
-    "l2": 1.0,
-    "depth": 1,
-    "train_frac": 0.3,
-    "lamb": 2  # grokfast
-}
-
-# %%
-cfg = mi.utils.cfg_fn(args)
+cfg = mi.utils.Conf(project="miiii", prime=113, task=0, epochs=10000, dropout=0.5, l2=1.0, depth=1, train_frac=0.3, lamb=2)
 keys = random.split(random.PRNGKey(0))
 ds = mi.tasks.task_fn(cfg, keys[0])
 

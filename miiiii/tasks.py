@@ -21,6 +21,7 @@ class Datasplit:
 @dataclass
 class Datainfo:
     idxs: Array  # idxs with which the dataset was shuffled
+    task: Array
     udxs: Array  # idxs to undo the shuffled idxs
     alpha: Array | None = None  # for a given tasks, the alpha probabilities of each class
     tasks: List[str] | None = None  # list of tasks
@@ -45,20 +46,18 @@ def task_fn(cfg: Conf, key: Array | None = None) -> Dataset:
 def prime_fn(cfg: Conf, key: Array | None = None) -> Dataset:
     n, base = cfg.prime**2, cfg.prime
     x = source_fn(n, base, base_ns)  # get source
-    y, tasks = target_fn(x)  # get target and tasks
+    y, tasks, task = target_fn(x, cfg)  # get target and tasks
 
     # shuffle data
     idxs = random.permutation(key, len(x)) if key is not None else jnp.arange(len(x))
     x, y = x[idxs], y[idxs]  # shuffle data
 
-    sep = int(len(x) * cfg.train_frac)  # 50/50 split
-    alpha = (1 - y[:sep].mean(axis=0)) ** 2  # for focal loss
-
-    # dataset
+    sep = int(len(x) * cfg.train_frac)
+    alpha = (1 - y[:sep].mean(axis=0))  # ** 2  # for focal loss
     train = Datasplit(x=x[:sep], y=y[:sep])
     valid = Datasplit(x=x[sep:], y=y[sep:])
     udxs = jnp.argsort(idxs)
-    info = Datainfo(alpha=alpha, tasks=tasks, idxs=idxs, udxs=udxs)
+    info = Datainfo(alpha=alpha, tasks=tasks, idxs=idxs, udxs=udxs, task=task)
     ds = Dataset(train=train, valid=valid, info=info)
 
     return ds
@@ -69,15 +68,21 @@ def source_fn(n: int, base: int, ns: Callable) -> Array:
     return x
 
 
-def target_fn(x: Array) -> Tuple[Array, List[str]]:
+def target_fn(x: Array, cfg: Conf) -> Tuple[Array, List[str], Array]:
+
     all_primes = primes_fn(len(x))
     target_primes = all_primes[all_primes < len(x)]  # target primes
     test_primes = all_primes[all_primes < jnp.sqrt(len(x))]  # source primes
     is_prime = jnp.zeros(len(x)).at[target_primes].set(1).astype(jnp.int32)[:, None]
     is_multiple = (jnp.arange(len(x))[:, None] % test_primes == 0).astype(jnp.int32)
     y = jnp.concatenate([is_multiple, is_prime], axis=-1)
+    if cfg.task == 0:
+        task = jnp.ones(y.shape[1]) / y.shape[1]
+    else:
+        target_idx = jnp.where(test_primes == cfg.task) if cfg.task != -1 else jnp.array(-1) # for
+        task = jnp.zeros(y.shape[1]).at[target_idx].set(1)
     tasks = list(map(str, test_primes.tolist())) + ["prime"]
-    return y, tasks
+    return y, tasks, task
 
 
 def unsplit_fn(ds: Dataset) -> Datasplit:

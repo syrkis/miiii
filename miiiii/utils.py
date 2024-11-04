@@ -25,16 +25,17 @@ from typing import Literal
 @dataclass
 class Conf:
     project: str = "nanda"
+    task: int = 0  # None means weigh all tasks equally, int means focus on that task, prime means focus on that prime
     alpha: float = 0.98  # not sure what this does (grokfast)
     lamb: float = 2  # set to 0 for no filter (grokfast)
-    prime: int = 113
-    latent_dim: int = 128
-    depth: int = 1
-    heads: int = 4
-    epochs: int = 10000
-    lr: float = 1e-3
-    l2: float = 1.0
-    dropout: float = 0.5
+    prime: int = 113  # @nanda2023
+    latent_dim: int = 128  # @nanda2023
+    depth: int = 1  # @nanda2023
+    heads: int = 4  # @nanda2023
+    epochs: int = 1000
+    lr: float = 1e-3  # @nanda2023
+    l2: float = 1.0  # @nanda2023
+    dropout: float = 0.5  # @nanda2023
     train_frac: float = 0.3  # @nanda2023
 
 def digit_fn(n, base):
@@ -42,10 +43,6 @@ def digit_fn(n, base):
 
 
 # %% functions
-def cfg_fn(kwargs):
-    return Conf(**kwargs)
-
-
 def metrics_to_dict(metrics):
     return {
         "loss": {"train": np.array(metrics.train.loss), "valid" : np.array(metrics.valid.loss)},
@@ -55,6 +52,7 @@ def metrics_to_dict(metrics):
 
 def log_split(run, cfg, metrics, epoch, task, task_idx, split):
     fn = partial(log_metric, cfg, metrics, epoch, task_idx, split)
+    task = -1 if task == "prime" else int(task)
     run.track({"acc" : fn("acc"), "f1" : fn("f1"), "loss" : fn("loss")}, context={"split": split, "task": task})
 
 def log_metric(cfg, metrics, epoch, task_idx, split, metric_name):
