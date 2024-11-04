@@ -45,15 +45,15 @@ def digit_fn(n, base):
 # %% functions
 def metrics_to_dict(metrics):
     return {
-        "loss": {"train": np.array(metrics.train.loss), "valid" : np.array(metrics.valid.loss)},
-        "f1": {"train": np.array(metrics.train.f1), "valid" : np.array(metrics.valid.f1)},
-        "acc": {"train": np.array(metrics.train.acc), "valid" : np.array(metrics.valid.acc)},
+        "loss": {"train": np.array(metrics.train.loss, dtype=np.float16), "valid" : np.array(metrics.valid.loss, dtype=np.float16)},
+        "f1": {"train": np.array(metrics.train.f1, dtype=np.float16), "valid" : np.array(metrics.valid.f1, dtype=np.float16)},
+        "acc": {"train": np.array(metrics.train.acc, dtype=np.float16), "valid" : np.array(metrics.valid.acc, dtype=np.float16)},
     }
 
 def log_split(run, cfg, metrics, epoch, task, task_idx, split):
     fn = partial(log_metric, cfg, metrics, epoch, task_idx, split)
     task = -1 if task == "prime" else int(task)
-    run.track({"acc" : fn("acc"), "f1" : fn("f1"), "loss" : fn("loss")}, context={"split": split, "task": task})
+    run.track({"acc" : fn("acc"), "f1" : fn("f1"), "loss" : fn("loss")}, context={"split": split, "task": task}, step=epoch)
 
 def log_metric(cfg, metrics, epoch, task_idx, split, metric_name):
     metrics_value = metrics[metric_name][split]
@@ -65,7 +65,8 @@ def log_fn(cfg: Conf, ds, metrics):
     metrics = metrics_to_dict(metrics)
 
     # Log metrics for each epoch
-    for epoch in tqdm(range(cfg.epochs)):
+    log_steps = 1000
+    for epoch in tqdm(range(0, cfg.epochs, cfg.epochs // log_steps)):
         for task_idx, task in enumerate(ds.info.tasks if cfg.project == "miiii" else range(1)):
             log_split(run, cfg, metrics, epoch, task, task_idx, "train")
             log_split(run, cfg, metrics, epoch, task, task_idx, "valid")

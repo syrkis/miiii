@@ -18,12 +18,13 @@ from omegaconf import OmegaConf
 
 # exit()
 # %% Training
-cfg = mi.utils.Conf(project="miiii", prime=113, task=0, epochs=10000, dropout=0.5, l2=1.0, depth=1, train_frac=0.3, lamb=2)
+cfg = mi.utils.Conf(project="miiii", prime=37, task=0, epochs=1000, dropout=0.5, l2=0.1, depth=2, train_frac=0.5, latent_dim=64, heads=8, lamb=2)
 keys = random.split(random.PRNGKey(0))
 ds = mi.tasks.task_fn(cfg, keys[0])
 
 # %%
 state, metrics, acts = mi.train.train(keys[1], cfg, ds, log=True) # scope=True)
+
 
 
 # %% blah blah

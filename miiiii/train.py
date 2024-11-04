@@ -136,7 +136,8 @@ def evaluate_fn(ds, cfg: Conf, apply, loss_fn):
         valid_metrics = aux_fn(valid_output.logits, ds.valid.y, valid_loss)
         train_metrics = aux_fn(train_logits, ds.train.y, train_loss)
 
-        return Metrics(train=train_metrics, valid=valid_metrics), valid_output  # also return the validation activations
+        metrics = Metrics(train=train_metrics, valid=valid_metrics), valid_output  # also return the validation activations
+        return metrics  # tree.map(lambda x: x.astype(jnp.float16), metries)  # store as float16
 
     return evaluate
 
