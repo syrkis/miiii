@@ -65,6 +65,7 @@ class Params:
     blocks: Block
     unbeds: Array  # should be a linear layer ?
 
+
 @dataclass
 class Activation:
     # q: Array
@@ -78,7 +79,7 @@ class Activation:
 # %% Model #####################################################################
 def apply_fn(cfg: Conf):
     @partial(vmap, in_axes=(None, None, 0, None))  # type: ignore
-    def apply(p: Params, rng: Array, x: Array, dropout: float) -> Activation:
+    def apply(p, rng: Array, x: Array, dropout: float) -> Activation:
         embeds = embed_fn(p.embeds, x)
         step_fn = partial(block_fn, dropout=dropout)
         z, acts = lax.scan(step_fn, embeds, (key_fn(p, rng), p.blocks))

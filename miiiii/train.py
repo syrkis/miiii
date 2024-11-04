@@ -66,12 +66,12 @@ def update_fn(opt, ds, cfg: Conf):
 
 
 def grad_fn(params: Params, rng, ds: Dataset, cfg: Conf, apply, loss_fn) -> Tuple[Array, Array, Activation, Array]:
+    w = ds.info.task if cfg.project == "miiii" else jnp.ones(1)
+
     def loss_and_logits(params: Params) -> Tuple[jnp.ndarray, Tuple[Array, Activation]]:
         output: Activation = apply(params, rng, ds.train.x, cfg.dropout)
         losses = loss_fn(output.logits, ds.train.y, ds.info.alpha)  # mean for optimization
-        # print(losses.shape, ds.info.task.shape)
-        # exit()
-        return (losses * ds.info.task).sum(), (losses, output)
+        return (losses * w).sum(), (losses, output)
 
     (loss, (losses, output)), grads = value_and_grad(loss_and_logits, has_aux=True)(params)
     return loss, losses, output, grads
@@ -100,7 +100,7 @@ def step_fn(ds, cfg: Conf, opt, scope):  # scope is for showing activations duri
 
 
 def init_state(rng, cfg: Conf, opt):
-    params = init_fn(rng, cfg)
+    params: Params = init_fn(rng, cfg)
     emas = tree.map(lambda x: jnp.zeros_like(x), params)
     opt_state = opt.init(params)
     return State(params=params, opt_state=opt_state, emas=emas)
@@ -136,7 +136,10 @@ def evaluate_fn(ds, cfg: Conf, apply, loss_fn):
         valid_metrics = aux_fn(valid_output.logits, ds.valid.y, valid_loss)
         train_metrics = aux_fn(train_logits, ds.train.y, train_loss)
 
-        metrics = Metrics(train=train_metrics, valid=valid_metrics), valid_output  # also return the validation activations
+        metrics = (
+            Metrics(train=train_metrics, valid=valid_metrics),
+            valid_output,
+        )  # also return the validation activations
         return metrics  # tree.map(lambda x: x.astype(jnp.float16), metries)  # store as float16
 
     return evaluate

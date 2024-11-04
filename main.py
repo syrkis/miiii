@@ -12,19 +12,33 @@ import numpy as np
 import esch
 from einops import rearrange
 from omegaconf import OmegaConf
+
+# from cairosvg import svg2png
+import matplotlib.pyplot as plt
 # conf = OmegaConf.create()
 # print(OmegaConf.to_yaml(conf))
 
 
 # exit()
 # %% Training
-cfg = mi.utils.Conf(project="miiii", prime=37, task=0, epochs=1000, dropout=0.5, l2=0.1, depth=2, train_frac=0.5, latent_dim=64, heads=8, lamb=2)
+cfg = mi.utils.Conf(
+    project="nanda",
+    prime=113,
+    task=0,
+    epochs=1000,
+    dropout=0.5,
+    l2=0.1,
+    depth=2,
+    train_frac=0.5,
+    latent_dim=64,
+    heads=8,
+    lamb=2,
+)
 keys = random.split(random.PRNGKey(0))
 ds = mi.tasks.task_fn(cfg, keys[0])
 
 # %%
-state, metrics, acts = mi.train.train(keys[1], cfg, ds, log=True) # scope=True)
-
+state, metrics, acts = mi.train.train(keys[1], cfg, ds)  # log=True)  # scope=True)
 
 
 # %% blah blah
@@ -34,6 +48,21 @@ state, metrics, acts = mi.train.train(keys[1], cfg, ds, log=True) # scope=True)
 # axes[1].plot(metrics.train.acc, c="black")
 # axes[1].plot(metrics.valid.acc, c="forestgreen", ls=":")
 # plt.show()
+
+# %% scope
+rng = random.PRNGKey(0)
+apply = mi.model.apply_fn(cfg)
+acts = apply(state.params, rng, ds.train.x, 0.0)
+
+
+U, S, Vh = jnp.linalg.svd(state.params.unbeds)
+
+
+# %%
+fig, axes = plt.subplots(ncols=2, figsize=(12, 4), dpi=100)
+axes[0].imshow(U)
+axes[1].imshow(Vh)
+plt.show()
 
 
 # def plot_a_b_activations(
@@ -59,26 +88,28 @@ state, metrics, acts = mi.train.train(keys[1], cfg, ds, log=True) # scope=True)
 # mi.plots.hinton_fn(attn_acts.wei.mean(axis=0)[0].mean(axis=-1))
 
 
+def wei_fn(acts):  # t: time, s: sample, l: layer, h: head
+    qk = acts.q @ rearrange(acts.k, "t s l h tok c -> t s l h c tok")
+    qk /= jnp.sqrt(acts.k.shape[-1])
+    wei = nn.softmax(qk, axis=-1)
+    return wei
 
-# def wei_fn(acts): # t: time, s: sample, l: layer, h: head
-#     qk = acts.q @ rearrange(acts.k, "t s l h tok c -> t s l h c tok")
-#     qk /= jnp.sqrt(acts.k.shape[-1])
-#     wei = nn.softmax(qk, axis=-1)
-#     return wei
 
-# wei = wei_fn(acts)
 #
+# wei = wei_fn(acts)
+
+# mi.model.apply_fn(params, ds.x)
 # esch.plot(
-    # rearrange(acts.wei, "time (a b) layer head fst snd -> time a b layer head fst snd", a=cfg.prime, b=cfg.prime)[
-        # :, :, :, 0, 0, 0, 1  # time, a, b, layer, head, fst, snd
-    # ],
-    # animated=True,
-    # path="noah.svg",
-    # xlabel="First digit (a)",
-    # ylabel="Second digit (b)",
-    # xticks=[(0, str(0)), (cfg.prime - 1, str(cfg.prime - 1))],
-    # yticks=[(0, str(0)), (cfg.prime - 1, str(cfg.prime - 1))],
-    # rate=100
+# rearrange(acts.wei, "time (a b) layer head fst snd -> time a b layer head fst snd", a=cfg.prime, b=cfg.prime)[
+# :, :, :, 0, 0, 0, 1  # time, a, b, layer, head, fst, snd
+# ],
+# animated=True,
+# path="noah.svg",
+# xlabel="First digit (a)",
+# ylabel="Second digit (b)",
+# xticks=[(0, str(0)), (cfg.prime - 1, str(cfg.prime - 1))],
+# yticks=[(0, str(0)), (cfg.prime - 1, str(cfg.prime - 1))],
+# rate=100,
 # )
 
 # %%

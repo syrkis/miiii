@@ -25,7 +25,7 @@ from typing import Literal
 @dataclass
 class Conf:
     project: str = "nanda"
-    task: int = 0  # None means weigh all tasks equally, int means focus on that task, prime means focus on that prime
+    task: int | None = None
     alpha: float = 0.98  # not sure what this does (grokfast)
     lamb: float = 2  # set to 0 for no filter (grokfast)
     prime: int = 113  # @nanda2023
@@ -38,6 +38,7 @@ class Conf:
     dropout: float = 0.5  # @nanda2023
     train_frac: float = 0.3  # @nanda2023
 
+
 def digit_fn(n, base):
     return jnp.ceil(jnp.log(n + 1) / jnp.log(base)).astype(jnp.int32)
 
@@ -45,19 +46,33 @@ def digit_fn(n, base):
 # %% functions
 def metrics_to_dict(metrics):
     return {
-        "loss": {"train": np.array(metrics.train.loss, dtype=np.float16), "valid" : np.array(metrics.valid.loss, dtype=np.float16)},
-        "f1": {"train": np.array(metrics.train.f1, dtype=np.float16), "valid" : np.array(metrics.valid.f1, dtype=np.float16)},
-        "acc": {"train": np.array(metrics.train.acc, dtype=np.float16), "valid" : np.array(metrics.valid.acc, dtype=np.float16)},
+        "loss": {
+            "train": np.array(metrics.train.loss, dtype=np.float16),
+            "valid": np.array(metrics.valid.loss, dtype=np.float16),
+        },
+        "f1": {
+            "train": np.array(metrics.train.f1, dtype=np.float16),
+            "valid": np.array(metrics.valid.f1, dtype=np.float16),
+        },
+        "acc": {
+            "train": np.array(metrics.train.acc, dtype=np.float16),
+            "valid": np.array(metrics.valid.acc, dtype=np.float16),
+        },
     }
+
 
 def log_split(run, cfg, metrics, epoch, task, task_idx, split):
     fn = partial(log_metric, cfg, metrics, epoch, task_idx, split)
     task = -1 if task == "prime" else int(task)
-    run.track({"acc" : fn("acc"), "f1" : fn("f1"), "loss" : fn("loss")}, context={"split": split, "task": task}, step=epoch)
+    run.track(
+        {"acc": fn("acc"), "f1": fn("f1"), "loss": fn("loss")}, context={"split": split, "task": task}, step=epoch
+    )
+
 
 def log_metric(cfg, metrics, epoch, task_idx, split, metric_name):
     metrics_value = metrics[metric_name][split]
     return metrics_value[epoch, task_idx] if cfg.project == "miiii" else metrics_value[epoch]
+
 
 def log_fn(cfg: Conf, ds, metrics):
     run = Run(experiment=cfg.project, system_tracking_interval=None)

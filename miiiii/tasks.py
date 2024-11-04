@@ -6,7 +6,7 @@
 from miiiii.utils import Conf, digit_fn
 from oeis import oeis
 import jax.numpy as jnp
-from jax import Array, random, jit
+from jax import Array, random
 from typing import Callable, List, Tuple
 from chex import dataclass
 
@@ -21,8 +21,8 @@ class Datasplit:
 @dataclass
 class Datainfo:
     idxs: Array  # idxs with which the dataset was shuffled
-    task: Array
     udxs: Array  # idxs to undo the shuffled idxs
+    task: Array | None = None
     alpha: Array | None = None  # for a given tasks, the alpha probabilities of each class
     tasks: List[str] | None = None  # list of tasks
 
@@ -53,7 +53,7 @@ def prime_fn(cfg: Conf, key: Array | None = None) -> Dataset:
     x, y = x[idxs], y[idxs]  # shuffle data
 
     sep = int(len(x) * cfg.train_frac)
-    alpha = (1 - y[:sep].mean(axis=0))  # ** 2  # for focal loss
+    alpha = 1 - y[:sep].mean(axis=0)  # ** 2  # for focal loss
     train = Datasplit(x=x[:sep], y=y[:sep])
     valid = Datasplit(x=x[sep:], y=y[sep:])
     udxs = jnp.argsort(idxs)
@@ -69,7 +69,6 @@ def source_fn(n: int, base: int, ns: Callable) -> Array:
 
 
 def target_fn(x: Array, cfg: Conf) -> Tuple[Array, List[str], Array]:
-
     all_primes = primes_fn(len(x))
     target_primes = all_primes[all_primes < len(x)]  # target primes
     test_primes = all_primes[all_primes < jnp.sqrt(len(x))]  # source primes
@@ -79,7 +78,7 @@ def target_fn(x: Array, cfg: Conf) -> Tuple[Array, List[str], Array]:
     if cfg.task == 0:
         task = jnp.ones(y.shape[1]) / y.shape[1]
     else:
-        target_idx = jnp.where(test_primes == cfg.task) if cfg.task != -1 else jnp.array(-1) # for
+        target_idx = jnp.where(test_primes == cfg.task) if cfg.task != -1 else jnp.array(-1)  # for
         task = jnp.zeros(y.shape[1]).at[target_idx].set(1)
     tasks = list(map(str, test_primes.tolist())) + ["prime"]
     return y, tasks, task
