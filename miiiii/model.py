@@ -4,21 +4,19 @@
 
 # %% Imports
 # import miiiii as mi
-from miiiii.utils import Conf, digit_fn
+from miiiii.utils import Conf
 from dataclasses import field
 
 
 import jax
-import optax
-from jax import random, value_and_grad, jit, lax, nn, vmap, tree
+from jax import random, lax, nn, vmap
 import jax.numpy as jnp
 from jax import Array
 
 from functools import partial
-from tqdm import tqdm
 from einops import rearrange
 from oeis import A000040
-from typing import Callable, Optional, Tuple
+from typing import Tuple
 from chex import dataclass
 
 # %% Constants #################################################################
@@ -94,6 +92,9 @@ def block_fn(z, args, dropout):
     attn, acts = attn_fn(param.attn, z)
     z = dropout_fn(keys[0], z + attn, dropout)
     ffwd, acts.ffwd = ffwd_fn(param.ffwd, z)[0]
+    # print(z.shape)
+    # print(ffwd.shape)
+    # exit()
     z = dropout_fn(keys[1], z + ffwd, dropout)
     return z, acts
 
@@ -103,9 +104,7 @@ def attn_fn(p, x: Array):
     qk = q @ rearrange(k, "b t c -> b c t")
     qk /= jnp.sqrt(p.k.shape[-1])
     wei = nn.softmax(qk, axis=-1)
-    weiv = rearrange(wei @ v, "h t d -> t (h d)")
-    weivp = weiv @ p.p
-    return weivp, Activation(wei=wei)
+    return (wei @ v @ p.p).sum(axis=0), Activation(wei=wei)
 
 
 def ffwd_fn(p: Feedforward, x: Array) -> Tuple[Array, Array]:
@@ -120,10 +119,12 @@ def embed_fn(p: Embedding, x: Array) -> Array:
     return tok_emb + pos_emb  # z: seq_len x emb_dim
 
 
+"""
 def layer_norm(params: LayerNorm, x: Array) -> Array:
     mean = jnp.mean(x, axis=-1, keepdims=True)
     std = jnp.std(x, axis=-1, keepdims=True)
     return params.gamma * (x - mean) / (std + 1e-5) + params.beta
+"""
 
 
 # %% Initializers ###########################################################
@@ -137,8 +138,8 @@ def init_embed_fn(rng: Array, cfg: Conf):
 def init_attn_fn(rng: Array, cfg: Conf) -> Attention:
     keys = random.split(rng, 4)
     shape = (cfg.heads, cfg.latent_dim, cfg.latent_dim // cfg.heads)
-    q, k, v = init_array(keys[0], shape), init_array(keys[1], shape), init_array(keys[2], shape)  # type: ignore
-    p = init_array(keys[3], (cfg.latent_dim, cfg.latent_dim))  # type: ignore
+    q, k, v = map(lambda key: init_array(key, shape), keys[:3])
+    p = init_array(keys[3], (cfg.heads, cfg.latent_dim // cfg.heads, cfg.latent_dim))  # type: ignore
     return Attention(q=q, k=k, v=v, p=p)
 
 

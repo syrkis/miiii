@@ -9,7 +9,7 @@ readme = "README.md"
 package_command = "main:main"
 
 [tool.poetry.dependencies]
-python = ">=3.11,<3.13"
+python = ">=3.11,<3.12"
 oeis = "^2023.3.10"
 tqdm = "^4.66.4"
 requests = "^2.32.2"
@@ -23,17 +23,20 @@ optax = "^0.2.3"
 jaxtyping = "^0.2.33"
 jax-tqdm = "^0.2.2"
 ipywidgets = "^8.1.5"
-esch = ">=0.2.5"
-cairosvg = "^2.7.1"
+esch = ">=0.3.6"
 jax = "^0.4.35"
 wandb = "^0.18.5"
 aim = "^3.25.0"
 omegaconf = "^2.3.0"
+cairosvg = "^2.7.1"
+darkdetect = "^0.8.0"
+svglib = "^1.5.1"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3.2"
 pytest-cov = "^5.0.0"
 ruff = "^0.6.3"
+macholib = "^1.16.3"
 
 [build-system]
 requires = ["poetry-core"]

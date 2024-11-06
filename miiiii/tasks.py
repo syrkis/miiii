@@ -73,14 +73,16 @@ def target_fn(x: Array, cfg: Conf) -> Tuple[Array, List[str], Array]:
     target_primes = all_primes[all_primes < len(x)]  # target primes
     test_primes = all_primes[all_primes < jnp.sqrt(len(x))]  # source primes
     is_prime = jnp.zeros(len(x)).at[target_primes].set(1).astype(jnp.int32)[:, None]
-    is_multiple = (jnp.arange(len(x))[:, None] % test_primes == 0).astype(jnp.int32)
-    y = jnp.concatenate([is_multiple, is_prime], axis=-1)
+    y = jnp.eye(cfg.prime)[(jnp.arange(len(x))[:, None] % test_primes).astype(jnp.int32)]  # is this right?
+    print(y.shape)
+    exit()
+    # y = jnp.concatenate([is_multiple, is_prime], axis=-1)
     if cfg.task == 0:
         task = jnp.ones(y.shape[1]) / y.shape[1]
     else:
         target_idx = jnp.where(test_primes == cfg.task) if cfg.task != -1 else jnp.array(-1)  # for
         task = jnp.zeros(y.shape[1]).at[target_idx].set(1)
-    tasks = list(map(str, test_primes.tolist())) + ["prime"]
+    tasks = list(map(str, test_primes.tolist()))  # + ["prime"]
     return y, tasks, task
 
 

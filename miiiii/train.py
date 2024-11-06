@@ -5,17 +5,17 @@
 # %% Imports
 from miiiii.model import Params, apply_fn, init_fn, Activation
 from miiiii.tasks import Dataset
-from miiiii.utils import Conf, log_fn
+from miiiii.utils import Conf
 
 from jax import random, jit, value_and_grad, vmap, nn, lax, tree
-from jax.experimental import io_callback
+
+# from jax.experimental import io_callback  # use in scan every epochs / 1000 steps (if possible)
 import jax.numpy as jnp
 from jax_tqdm import scan_tqdm
 import optax
 from functools import partial
 from typing import Tuple
 from chex import dataclass, Array
-import wandb
 
 
 @dataclass
@@ -54,6 +54,7 @@ def update_fn(opt, ds, cfg: Conf):
     apply = apply_fn(cfg)
     loss_fn = focal_loss_fn if cfg.project == "miiii" else cross_entropy_loss_fn
 
+    @jit
     def update(state, key):
         loss, losses, output, grads = grad_fn(state.params, key, ds, cfg, apply, loss_fn)
         grads, emas = filter_fn(grads, state.emas, cfg.alpha, cfg.lamb)  # grokfast values
@@ -106,14 +107,15 @@ def init_state(rng, cfg: Conf, opt):
     return State(params=params, opt_state=opt_state, emas=emas)
 
 
-def train(rng, cfg: Conf, ds, scope=False, log=False):
+def train(rng, cfg: Conf, ds, scope=False):
     opt = optax.adamw(cfg.lr, weight_decay=cfg.l2, b1=0.9, b2=0.98)  # @nanda2023
     state = init_state(rng, cfg, opt)
     step = step_fn(ds, cfg, opt, scope)
     rngs = random.split(rng, cfg.epochs)
-    state, (metrics, outputs) = lax.scan(step, state, (jnp.arange(cfg.epochs), rngs))
-    log_fn(cfg, ds, metrics) if log else None
-    return state, metrics, outputs
+    xs = (jnp.arange(cfg.epochs), rngs)
+    state, output = lax.scan(step, state, xs)
+    return state, output
+    # log_fn(cfg, ds, metrics, acts, state)
 
 
 # Evaluation #########################################################################
@@ -121,7 +123,7 @@ def evaluate_fn(ds, cfg: Conf, apply, loss_fn):
     f1_score = vmap(f1_score_fn, in_axes=(1, 1)) if cfg.project == "miiii" else f1_score_fn  # type: ignore
     accuracy = vmap(accuracy_fn, in_axes=(1, 1)) if cfg.project == "miiii" else accuracy_fn  # type: ignore
     pred_fn = (
-        (lambda l: (nn.sigmoid(l) > 0.5).astype(int)) if cfg.project == "miiii" else lambda l: jnp.argmax(l, axis=-1)
+        (lambda x: (nn.sigmoid(x) > 0.5).astype(int)) if cfg.project == "miiii" else lambda x: jnp.argmax(x, axis=-1)
     )
 
     def aux_fn(logits, y, loss):

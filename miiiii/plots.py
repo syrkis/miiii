@@ -19,7 +19,6 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 from typing import Sequence
 import jax.numpy as jnp
-from typing import Dict
 import datetime
 
 # %% Constants and configurations

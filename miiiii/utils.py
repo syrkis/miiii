@@ -3,23 +3,14 @@
 # by: Noah Syrkis
 
 # %% imports
-import os
 import jax.numpy as jnp
-from jax import tree
-import yaml
-import pickle
-import wandb
-import sqlite3
-from pathlib import Path
 import numpy as np
-from aim import Run
 from tqdm import tqdm
 from functools import partial
-
-
-# from aim import Run
 from chex import dataclass
-from typing import Literal
+from aim import Run, Image as AImage
+from PIL import Image as PImage
+import esch
 
 
 @dataclass
@@ -37,6 +28,7 @@ class Conf:
     l2: float = 1.0  # @nanda2023
     dropout: float = 0.5  # @nanda2023
     train_frac: float = 0.3  # @nanda2023
+    debug: bool = False
 
 
 def digit_fn(n, base):
@@ -74,10 +66,10 @@ def log_metric(cfg, metrics, epoch, task_idx, split, metric_name):
     return metrics_value[epoch, task_idx] if cfg.project == "miiii" else metrics_value[epoch]
 
 
-def log_fn(cfg: Conf, ds, metrics):
+def log_fn(cfg: Conf, ds, state, output):
     run = Run(experiment=cfg.project, system_tracking_interval=None)
     run["hparams"] = cfg.__dict__
-    metrics = metrics_to_dict(metrics)
+    metrics = metrics_to_dict(output[0])
 
     # Log metrics for each epoch
     log_steps = 1000
@@ -85,6 +77,9 @@ def log_fn(cfg: Conf, ds, metrics):
         for task_idx, task in enumerate(ds.info.tasks if cfg.project == "miiii" else range(1)):
             log_split(run, cfg, metrics, epoch, task, task_idx, "train")
             log_split(run, cfg, metrics, epoch, task, task_idx, "valid")
+
+    p = esch.plot(state.params.embeds.tok_emb)
+    run.track(AImage(PImage.open(p.png)), name="tok_emb", step=cfg.epochs)  # type: ignore
 
     run.close()
 

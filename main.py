@@ -3,70 +3,85 @@
 # by: Noah Syrkis
 
 # %% Imports
-import miiiii as mi  # test
-from jax import random, vmap, lax, nn, tree
+import miiiii as mi
+from jax import random, nn, tree
 import jax.numpy as jnp
-from functools import partial
-from oeis import A000040 as primes
-import numpy as np
 import esch
 from einops import rearrange
-from omegaconf import OmegaConf
-
-# from cairosvg import svg2png
 import matplotlib.pyplot as plt
-# conf = OmegaConf.create()
-# print(OmegaConf.to_yaml(conf))
 
-
-# exit()
 # %% Training
-cfg = mi.utils.Conf(
-    project="nanda",
-    prime=113,
-    task=0,
-    epochs=1000,
-    dropout=0.5,
-    l2=0.1,
-    depth=2,
-    train_frac=0.5,
-    latent_dim=64,
-    heads=8,
-    lamb=2,
-)
-keys = random.split(random.PRNGKey(0))
+cfg = mi.utils.Conf(project="miiii", prime=113, epochs=1000, lamb=2, dropout=0.1, lr=0.1)
+rng, *keys = random.split(random.PRNGKey(0), 3)
 ds = mi.tasks.task_fn(cfg, keys[0])
 
 # %%
-state, metrics, acts = mi.train.train(keys[1], cfg, ds)  # log=True)  # scope=True)
-
-
-# %% blah blah
-# fig, axes = plt.subplots(ncols=2, figsize=(12, 4), dpi=100)
-# axes[0].plot(metrics.train.loss, c="black")
-# axes[0].plot(metrics.valid.loss, c="forestgreen", ls=":")
-# axes[1].plot(metrics.train.acc, c="black")
-# axes[1].plot(metrics.valid.acc, c="forestgreen", ls=":")
-# plt.show()
-
-# %% scope
-rng = random.PRNGKey(0)
-apply = mi.model.apply_fn(cfg)
-acts = apply(state.params, rng, ds.train.x, 0.0)
-
-
-U, S, Vh = jnp.linalg.svd(state.params.unbeds)
+state, output = mi.train.train(keys[1], cfg, ds, scope=True)
 
 
 # %%
-fig, axes = plt.subplots(ncols=2, figsize=(12, 4), dpi=100)
-axes[0].imshow(U)
-axes[1].imshow(Vh)
-plt.show()
+W_E = state.params.embeds.tok_emb
+W_E.shape
+
+# %%
+W_neur = (
+    state.params.embeds.tok_emb
+    @ state.params.blocks.attn.v[0]
+    @ state.params.blocks.attn.p[0]
+    @ state.params.blocks.ffwd.w1[0]
+)
+W_neur.shape
+
+# %%
+
+# %%
+W_logit = state.params.blocks.ffwd.w2[0] @ state.params.unbeds
+W_logit.shape
+
+# %% scope
+apply = mi.model.apply_fn(cfg)
+acts = apply(state.params, rng, ds.train.x, 0.0)
+tree.map(jnp.shape, acts)
+
+# %%  we see the attention is leaning towards the first digit (from the right)
+# wei = rearrange(acts.wei, "time (a b) layer head fst snd -> time a b layer head fst snd", a=cfg.prime, b=cfg.prime)
+# esch.plot(
+#     rearrange(
+#         rearrange(
+#             output[1].wei, "time (a b) layer head fst snd -> time a b layer head fst snd", a=cfg.prime, b=cfg.prime
+#         ).squeeze()[-1],
+#         "a b head fst snd -> (head snd) (fst a b)",
+#     ),
+# )
 
 
-# def plot_a_b_activations(
+# %%
+esch.plot(
+    rearrange(output[1].wei[-1], "(a b) layer head fst snd -> a b layer head fst snd", a=cfg.prime, b=cfg.prime)[
+        :, :, 0, 3, 0, 0
+    ],
+    xlabel="First digit (a)",
+    ylabel="Second digit (b)",
+    xticks=[(0, str(0)), (cfg.prime - 1, str(cfg.prime - 1))],
+    yticks=[(0, str(0)), (cfg.prime - 1, str(cfg.prime - 1))],
+)
+
+
+# %%  Neural activations (first five mlp neurons)
+esch.plot(rearrange(output[1].logits[-1][:, :1000], "(a b) neuron -> neuron a b", a=cfg.prime, b=cfg.prime)[100])  #
+
 # %% Logging stuff
+U, S, V = jnp.linalg.svd(W_E)
+
+# %%
+thresh = jnp.where((S / S.sum()).cumsum(axis=0) < 0.95)[0].max()
+esch.plot(S[None, :])  # chose 90th percentile.
+esch.plot(U[:, :thresh].T)
+# plt.show()
+# %%
+plt.plot(U[:, 2])
+
+# %%
 # %%
 # @partial(vmap, in_axes=(None, 0))
 # def scope_fn(params, x):
