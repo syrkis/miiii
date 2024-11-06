@@ -14,8 +14,9 @@ import jax.numpy as jnp
 from jax_tqdm import scan_tqdm
 import optax
 from functools import partial
-from typing import Tuple
+from typing import Tuple, Any
 from chex import dataclass, Array
+import miiiii as mi
 
 
 @dataclass
@@ -39,10 +40,10 @@ class Metrics:
 
 
 # functions
-@partial(vmap, in_axes=(1, 1, 0))  # type: ignore vmap across task (not sample)
-def focal_loss_fn(logits, y, alpha):
+@partial(vmap, in_axes=(1, 1))  # type: ignore vmap across task (not sample)
+def focal_loss_fn(logits, y):
     logits = logits.astype(jnp.float64)  # enable with some jax bullshit to avoid slingshot
-    return optax.sigmoid_focal_loss(logits, y, alpha=alpha).mean()  # mean across samples
+    return optax.sigmoid_binary_cross_entropy(logits, y).mean()  # mean across samples
 
 
 def cross_entropy_loss_fn(logits, y, _):
@@ -50,7 +51,7 @@ def cross_entropy_loss_fn(logits, y, _):
     return optax.softmax_cross_entropy_with_integer_labels(logits, y).mean()
 
 
-def update_fn(opt, ds, cfg: Conf):
+def update_fn(opt, ds: mi.tasks.Dataset, cfg: Conf):
     apply = apply_fn(cfg)
     loss_fn = focal_loss_fn if cfg.project == "miiii" else cross_entropy_loss_fn
 
@@ -67,12 +68,12 @@ def update_fn(opt, ds, cfg: Conf):
 
 
 def grad_fn(params: Params, rng, ds: Dataset, cfg: Conf, apply, loss_fn) -> Tuple[Array, Array, Activation, Array]:
-    w = ds.info.task if cfg.project == "miiii" else jnp.ones(1)
+    # w = ds.info.task if cfg.project == "miiii" else jnp.ones(1)
 
     def loss_and_logits(params: Params) -> Tuple[jnp.ndarray, Tuple[Array, Activation]]:
-        output: Activation = apply(params, rng, ds.train.x, cfg.dropout)
-        losses = loss_fn(output.logits, ds.train.y, ds.info.alpha)  # mean for optimization
-        return (losses * w).sum(), (losses, output)
+        output: Activation = apply(params, rng, ds.train[0], cfg.dropout)
+        losses = loss_fn(output.logits, ds.train[1])  # ds.info.alpha)  # mean for optimization
+        return losses.mean(), (losses, output)
 
     (loss, (losses, output)), grads = value_and_grad(loss_and_logits, has_aux=True)(params)
     return loss, losses, output, grads
@@ -84,17 +85,20 @@ def filter_fn(grads, emas, alpha: float, lamb: float):
     return grads, emas
 
 
-def step_fn(ds, cfg: Conf, opt, scope):  # scope is for showing activations during trainig
+def step_fn(ds: mi.tasks.Dataset, cfg: Conf, opt, scope):  # scope is for showing activations d
     opt = optax.adamw(cfg.lr, weight_decay=cfg.l2)  # b1=0.9, b2=0.98)
     update, apply, loss_fn = update_fn(opt, ds, cfg)
     evaluate = evaluate_fn(ds, cfg, apply, loss_fn)
 
+    def consort(x, y):
+        return jnp.concat((x, y))[jnp.argsort(ds.idxs)].astype(jnp.float16)
+
     @scan_tqdm(cfg.epochs)
     def step(state, args):
         epoch, key = args
-        state, (loss, losses, train_output) = update(state, key)
-        metrics, valid_output = evaluate(state.params, key, losses, train_output.logits)
-        output = tree.map(lambda a, b: jnp.concat((a, b))[ds.info.udxs].astype(jnp.float16), train_output, valid_output)
+        state, (loss, losses, train_out) = update(state, key)
+        metrics, valid_out = evaluate(state.params, key, losses, train_out.logits)
+        output = tree.map(consort, train_out, valid_out)
         return state, (metrics, output if scope else None)
 
     return step
@@ -107,7 +111,7 @@ def init_state(rng, cfg: Conf, opt):
     return State(params=params, opt_state=opt_state, emas=emas)
 
 
-def train(rng, cfg: Conf, ds, scope=False):
+def train(rng, cfg: Conf, ds: mi.tasks.Dataset, scope=False) -> Tuple[State, Any]:
     opt = optax.adamw(cfg.lr, weight_decay=cfg.l2, b1=0.9, b2=0.98)  # @nanda2023
     state = init_state(rng, cfg, opt)
     step = step_fn(ds, cfg, opt, scope)
@@ -119,7 +123,7 @@ def train(rng, cfg: Conf, ds, scope=False):
 
 
 # Evaluation #########################################################################
-def evaluate_fn(ds, cfg: Conf, apply, loss_fn):
+def evaluate_fn(ds: mi.tasks.Dataset, cfg: Conf, apply, loss_fn):
     f1_score = vmap(f1_score_fn, in_axes=(1, 1)) if cfg.project == "miiii" else f1_score_fn  # type: ignore
     accuracy = vmap(accuracy_fn, in_axes=(1, 1)) if cfg.project == "miiii" else accuracy_fn  # type: ignore
     pred_fn = (
@@ -132,16 +136,13 @@ def evaluate_fn(ds, cfg: Conf, apply, loss_fn):
         return Split(loss=loss, f1=f1, acc=acc)
 
     def evaluate(params, key, train_loss, train_logits):
-        valid_output = apply(params, key, ds.valid.x, cfg.dropout)
-        valid_loss = loss_fn(valid_output.logits, ds.valid.y, ds.info.alpha)
+        valid_output = apply(params, key, ds.valid[0], cfg.dropout)
+        valid_loss = loss_fn(valid_output.logits, ds.valid[1])
 
-        valid_metrics = aux_fn(valid_output.logits, ds.valid.y, valid_loss)
-        train_metrics = aux_fn(train_logits, ds.train.y, train_loss)
+        valid_metrics = aux_fn(valid_output.logits, ds.valid[1], valid_loss)
+        train_metrics = aux_fn(train_logits, ds.train[1], train_loss)
 
-        metrics = (
-            Metrics(train=train_metrics, valid=valid_metrics),
-            valid_output,
-        )  # also return the validation activations
+        metrics = (Metrics(train=train_metrics, valid=valid_metrics), valid_output)
         return metrics  # tree.map(lambda x: x.astype(jnp.float16), metries)  # store as float16
 
     return evaluate

@@ -19,7 +19,7 @@ class Conf:
     task: int | None = None
     alpha: float = 0.98  # not sure what this does (grokfast)
     lamb: float = 2  # set to 0 for no filter (grokfast)
-    prime: int = 113  # @nanda2023
+    p: int = 113  # @nanda2023
     latent_dim: int = 128  # @nanda2023
     depth: int = 1  # @nanda2023
     heads: int = 4  # @nanda2023
@@ -91,7 +91,7 @@ def name_run_fn(cfg: Conf) -> str:
     """
     return (
         # f"{cfg.task}"
-        f"_pm{cfg.prime}"
+        f"_pm{cfg.p}"
         f"_ld{cfg.latent_dim}"
         f"_de{cfg.depth}"
         f"_he{cfg.heads}"

@@ -10,11 +10,11 @@ import esch
 from einops import rearrange
 import matplotlib.pyplot as plt
 
-# %% Training
-cfg = mi.utils.Conf(project="miiii", prime=113, epochs=1000, lamb=2, dropout=0.1, lr=0.1)
-rng, *keys = random.split(random.PRNGKey(0), 3)
-ds = mi.tasks.task_fn(cfg, keys[0])
 
+# %% Configuration
+cfg = mi.utils.Conf(project="miiii", p=37, epochs=1000, lamb=2, dropout=0.1, lr=0.1)
+rng, *keys = random.split(random.PRNGKey(0), 3)
+ds = mi.tasks.task_fn(keys[0], cfg)
 # %%
 state, output = mi.train.train(keys[1], cfg, ds, scope=True)
 
@@ -40,7 +40,7 @@ W_logit.shape
 
 # %% scope
 apply = mi.model.apply_fn(cfg)
-acts = apply(state.params, rng, ds.train.x, 0.0)
+acts = apply(state.params, rng, ds.train[0], 0.0)
 tree.map(jnp.shape, acts)
 
 # %%  we see the attention is leaning towards the first digit (from the right)
@@ -57,18 +57,18 @@ tree.map(jnp.shape, acts)
 
 # %%
 esch.plot(
-    rearrange(output[1].wei[-1], "(a b) layer head fst snd -> a b layer head fst snd", a=cfg.prime, b=cfg.prime)[
+    rearrange(output[1].wei[-1], "(a b) layer head fst snd -> a b layer head fst snd", a=cfg.p, b=cfg.p)[
         :, :, 0, 3, 0, 0
     ],
     xlabel="First digit (a)",
     ylabel="Second digit (b)",
-    xticks=[(0, str(0)), (cfg.prime - 1, str(cfg.prime - 1))],
-    yticks=[(0, str(0)), (cfg.prime - 1, str(cfg.prime - 1))],
+    xticks=[(0, str(0)), (cfg.p - 1, str(cfg.p - 1))],
+    yticks=[(0, str(0)), (cfg.p - 1, str(cfg.p - 1))],
 )
 
 
 # %%  Neural activations (first five mlp neurons)
-esch.plot(rearrange(output[1].logits[-1][:, :1000], "(a b) neuron -> neuron a b", a=cfg.prime, b=cfg.prime)[100])  #
+esch.plot(rearrange(output[1].logits[-1][:, :1000], "(a b) neuron -> neuron a b", a=cfg.p, b=cfg.p)[100])  #
 
 # %% Logging stuff
 U, S, V = jnp.linalg.svd(W_E)

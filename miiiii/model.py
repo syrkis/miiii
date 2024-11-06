@@ -16,7 +16,7 @@ from jax import Array
 from functools import partial
 from einops import rearrange
 from oeis import A000040
-from typing import Tuple
+from typing import Tuple, List
 from chex import dataclass
 
 # %% Constants #################################################################
@@ -60,7 +60,7 @@ class Embedding:
 @dataclass
 class Params:
     embeds: Embedding
-    blocks: Block
+    blocks: List[Block]
     unbeds: Array  # should be a linear layer ?
 
 
@@ -130,7 +130,7 @@ def layer_norm(params: LayerNorm, x: Array) -> Array:
 # %% Initializers ###########################################################
 def init_embed_fn(rng: Array, cfg: Conf):
     keys = random.split(rng, 2)
-    tok_emb = init_array(keys[0], (cfg.prime, cfg.latent_dim))  # type: ignore
+    tok_emb = init_array(keys[0], (cfg.p, cfg.latent_dim))  # type: ignore
     pos_emb = init_array(keys[1], (2, cfg.latent_dim))  # type: ignore
     return Embedding(tok_emb=tok_emb, pos_emb=pos_emb)
 
@@ -166,11 +166,11 @@ def init_fn(rng: Array, cfg: Conf):  # x: Array, y: Array) -> mi.types.Params:
 
 # %% Functions #################################################################
 def y_fn(cfg: Conf) -> int:  # infers the number of tasks we are solving
-    primes = jnp.array(A000040[1 : cfg.prime**2 * 2])
-    primes = primes[primes < jnp.sqrt(cfg.prime**2)]
-    tasks = primes.shape[0] + 1  #  if cfg.project == "prime" else cfg.vocab_size
+    primes = jnp.array(A000040[1 : cfg.p**2 * 2])
+    primes = primes[primes < jnp.sqrt(cfg.p**2)]
+    tasks = primes.shape[0]  #  if cfg.project == "prime" else cfg.vocab_size
     # TODO: adapt to work with prose
-    return tasks if cfg.project == "miiii" else cfg.prime  # if project is nanda we wanna guess the mod
+    return tasks if cfg.project == "miiii" else cfg.p  # if project is nanda we wanna guess the mod
 
 
 def dropout_fn(key: Array, x: Array, dropout: float) -> Array:
