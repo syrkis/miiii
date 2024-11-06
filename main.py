@@ -3,7 +3,7 @@
 # by: Noah Syrkis
 
 # %% Imports
-import miiiii as mi
+import miiii as mi
 from jax import random, nn
 import jax.numpy as jnp
 import esch

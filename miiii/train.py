@@ -3,9 +3,9 @@
 # by: Noah Syrkis
 
 # %% Imports
-from miiiii.model import Params, apply_fn, init_fn, Activation
-from miiiii.tasks import Dataset
-from miiiii.utils import Conf
+from miiii.model import Params, apply_fn, init_fn, Activation
+from miiii.tasks import Dataset
+from miiii.utils import Conf
 from jax import random, value_and_grad, vmap, nn, lax, tree
 import jax.numpy as jnp
 from jax_tqdm import scan_tqdm

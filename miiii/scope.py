@@ -4,7 +4,7 @@
 
 # %% imports
 from jax import tree
-from miiiii.train import State
+from miiii.train import State
 import esch
 
 

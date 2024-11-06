@@ -4,8 +4,8 @@
 
 # %% Imports
 # import miiiii as mi
-from miiiii.utils import Conf
-from miiiii.tasks import Dataset
+from miiii.utils import Conf
+from miiii.tasks import Dataset
 from dataclasses import field
 
 

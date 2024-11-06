@@ -11,7 +11,7 @@ plot types:
 """
 
 # %% imports
-import miiiii as mi
+import miiii as mi
 from jax import Array
 import numpy as np
 import os

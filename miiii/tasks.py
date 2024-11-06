@@ -3,7 +3,7 @@
 # by: Noah Syrkis
 
 # %% Imports
-from miiiii.utils import Conf
+from miiii.utils import Conf
 from oeis import oeis
 import jax.numpy as jnp
 from jax import Array, random
