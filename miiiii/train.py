@@ -6,22 +6,18 @@
 from miiiii.model import Params, apply_fn, init_fn, Activation
 from miiiii.tasks import Dataset
 from miiiii.utils import Conf
-
-from jax import random, jit, value_and_grad, vmap, nn, lax, tree
-
-# from jax.experimental import io_callback  # use in scan every epochs / 1000 steps (if possible)
+from jax import random, value_and_grad, vmap, nn, lax, tree
 import jax.numpy as jnp
 from jax_tqdm import scan_tqdm
 import optax
 from functools import partial
-from typing import Tuple, Any
+from typing import Tuple
 from chex import dataclass, Array
-import miiiii as mi
 
 
 @dataclass
 class State:
-    params: Params | optax.Params
+    params: Params
     opt_state: optax.OptState
     emas: Params
 
@@ -46,37 +42,34 @@ def focal_loss_fn(logits, y):
     return optax.sigmoid_binary_cross_entropy(logits, y).mean()  # mean across samples
 
 
-def cross_entropy_loss_fn(logits, y, _):
+def cross_entropy_loss_fn(logits, y):
     logits = logits.astype(jnp.float64)  # enable with some jax bullshit to avoid slingshot
     return optax.softmax_cross_entropy_with_integer_labels(logits, y).mean()
 
 
-def update_fn(opt, ds: mi.tasks.Dataset, cfg: Conf):
+def update_fn(opt, ds: Dataset, cfg: Conf):
     apply = apply_fn(cfg)
     loss_fn = focal_loss_fn if cfg.project == "miiii" else cross_entropy_loss_fn
 
-    @jit
     def update(state, key):
         loss, losses, output, grads = grad_fn(state.params, key, ds, cfg, apply, loss_fn)
         grads, emas = filter_fn(grads, state.emas, cfg.alpha, cfg.lamb)  # grokfast values
         updates, opt_state = opt.update(grads, state.opt_state, state.params)
         params = optax.apply_updates(state.params, updates)
-        state = State(params=params, emas=emas, opt_state=opt_state)
+        state = State(params=params, emas=emas, opt_state=opt_state)  # type: ignore
         return state, (loss, losses, output)
 
     return update, apply, loss_fn
 
 
 def grad_fn(params: Params, rng, ds: Dataset, cfg: Conf, apply, loss_fn) -> Tuple[Array, Array, Activation, Array]:
-    # w = ds.info.task if cfg.project == "miiii" else jnp.ones(1)
-
     def loss_and_logits(params: Params) -> Tuple[jnp.ndarray, Tuple[Array, Activation]]:
-        output: Activation = apply(params, rng, ds.train[0], cfg.dropout)
-        losses = loss_fn(output.logits, ds.train[1])  # ds.info.alpha)  # mean for optimization
-        return losses.mean(), (losses, output)
+        acts: Activation = apply(params, rng, ds.train[0], cfg.dropout)
+        losses = loss_fn(acts.logits, ds.train[1])
+        return losses.mean(), (losses, acts)
 
-    (loss, (losses, output)), grads = value_and_grad(loss_and_logits, has_aux=True)(params)
-    return loss, losses, output, grads
+    (loss, (losses, acts)), grads = value_and_grad(loss_and_logits, has_aux=True)(params)
+    return loss, losses, acts, grads
 
 
 def filter_fn(grads, emas, alpha: float, lamb: float):
@@ -85,7 +78,7 @@ def filter_fn(grads, emas, alpha: float, lamb: float):
     return grads, emas
 
 
-def step_fn(ds: mi.tasks.Dataset, cfg: Conf, opt, scope):  # scope is for showing activations d
+def step_fn(ds: Dataset, cfg: Conf, opt, scope):  # scope is for showing activations d
     opt = optax.adamw(cfg.lr, weight_decay=cfg.l2)  # b1=0.9, b2=0.98)
     update, apply, loss_fn = update_fn(opt, ds, cfg)
     evaluate = evaluate_fn(ds, cfg, apply, loss_fn)
@@ -104,30 +97,30 @@ def step_fn(ds: mi.tasks.Dataset, cfg: Conf, opt, scope):  # scope is for showin
     return step
 
 
-def init_state(rng, cfg: Conf, opt):
-    params: Params = init_fn(rng, cfg)
+def init_state(rng, cfg: Conf, ds, opt):
+    params: Params = init_fn(rng, cfg, ds)
     emas = tree.map(lambda x: jnp.zeros_like(x), params)
     opt_state = opt.init(params)
     return State(params=params, opt_state=opt_state, emas=emas)
 
 
-def train(rng, cfg: Conf, ds: mi.tasks.Dataset, scope=False) -> Tuple[State, Any]:
+def train(rng, cfg: Conf, ds: Dataset, scope=False) -> Tuple[State, Tuple[Metrics, Activation | None]]:
     opt = optax.adamw(cfg.lr, weight_decay=cfg.l2, b1=0.9, b2=0.98)  # @nanda2023
-    state = init_state(rng, cfg, opt)
+    state = init_state(rng, cfg, ds, opt)
     step = step_fn(ds, cfg, opt, scope)
     rngs = random.split(rng, cfg.epochs)
     xs = (jnp.arange(cfg.epochs), rngs)
     state, output = lax.scan(step, state, xs)
     return state, output
-    # log_fn(cfg, ds, metrics, acts, state)
 
 
-# Evaluation #########################################################################
-def evaluate_fn(ds: mi.tasks.Dataset, cfg: Conf, apply, loss_fn):
+def evaluate_fn(ds: Dataset, cfg: Conf, apply, loss_fn):
     f1_score = vmap(f1_score_fn, in_axes=(1, 1)) if cfg.project == "miiii" else f1_score_fn  # type: ignore
     accuracy = vmap(accuracy_fn, in_axes=(1, 1)) if cfg.project == "miiii" else accuracy_fn  # type: ignore
     pred_fn = (
-        (lambda x: (nn.sigmoid(x) > 0.5).astype(int)) if cfg.project == "miiii" else lambda x: jnp.argmax(x, axis=-1)
+        (lambda x: (nn.sigmoid(x) > 0.5).astype(jnp.int32))
+        if cfg.project == "miiii"
+        else lambda x: jnp.argmax(x, axis=-1)
     )
 
     def aux_fn(logits, y, loss):

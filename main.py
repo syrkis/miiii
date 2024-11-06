@@ -4,7 +4,7 @@
 
 # %% Imports
 import miiiii as mi
-from jax import random, nn, tree
+from jax import random, nn
 import jax.numpy as jnp
 import esch
 from einops import rearrange
@@ -12,37 +12,41 @@ import matplotlib.pyplot as plt
 
 
 # %% Configuration
-cfg = mi.utils.Conf(project="miiii", p=37, epochs=1000, lamb=2, dropout=0.1, lr=0.1)
+cfg = mi.utils.Conf(project="nanda", p=37, epochs=200, lamb=2, dropout=0.1, lr=0.1)
 rng, *keys = random.split(random.PRNGKey(0), 3)
 ds = mi.tasks.task_fn(keys[0], cfg)
-# %%
-state, output = mi.train.train(keys[1], cfg, ds, scope=True)
 
+
+# %%
+state, (metrics, acts) = mi.train.train(keys[1], cfg, ds, scope=True)
+plt.plot(metrics.train.loss)
+plt.show()
+exit()
+# %%
+
+
+# %%
+ds.train[0]
 
 # %%
 W_E = state.params.embeds.tok_emb
 W_E.shape
 
 # %%
-W_neur = (
-    state.params.embeds.tok_emb
-    @ state.params.blocks.attn.v[0]
-    @ state.params.blocks.attn.p[0]
-    @ state.params.blocks.ffwd.w1[0]
-)
+W_neur = state.params.embeds.tok_emb @ state.params.attn.v[0] @ state.params.attn.o[0] @ state.params.ffwd.w_in[0]
 W_neur.shape
 
 # %%
 
 # %%
-W_logit = state.params.blocks.ffwd.w2[0] @ state.params.unbeds
+W_logit = state.params.ffwd.w_out[0] @ state.params.unbeds
 W_logit.shape
 
 # %% scope
 apply = mi.model.apply_fn(cfg)
 acts = apply(state.params, rng, ds.train[0], 0.0)
-tree.map(jnp.shape, acts)
 
+acts.wei.shape
 # %%  we see the attention is leaning towards the first digit (from the right)
 # wei = rearrange(acts.wei, "time (a b) layer head fst snd -> time a b layer head fst snd", a=cfg.prime, b=cfg.prime)
 # esch.plot(
@@ -57,9 +61,7 @@ tree.map(jnp.shape, acts)
 
 # %%
 esch.plot(
-    rearrange(output[1].wei[-1], "(a b) layer head fst snd -> a b layer head fst snd", a=cfg.p, b=cfg.p)[
-        :, :, 0, 3, 0, 0
-    ],
+    rearrange(acts.wei[-1], "(a b) layer head fst snd -> a b layer head fst snd", a=cfg.p, b=cfg.p)[:, :, 0, 3, 0, 0],
     xlabel="First digit (a)",
     ylabel="Second digit (b)",
     xticks=[(0, str(0)), (cfg.p - 1, str(cfg.p - 1))],
@@ -68,7 +70,8 @@ esch.plot(
 
 
 # %%  Neural activations (first five mlp neurons)
-esch.plot(rearrange(output[1].logits[-1][:, :1000], "(a b) neuron -> neuron a b", a=cfg.p, b=cfg.p)[100])  #
+acts.logits[0].shape
+
 
 # %% Logging stuff
 U, S, V = jnp.linalg.svd(W_E)
