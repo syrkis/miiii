@@ -130,7 +130,7 @@ def evaluate_fn(ds: Dataset, cfg: Conf, apply, loss_fn):
 
     def evaluate(params, key, train_loss, train_logits):
         valid_output = apply(params, key, ds.valid[0], cfg.dropout)
-        valid_loss = loss_fn(valid_output.logits, ds.valid[1])
+        valid_loss = loss_fn(valid_output.logits, ds.valid[1], ds.train[1].mean(axis=0))
 
         valid_metrics = aux_fn(valid_output.logits, ds.valid[1], valid_loss)
         train_metrics = aux_fn(train_logits, ds.train[1], train_loss)

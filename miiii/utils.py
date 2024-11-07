@@ -11,6 +11,7 @@ from chex import dataclass
 from aim import Run, Image as AImage
 from PIL import Image as PImage
 import esch
+from oeis import oeis
 
 
 @dataclass
@@ -66,15 +67,16 @@ def log_metric(cfg, metrics, epoch, task_idx, split, metric_name):
     return metrics_value[epoch, task_idx] if cfg.project == "miiii" else metrics_value[epoch]
 
 
-def log_fn(cfg: Conf, ds, state, output):
+def log_fn(cfg: Conf, ds, state, metrics):
     run = Run(experiment=cfg.project, system_tracking_interval=None)
     run["hparams"] = cfg.__dict__
-    metrics = metrics_to_dict(output[0])
+    metrics = metrics_to_dict(metrics)
+    tasks = [p for p in oeis["A000040"][1 : cfg.p] if p < cfg.p]
 
     # Log metrics for each epoch
     log_steps = 1000
     for epoch in tqdm(range(0, cfg.epochs, cfg.epochs // log_steps)):
-        for task_idx, task in enumerate(ds.info.tasks if cfg.project == "miiii" else range(1)):
+        for task_idx, task in enumerate(tasks if cfg.project == "miiii" else range(1)):
             log_split(run, cfg, metrics, epoch, task, task_idx, "train")
             log_split(run, cfg, metrics, epoch, task, task_idx, "valid")
 
