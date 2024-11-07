@@ -36,10 +36,10 @@ class Metrics:
 
 
 # functions
-@partial(vmap, in_axes=(1, 1))  # type: ignore vmap across task (not sample)
-def focal_loss_fn(logits, y):
+@partial(vmap, in_axes=(1, 1, 0))  # type: ignore vmap across task (not sample)
+def focal_loss_fn(logits, y, alpha):
     logits = logits.astype(jnp.float64)  # enable with some jax bullshit to avoid slingshot
-    return optax.sigmoid_binary_cross_entropy(logits, y).mean()  # mean across samples
+    return optax.sigmoid_focal_loss(logits, y, alpha).mean()  # mean across samples
 
 
 def cross_entropy_loss_fn(logits, y):
@@ -65,7 +65,7 @@ def update_fn(opt, ds: Dataset, cfg: Conf):
 def grad_fn(params: Params, rng, ds: Dataset, cfg: Conf, apply, loss_fn) -> Tuple[Array, Array, Activation, Array]:
     def loss_and_logits(params: Params) -> Tuple[jnp.ndarray, Tuple[Array, Activation]]:
         acts: Activation = apply(params, rng, ds.train[0], cfg.dropout)
-        losses = loss_fn(acts.logits, ds.train[1])
+        losses = loss_fn(acts.logits, ds.train[1], ds.train[1].mean(axis=0))
         return losses.mean(), (losses, acts)
 
     (loss, (losses, acts)), grads = value_and_grad(loss_and_logits, has_aux=True)(params)

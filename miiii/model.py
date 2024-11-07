@@ -3,27 +3,25 @@
 # by: Noah Syrkis
 
 # %% Imports
-# import miiiii as mi
 from miiii.utils import Conf
 from miiii.tasks import Dataset
 from dataclasses import field
-
-
 import jax
 from jax import random, lax, nn, vmap
 import jax.numpy as jnp
 from jax import Array
-
 from functools import partial
 from einops import rearrange
 from oeis import A000040
 from typing import Tuple
 from chex import dataclass
 
-# %% Constants #################################################################
-init_array = nn.initializers.glorot_uniform()
+
+# %% Constants
+initializer = nn.initializers.glorot_uniform()
 
 
+# %% Data classes
 @dataclass
 class Feedforward:
     w_in: Array
@@ -59,7 +57,7 @@ class Activation:
     logits: Array = field(default_factory=lambda: jnp.array([]))
 
 
-# %% Model #####################################################################
+# %% Forward
 def apply_fn(cfg: Conf):
     @partial(vmap, in_axes=(None, None, 0, None))  # type: ignore
     def apply(params, rng: Array, x: Array, dropout: float) -> Activation:
@@ -102,25 +100,25 @@ def embed_fn(w: Embedding, x: Array) -> Array:
     return tok_emb + pos_emb  # z: seq_len x emb_dim
 
 
-# %% Initializers ###########################################################
+# %% Initializers
 def init_embed_fn(rng: Array, cfg: Conf):
     keys = random.split(rng, 2)
-    tok_emb = init_array(keys[0], (cfg.p, cfg.latent_dim))  # type: ignore
-    pos_emb = init_array(keys[1], (2, cfg.latent_dim))  # type: ignore
+    tok_emb = initializer(keys[0], (cfg.p, cfg.latent_dim))  # type: ignore
+    pos_emb = initializer(keys[1], (2, cfg.latent_dim))  # type: ignore
     return Embedding(tok_emb=tok_emb, pos_emb=pos_emb)
 
 
 def init_attn_fn(rng: Array, cfg: Conf) -> Attention:
     keys = random.split(rng, 4)
     shape = (cfg.heads, cfg.latent_dim, cfg.latent_dim // cfg.heads)
-    q, k, v = map(lambda key: init_array(key, shape), keys[:3])
-    o = init_array(keys[3], (cfg.heads, cfg.latent_dim // cfg.heads, cfg.latent_dim))  # type: ignore
+    q, k, v = map(lambda key: initializer(key, shape), keys[:3])
+    o = initializer(keys[3], (cfg.heads, cfg.latent_dim // cfg.heads, cfg.latent_dim))  # type: ignore
     return Attention(q=q, k=k, v=v, o=o)
 
 
 def init_ffwd_fn(rng: Array, cfg: Conf) -> Feedforward:
-    w_in = init_array(rng, (cfg.latent_dim, cfg.latent_dim * 4))  # type: ignore
-    w_out = init_array(rng, (cfg.latent_dim * 4, cfg.latent_dim))  # type: ignore
+    w_in = initializer(rng, (cfg.latent_dim, cfg.latent_dim * 4))  # type: ignore
+    w_out = initializer(rng, (cfg.latent_dim * 4, cfg.latent_dim))  # type: ignore
     return Feedforward(w_in=w_in, w_out=w_out)
 
 
@@ -134,17 +132,16 @@ def init_block(cfg: Conf, rng: jnp.ndarray) -> Tuple[Attention, Feedforward]:
 def init_fn(rng: Array, cfg: Conf, ds: Dataset):  # -> mi.types.Params:
     keys = random.split(rng, 2 + cfg.depth)
     embeds = init_embed_fn(keys[0], cfg)
-    unbeds = init_array(keys[1], (cfg.latent_dim, y_fn(cfg)))  # type: ignore
+    unbeds = initializer(keys[1], (cfg.latent_dim, y_fn(cfg)))  # type: ignore
     attn, ffwd = lax.map(partial(init_block, cfg), keys[2:])
     return Params(embeds=embeds, unbeds=unbeds, attn=attn, ffwd=ffwd)
 
 
-# %% Functions #################################################################
+# %% Evaluation
 def y_fn(cfg: Conf) -> int:  # infers the number of tasks we are solving
     primes = jnp.array(A000040[1 : cfg.p])
     primes = primes[primes < cfg.p]
     tasks = primes.shape[0]  #  if cfg.project == "prime" else cfg.vocab_size
-    # TODO: adapt to work with prose
     return tasks if cfg.project == "miiii" else cfg.p  # if project is nanda we wanna guess the mod
 
 

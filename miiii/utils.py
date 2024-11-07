@@ -26,7 +26,7 @@ class Conf:
     epochs: int = 1000
     lr: float = 1e-3  # @nanda2023
     l2: float = 1.0  # @nanda2023
-    dropout: float = 0.5  # @nanda2023
+    dropout: float = 0.1  # @nanda2023
     train_frac: float = 0.3  # @nanda2023
     debug: bool = False
 
