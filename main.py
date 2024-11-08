@@ -9,10 +9,17 @@ from jax import random
 import jax.numpy as jnp
 import esch
 from einops import rearrange
+from omegaconf import OmegaConf
+
+# omegaconf = OmegaConf.load('config.yaml')
+# cfgs = [mi.utils.sample_config(omegaconf) for _ in range(10)]
+
+# print(cfgs)
+# exit()
 
 
 # %% Configuration
-cfg = mi.utils.Conf(project="miiii", p=113, epochs=10000, lamb=2, dropout=0.5, l2=1.0)
+cfg = mi.utils.Conf(project="miiii", p=113, epochs=50_000, lamb=2, dropout=0.5, l2=1.0, heads=8, depth=1, gamma=2.0, lr=3e-4)
 rng, *keys = random.split(random.PRNGKey(0), 3)
 ds = mi.tasks.task_fn(keys[0], cfg)
 state, (metrics, _) = mi.train.train(keys[1], cfg, ds)  # scope=True)
@@ -25,15 +32,12 @@ apply = mi.model.apply_fn(cfg)
 acts = apply(state.params, rng, x, 0.0)
 
 # %%
-# %%
 # W_E = state.params.embeds.tok_emb
 # W_E.shape
 
 # %%
 # W_neur = state.params.embeds.tok_emb @ state.params.attn.v[0] @ state.params.attn.o[0] @ state.params.ffwd.w_in[0]
 # W_neur.shape
-
-# %%
 
 # %%
 # W_logit = state.params.ffwd.w_out[0] @ state.params.unbeds
@@ -46,9 +50,6 @@ acts = apply(state.params, rng, x, 0.0)
 # esch.plot(wei.squeeze()[:, :, :, 1, 0].transpose(2, 0, 1))
 # esch.plot(wei.squeeze()[:, :, :, 0, 1].transpose(2, 0, 1))
 # esch.plot(wei.squeeze()[:, :, :, 1, 1].transpose(2, 0, 1))
-
-
-# %%
 
 
 # %%  Neural activations (first five mlp neurons)

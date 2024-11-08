@@ -18,7 +18,7 @@ from chex import dataclass
 
 
 # %% Constants
-initializer = nn.initializers.glorot_uniform()
+initializer = nn.initializers.he_normal()
 
 
 # %% Data classes
@@ -65,7 +65,7 @@ def apply_fn(cfg: Conf):
         step_fn = partial(block_fn, dropout=dropout)
         keys = random.split(rng, cfg.depth * 2).reshape(cfg.depth, 2, 2)
         z, acts = lax.scan(step_fn, embeds, (keys, params.attn, params.ffwd))
-        acts.logits = (z @ params.unbeds).sum(axis=0)
+        acts.logits = (z @ params.unbeds)[-1]
         return acts
 
     return apply
@@ -75,7 +75,7 @@ def block_fn(z, args, dropout):
     keys, attn_w, ffwd_w = args
     attn, acts = attn_fn(attn_w, z)
     z = dropout_fn(keys[0], z + attn, dropout)
-    ffwd, acts.ffwd = ffwd_fn(ffwd_w, z)[0]
+    ffwd, acts.ffwd = ffwd_fn(ffwd_w, z)
     z = dropout_fn(keys[1], z + ffwd, dropout)
     return z, acts
 
@@ -90,7 +90,7 @@ def attn_fn(w, x: Array):
 
 def ffwd_fn(w: Feedforward, x: Array) -> Tuple[Array, Array]:
     z = jnp.dot(x, w.w_in)  # + w.b1  # z: seq_len x emb_dim
-    z = jax.nn.relu(z)  # grokfast tanh to things are around 0
+    z = jax.nn.relu(z)  # grokfast relu
     return z @ w.w_out, z  # + w.b2  # disable biases as per @nanda2023
 
 
@@ -103,8 +103,8 @@ def embed_fn(w: Embedding, x: Array) -> Array:
 # %% Initializers
 def init_embed_fn(rng: Array, cfg: Conf):
     keys = random.split(rng, 2)
-    tok_emb = initializer(keys[0], (cfg.p, cfg.latent_dim))  # type: ignore
-    pos_emb = initializer(keys[1], (2, cfg.latent_dim))  # type: ignore
+    tok_emb = initializer(keys[0], (cfg.p + 1, cfg.latent_dim))  # type: ignore
+    pos_emb = initializer(keys[1], (3, cfg.latent_dim))  # type: ignore
     return Embedding(tok_emb=tok_emb, pos_emb=pos_emb)
 
 

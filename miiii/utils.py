@@ -12,24 +12,49 @@ from aim import Run, Image as AImage
 from PIL import Image as PImage
 import esch
 from oeis import oeis
+import random  # should this be determinisitc with jax?
+from omegaconf import DictConfig, ListConfig
 
 
 @dataclass
 class Conf:
+    p: int = 113  # @nanda2023
     project: str = "nanda"
-    task: int | None = None
     alpha: float = 0.98  # not sure what this does (grokfast)
     lamb: float = 2  # set to 0 for no filter (grokfast)
-    p: int = 113  # @nanda2023
+    gamma: float = 2  # grokfast
     latent_dim: int = 128  # @nanda2023
     depth: int = 1  # @nanda2023
     heads: int = 4  # @nanda2023
     epochs: int = 1000
     lr: float = 1e-3  # @nanda2023
     l2: float = 1.0  # @nanda2023
-    dropout: float = 0.1  # @nanda2023
-    train_frac: float = 0.3  # @nanda2023
-    debug: bool = False
+    dropout: float = 0.5  # @nanda2023
+    train_frac: float = 0.5  # @nanda2023
+
+def sample_config(omegaconf: DictConfig | ListConfig) -> Conf:
+    """
+    Randomly samples from the configuration options provided in a DictConfig object
+    and returns a Conf object with those selected hyperparameters.
+    """
+    return Conf(
+        # Assuming the project is a fixed string, not part of the random search
+        project="miiii",
+
+        # Randomly sample each hyperparameter from the provided configuration space
+        lr=random.choice(omegaconf.lr),
+        l2=random.choice(omegaconf.l2),
+        dropout=random.choice(omegaconf.dropout),
+        heads=random.choice(omegaconf.heads),
+
+        # The following are not parameterized in the configuration and remain static
+        epochs=omegaconf.epochs,      # assuming this is meant to be the number of iterations
+        latent_dim=omegaconf.latent_dim,
+
+        # If other hyperparameters like `alpha`, `lamb`, `p`, `depth`, `train_frac`, or `debug`
+        # are also part of the configuration, decide whether to use defaults or include them in the search.
+    )
+
 
 
 def digit_fn(n, base):

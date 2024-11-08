@@ -26,7 +26,7 @@ class Dataset:
 
 # miiii task  ################################################################
 def repr_fn(x, p):  # represent x in base p (p is prime, and x is less than p**2)
-    return jnp.stack((x // p, x % p)).T  # the representation of the numbers
+    return jnp.stack((x // p, x % p, jnp.array(p).repeat(x.shape[0])), axis=-1).astype(jnp.int8)
 
 
 def miiii_fn(key, cfg):  # we go from 0 instead of 2 to avoid annoying index bugs
