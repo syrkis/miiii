@@ -19,7 +19,7 @@ from omegaconf import OmegaConf
 
 
 # %% Configuration
-cfg = mi.utils.Conf(project="miiii", p=113, epochs=50_000, lamb=2, dropout=0.5, l2=1.0, heads=8, depth=1, gamma=2.0, lr=3e-4)
+cfg = mi.utils.Conf(project="miiii", p=113, epochs=50_000, lamb=2, dropout=0.5, l2=1.0, heads=4, depth=1, gamma=2.0, lr=3e-4)
 rng, *keys = random.split(random.PRNGKey(0), 3)
 ds = mi.tasks.task_fn(keys[0], cfg)
 state, (metrics, _) = mi.train.train(keys[1], cfg, ds)  # scope=True)

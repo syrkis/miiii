@@ -94,7 +94,7 @@ def log_metric(cfg, metrics, epoch, task_idx, split, metric_name):
 
 def log_fn(cfg: Conf, ds, state, metrics):
     run = Run(experiment=cfg.project, system_tracking_interval=None)
-    run["hparams"] = cfg.__dict__
+    run["params"] = cfg.__dict__
     metrics = metrics_to_dict(metrics)
     tasks = [p for p in oeis["A000040"][1 : cfg.p] if p < cfg.p]
 
