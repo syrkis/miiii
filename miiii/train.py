@@ -65,7 +65,7 @@ def update_fn(opt, ds: Dataset, cfg: Conf):
 def grad_fn(params: Params, rng, ds: Dataset, cfg: Conf, apply, loss_fn) -> Tuple[Array, Array, Activation, Array]:
     def loss_and_logits(params: Params) -> Tuple[jnp.ndarray, Tuple[Array, Activation]]:
         acts: Activation = apply(params, rng, ds.train[0], cfg.dropout)
-        losses = loss_fn(acts.logits, ds.train[1], ds.train[1].mean(axis=0))
+        losses = loss_fn(acts.logits, ds.train[1], 1 - ds.train[1].mean(axis=0))
         return losses.mean(), (losses, acts)
 
     (loss, (losses, acts)), grads = value_and_grad(loss_and_logits, has_aux=True)(params)
@@ -130,7 +130,7 @@ def evaluate_fn(ds: Dataset, cfg: Conf, apply, loss_fn):
 
     def evaluate(params, key, train_loss, train_logits):
         valid_output = apply(params, key, ds.valid[0], cfg.dropout)
-        valid_loss = loss_fn(valid_output.logits, ds.valid[1], ds.train[1].mean(axis=0))
+        valid_loss = loss_fn(valid_output.logits, ds.valid[1], 1 - ds.train[1].mean(axis=0))
 
         valid_metrics = aux_fn(valid_output.logits, ds.valid[1], valid_loss)
         train_metrics = aux_fn(train_logits, ds.train[1], train_loss)

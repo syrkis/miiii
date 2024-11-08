@@ -12,7 +12,7 @@ from einops import rearrange
 
 
 # %% Configuration
-cfg = mi.utils.Conf(project="miiii", p=113, epochs=5000, lamb=2, dropout=0.5, l2=1.0)
+cfg = mi.utils.Conf(project="miiii", p=113, epochs=10000, lamb=2, dropout=0.5, l2=1.0)
 rng, *keys = random.split(random.PRNGKey(0), 3)
 ds = mi.tasks.task_fn(keys[0], cfg)
 state, (metrics, _) = mi.train.train(keys[1], cfg, ds)  # scope=True)
