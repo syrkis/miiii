@@ -43,7 +43,7 @@ def focal_loss_fn(logits, y, alpha, gamma):
     return optax.sigmoid_focal_loss(logits, y, alpha, gamma).astype(jnp.float32).mean()  # mean across samples
 
 
-def cross_entropy_loss_fn(logits, y):
+def cross_entropy_loss_fn(logits, y, *args):
     logits = logits.astype(jnp.float64)  # enable with some jax bullshit to avoid slingshot
     return optax.softmax_cross_entropy_with_integer_labels(logits, y).astype(jnp.float32).mean()
 

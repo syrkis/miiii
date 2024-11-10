@@ -46,11 +46,11 @@ def nanda_fn(key, cfg: Conf) -> Dataset:
     a = jnp.arange(cfg.p).repeat(cfg.p)
     b = jnp.tile(jnp.arange(cfg.p), cfg.p)
     y = (a + b) % cfg.p
-    data = jnp.stack([a, b, y], axis=-1)
+    data = jnp.stack([a, b, jnp.array(cfg.p).repeat(cfg.p**2), y], axis=-1)
     idxs = random.permutation(key, len(data))
     data = data[idxs]
-    x = data[:, :2]
-    y = data[:, 2]
+    x = data[:, :-1]
+    y = data[:, -1]
     x_train, x_valid = x[: int(len(x) * cfg.train_frac)], x[int(len(x) * cfg.train_frac) :]
     y_train, y_valid = y[: int(len(y) * cfg.train_frac)], y[int(len(y) * cfg.train_frac) :]
     return Dataset(train=(x_train, y_train), valid=(x_valid, y_valid), idxs=idxs)

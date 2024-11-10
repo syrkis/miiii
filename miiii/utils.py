@@ -172,7 +172,7 @@ def cfg_to_dirname(cfg: Conf) -> str:
 
 
 def log_fn(cfg, ds, state, metrics, acts):
-    run = Run(experiment=cfg.project, system_tracking_interval=None)
+    run = Run(experiment=cfg.project, system_tracking_interval=None, repo="aim://localhost:53800")
     run.set_artifacts_uri("s3://syrkis/")
     grand_parent = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     run_hash_dir = os.path.join(grand_parent, "data/artifacts", run.hash)
@@ -228,3 +228,35 @@ def get_metrics_and_params(hash):
             outs[thing] = pickle.load(f)
 
     return outs["state"], (outs["metrics"], outs["acts"])
+
+
+def construct_cfg_from_hash(hash: str) -> Conf:
+    """
+    Constructs the configuration object from a specific run identified by its hash.
+    """
+    # Define the path to the hash directory and access the aim repository
+    repo = Repo("aim://localhost:53800")  # ensure aim server is running
+    run = repo.get_run(hash)
+
+    if run is None:
+        raise ValueError(f"No run associated with hash: {hash}")
+
+    # Retrieve hyperparameters stored in the run
+    hparams = run["hparams"]
+
+    # Create and return a Conf instance using the retrieved parameters from the run
+    return Conf(
+        project=hparams.get("project", "miiii"),  # type: ignore
+        p=run["dataset"].get("prime", 113),  # assuming it stores the prime as well  # type: ignore
+        alpha=hparams.get("alpha", 0.98),  # type: ignore
+        lamb=hparams.get("lamb", 2),  # type: ignore
+        gamma=hparams.get("gamma", 2),  # type: ignore
+        latent_dim=hparams.get("latent_dim", 128),  # type: ignore
+        depth=hparams.get("depth", 1),  # type: ignore
+        heads=hparams.get("heads", 4),  # type: ignore
+        epochs=hparams.get("epochs", 1000),  # type: ignore
+        lr=hparams.get("lr", 3e-4),  # type: ignore
+        l2=hparams.get("l2", 1.0),  # type: ignore
+        dropout=hparams.get("dropout", 0.5),  # type: ignore
+        train_frac=hparams.get("train_frac", 0.5),  # type: ignore
+    )
