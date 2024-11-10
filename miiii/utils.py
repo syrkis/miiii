@@ -16,13 +16,7 @@ import pickle
 from oeis import oeis
 import random
 from omegaconf import DictConfig, ListConfig
-import boto3
-from botocore.client import Config
-from dotenv import load_dotenv
-from botocore.exceptions import ClientError
 
-# Load environment variables from .env file
-load_dotenv()
 
 
 # Define your DigitalOcean Spaces endpoint
@@ -139,21 +133,18 @@ def cfg_to_dirname(cfg: Conf) -> str:
 
 def log_fn(cfg, ds, state, metrics):
     run = Run(experiment=cfg.project, system_tracking_interval=None)
-
     run.set_artifacts_uri('s3://syrkis/')
-    # make a dir data/artifacts/{run.hash}
-    os.makedirs(f"data/artifacts/{run.hash}")
+    grand_parent = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    run_hash_dir = os.path.join(grand_parent, "data/artifacts", run.hash)
+    os.makedirs(run_hash_dir, exist_ok=True)
 
-
-    # jnp.save(f"data/artifacts/{run.hash}/params.npy", state.params)
-    # jnp.save(f"data/artifacts/{run.hash}/metrics.npy", metrics)
-    with open(f"data/artifacts/{run.hash}/metrics.pkl", "wb") as f:
+    with open(f"{run_hash_dir}/metrics.pkl", "wb") as f:
         pickle.dump(metrics, f)
-    with open(f"data/artifacts/{run.hash}/params.pkl", "wb") as f:
+    with open(f"{run_hash_dir}/params.pkl", "wb") as f:
         pickle.dump(state.params, f)
 
-    run.log_artifact("data/artifacts/{run.hash}/metrics.pkl", name="state")
-    run.log_artifact("data/artifacts/{run.hash}/params.pkl", name="state")
+    run.log_artifact(f"{run_hash_dir}/metrics.pkl", name="metrics.pkl", block=True)
+    run.log_artifact(f"{run_hash_dir}/params.pkl", name="params.pkl", block=True)
 
     run["hparams"] = {k: v for k, v in cfg.__dict__.items() if k not in ["project", "debug", "prime"]}
     run["dataset"] = {"prime": cfg.p, "project": cfg.project}
@@ -174,10 +165,3 @@ def log_fn(cfg, ds, state, metrics):
 
 
 # Initialize the S3 client for DigitalOcean Spaces
-s3_client = boto3.client(
-    's3',
-    region_name=spaces_region,
-    endpoint_url=spaces_endpoint,
-    aws_access_key_id=spaces_access_key_id,
-    aws_secret_access_key=spaces_secret_access_key
-)
