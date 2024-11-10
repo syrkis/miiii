@@ -131,7 +131,7 @@ def cfg_to_dirname(cfg: Conf) -> str:
     return "_".join(name_parts)
 
 
-def log_fn(cfg, ds, state, metrics):
+def log_fn(cfg, ds, state, metrics, acts):
     run = Run(experiment=cfg.project, system_tracking_interval=None)
     run.set_artifacts_uri('s3://syrkis/')
     grand_parent = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -140,11 +140,14 @@ def log_fn(cfg, ds, state, metrics):
 
     with open(f"{run_hash_dir}/metrics.pkl", "wb") as f:
         pickle.dump(metrics, f)
-    with open(f"{run_hash_dir}/params.pkl", "wb") as f:
-        pickle.dump(state.params, f)
+    with open(f"{run_hash_dir}/state.pkl", "wb") as f:
+        pickle.dump(state, f)
+    with open(f"{run_hash_dir}/acts.pkl", "wb") as f:
+        pickle.dump(acts, f)
 
     run.log_artifact(f"{run_hash_dir}/metrics.pkl", name="metrics.pkl", block=True)
-    run.log_artifact(f"{run_hash_dir}/params.pkl", name="params.pkl", block=True)
+    run.log_artifact(f"{run_hash_dir}/state.pkl", name="state.pkl", block=True)
+    run.log_artifact(f"{run_hash_dir}/acts.pkl", name="acts.pkl", block=True)
 
     run["hparams"] = {k: v for k, v in cfg.__dict__.items() if k not in ["project", "debug", "prime"]}
     run["dataset"] = {"prime": cfg.p, "project": cfg.project}

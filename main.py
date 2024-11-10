@@ -22,7 +22,7 @@ from omegaconf import OmegaConf
 cfg = mi.utils.Conf(project="miiii", p=37, latent_dim=32,epochs=1000, lamb=2, dropout=0.5, l2=1.0, heads=4, depth=1, gamma=2.0, lr=3e-4)
 rng, *keys = random.split(random.PRNGKey(0), 3)
 ds = mi.tasks.task_fn(keys[0], cfg)
-state, (metrics, _) = mi.train.train(keys[1], cfg, ds)  # scope=True)
+state, (metrics, acts) = mi.train.train(keys[1], cfg, ds)  # scope=True)
 
 # %%
 params = mi.model.init_fn(rng, cfg, ds)
@@ -82,4 +82,4 @@ acts = apply(state.params, rng, x, 0.0)
 # mi.plots.polar_plot(seqs[-1], "polar_primes")
 
 if __name__ == "__main__" and "ipykernel" not in sys.argv[0]:
-    mi.utils.log_fn(cfg, ds, state, metrics)
+    mi.utils.log_fn(cfg, ds, state, metrics, acts)
