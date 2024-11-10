@@ -10,7 +10,7 @@ import jax.numpy as jnp
 
 
 # %%
-hash = "de87b3900af64fdeb34bea42"
+hash = "aa0cb9d1223d4cc8b15b8bda"
 state: mi.train.State
 metrics: mi.train.Metrics
 acts: mi.model.Activation

@@ -15,13 +15,36 @@ import pickle
 from oeis import oeis
 import random
 from omegaconf import DictConfig, ListConfig
+import argparse
 
 
-# Define your DigitalOcean Spaces endpoint
-spaces_access_key_id = os.getenv("SPACES_ACCESS_KEY_ID")
-spaces_secret_access_key = os.getenv("SPACES_SECRET_ACCESS_KEY")
-spaces_endpoint = os.getenv("SPACES_ENDPOINT")
-spaces_region = os.getenv("SPACES_REGION", "ams3")  #
+# # Define your DigitalOcean Spaces endpoint
+# spaces_access_key_id = os.getenv("SPACES_ACCESS_KEY_ID")
+# spaces_secret_access_key = os.getenv("SPACES_SECRET_ACCESS_KEY")
+# spaces_endpoint = os.getenv("SPACES_ENDPOINT")
+# spaces_region = os.getenv("SPACES_REGION", "ams3")  #
+#
+
+
+def parse_args():
+    parser = argparse.ArgumentParser(description="Run model with specified hyperparameters.")
+
+    # Define all hyperparameters as optional arguments with defaults from Conf class
+    parser.add_argument("--project", type=str, default="miiii", help="Project name")
+    parser.add_argument("--latent_dim", type=int, default=128, help="Latent dimension size")
+    parser.add_argument("--depth", type=int, default=1, help="Depth of the model")
+    parser.add_argument("--heads", type=int, default=4, help="Number of attention heads")
+    parser.add_argument("--epochs", type=int, default=10000, help="Number of training epochs")
+    parser.add_argument("--lr", type=float, default=3e-4, help="Learning rate")
+    parser.add_argument("--l2", type=float, default=1.0, help="L2 regularization")
+    parser.add_argument("--dropout", type=float, default=0.5, help="Dropout rate")
+    parser.add_argument("--train_frac", type=float, default=0.5, help="Fraction of data used for training")
+    parser.add_argument("--alpha", type=float, default=0.98, help="Alpha value for optimization")
+    parser.add_argument("--lamb", type=float, default=2, help="Lambda value for regularization")
+    parser.add_argument("--gamma", type=float, default=2, help="Gamma value for optimization")
+    parser.add_argument("--p", type=int, default=113, help="Prime number for data configuration")
+
+    return parser.parse_args()
 
 
 @dataclass
@@ -35,10 +58,31 @@ class Conf:
     depth: int = 1
     heads: int = 4
     epochs: int = 1000
-    lr: float = 1e-3
+    lr: float = 3e-4
     l2: float = 1.0
     dropout: float = 0.5
     train_frac: float = 0.5
+
+
+def create_cfg(args: argparse.Namespace) -> Conf:
+    """
+    Create a configuration object from parsed command-line arguments.
+    """
+    return Conf(
+        project=args.project,
+        p=args.p,
+        latent_dim=args.latent_dim,
+        epochs=args.epochs,
+        lamb=args.lamb,
+        dropout=args.dropout,
+        l2=args.l2,
+        heads=args.heads,
+        depth=args.depth,
+        gamma=args.gamma,
+        lr=args.lr,
+        train_frac=args.train_frac,
+        alpha=args.alpha,
+    )
 
 
 def sample_config(omegaconf: DictConfig | ListConfig) -> Conf:
