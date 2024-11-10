@@ -19,7 +19,7 @@ from chex import dataclass, Array
 @dataclass
 class State:
     params: Params
-    opt_state: optax.OptState
+    opt_state: Params
     emas: Params
 
 

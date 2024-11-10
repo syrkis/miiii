@@ -3,6 +3,8 @@ logs/
 **/__pycache__/
 **/*.pdf
 **/output/
+**/data/artifacts/
+data/
 .DS_Store
 paper_old/
 wandb/
@@ -16,3 +18,4 @@ dist/
 .ruff_cache/
 .venv/
 *.svg
+.env

@@ -32,6 +32,8 @@ cairosvg = "^2.7.1"
 darkdetect = "^0.8.0"
 svglib = "^1.5.1"
 macholib = "^1.16.3"
+boto3 = "^1.35.57"
+python-dotenv = "^1.0.1"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3.2"

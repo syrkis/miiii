@@ -1,8 +1,9 @@
-# %% utils.py
-#   miiii utils
-# by: Noah Syrkis
+# miiii/miiii/utils.py
+# miiii utils
+# By: Noah Syrkis
 
-# %% imports
+# %% Imports
+import os
 import jax.numpy as jnp
 import numpy as np
 from tqdm import tqdm
@@ -11,26 +12,42 @@ from chex import dataclass
 from aim import Run, Image as AImage
 from PIL import Image as PImage
 import esch
+import pickle
 from oeis import oeis
-import random  # should this be determinisitc with jax?
+import random
 from omegaconf import DictConfig, ListConfig
+import boto3
+from botocore.client import Config
+from dotenv import load_dotenv
+from botocore.exceptions import ClientError
+
+# Load environment variables from .env file
+load_dotenv()
+
+
+# Define your DigitalOcean Spaces endpoint
+spaces_access_key_id = os.getenv('SPACES_ACCESS_KEY_ID')
+spaces_secret_access_key = os.getenv('SPACES_SECRET_ACCESS_KEY')
+spaces_endpoint = os.getenv('SPACES_ENDPOINT')
+spaces_region = os.getenv('SPACES_REGION', 'ams3')  #
 
 
 @dataclass
 class Conf:
-    p: int = 113  # @nanda2023
+    p: int = 113
     project: str = "nanda"
-    alpha: float = 0.98  # not sure what this does (grokfast)
-    lamb: float = 2  # set to 0 for no filter (grokfast)
-    gamma: float = 2  # grokfast
-    latent_dim: int = 128  # @nanda2023
-    depth: int = 1  # @nanda2023
-    heads: int = 4  # @nanda2023
+    alpha: float = 0.98
+    lamb: float = 2
+    gamma: float = 2
+    latent_dim: int = 128
+    depth: int = 1
+    heads: int = 4
     epochs: int = 1000
-    lr: float = 1e-3  # @nanda2023
-    l2: float = 1.0  # @nanda2023
-    dropout: float = 0.5  # @nanda2023
-    train_frac: float = 0.5  # @nanda2023
+    lr: float = 1e-3
+    l2: float = 1.0
+    dropout: float = 0.5
+    train_frac: float = 0.5
+
 
 def sample_config(omegaconf: DictConfig | ListConfig) -> Conf:
     """
@@ -38,30 +55,20 @@ def sample_config(omegaconf: DictConfig | ListConfig) -> Conf:
     and returns a Conf object with those selected hyperparameters.
     """
     return Conf(
-        # Assuming the project is a fixed string, not part of the random search
         project="miiii",
-
-        # Randomly sample each hyperparameter from the provided configuration space
         lr=random.choice(omegaconf.lr),
         l2=random.choice(omegaconf.l2),
         dropout=random.choice(omegaconf.dropout),
         heads=random.choice(omegaconf.heads),
-
-        # The following are not parameterized in the configuration and remain static
-        epochs=omegaconf.epochs,      # assuming this is meant to be the number of iterations
+        epochs=omegaconf.epochs,
         latent_dim=omegaconf.latent_dim,
-
-        # If other hyperparameters like `alpha`, `lamb`, `p`, `depth`, `train_frac`, or `debug`
-        # are also part of the configuration, decide whether to use defaults or include them in the search.
     )
-
 
 
 def digit_fn(n, base):
     return jnp.ceil(jnp.log(n + 1) / jnp.log(base)).astype(jnp.int32)
 
 
-# %% functions
 def metrics_to_dict(metrics):
     return {
         "loss": {
@@ -83,7 +90,9 @@ def log_split(run, cfg, metrics, epoch, task, task_idx, split):
     fn = partial(log_metric, cfg, metrics, epoch, task_idx, split)
     task = -1 if task == "prime" else int(task)
     run.track(
-        {"acc": fn("acc"), "f1": fn("f1"), "loss": fn("loss")}, context={"split": split, "task": task}, step=epoch
+        {"acc": fn("acc"), "f1": fn("f1"), "loss": fn("loss")},
+        context={"split": split, "task": task},
+        step=epoch
     )
 
 
@@ -92,18 +101,71 @@ def log_metric(cfg, metrics, epoch, task_idx, split, metric_name):
     return metrics_value[epoch, task_idx] if cfg.project == "miiii" else metrics_value[epoch]
 
 
-def log_fn(cfg: Conf, ds, state, metrics):
-    run = Run(experiment=cfg.project, system_tracking_interval=None)
-    run["params"] = cfg.__dict__
-    metrics = metrics_to_dict(metrics)
-    tasks = [p for p in oeis["A000040"][1 : cfg.p] if p < cfg.p]
+def cfg_to_dirname(cfg: Conf) -> str:
+    """
+    Create a descriptive run name from configuration.
+    Example: nanda_ld128_de1_he4_ep1000_lr1e-3_l21.0_dr0.5_tf0.5
+    """
+    param_order = [
+        ('project', ''),
+        ('latent_dim', 'ld'),
+        ('depth', 'de'),
+        ('heads', 'he'),
+        ('epochs', 'ep'),
+        ('lr', 'lr'),
+        ('l2', 'l2'),
+        ('dropout', 'dr'),
+        ('train_frac', 'tf'),
+        ('alpha', 'al'),
+        ('lamb', 'la'),
+        ('gamma', 'ga'),
+        ('p', 'p'),
+    ]
 
-    # Log metrics for each epoch
+    name_parts = []
+    for attr, abbrev in param_order:
+        value = getattr(cfg, attr, None)
+
+        if value is None or (isinstance(value, int) and value == 0):
+            continue
+
+        if isinstance(value, float):
+            value = f"{value:.2e}" if attr in ['lr'] else f"{value:g}"
+
+        name_parts.append(f"{abbrev}{value}")
+
+    return "_".join(name_parts)
+
+
+def log_fn(cfg, ds, state, metrics):
+    run = Run(experiment=cfg.project, system_tracking_interval=None)
+
+    run.set_artifacts_uri('s3://syrkis/')
+    # make a dir data/artifacts/{run.hash}
+    os.makedirs(f"data/artifacts/{run.hash}")
+
+
+    # jnp.save(f"data/artifacts/{run.hash}/params.npy", state.params)
+    # jnp.save(f"data/artifacts/{run.hash}/metrics.npy", metrics)
+    with open(f"data/artifacts/{run.hash}/metrics.pkl", "wb") as f:
+        pickle.dump(metrics, f)
+    with open(f"data/artifacts/{run.hash}/params.pkl", "wb") as f:
+        pickle.dump(state.params, f)
+
+    run.log_artifact("data/artifacts/{run.hash}/metrics.pkl", name="state")
+    run.log_artifact("data/artifacts/{run.hash}/params.pkl", name="state")
+
+    run["hparams"] = {k: v for k, v in cfg.__dict__.items() if k not in ["project", "debug", "prime"]}
+    run["dataset"] = {"prime": cfg.p, "project": cfg.project}
+
+    metrics_dict = metrics_to_dict(metrics)
+    tasks = [p for p in oeis["A000040"][1:cfg.p] if p < cfg.p]
+
     log_steps = 1000
-    for epoch in tqdm(range(0, cfg.epochs, cfg.epochs // log_steps)):
+    for epoch in range(0, cfg.epochs, max(1, cfg.epochs // log_steps)):
         for task_idx, task in enumerate(tasks if cfg.project == "miiii" else range(1)):
-            log_split(run, cfg, metrics, epoch, task, task_idx, "train")
-            log_split(run, cfg, metrics, epoch, task, task_idx, "valid")
+            log_split(run, cfg, metrics_dict, epoch, task, task_idx, "train")
+            log_split(run, cfg, metrics_dict, epoch, task, task_idx, "valid")
 
     p = esch.plot(state.params.embeds.tok_emb)
     run.track(AImage(PImage.open(p.png)), name="tok_emb", step=cfg.epochs)  # type: ignore
@@ -111,19 +173,11 @@ def log_fn(cfg: Conf, ds, state, metrics):
     run.close()
 
 
-def name_run_fn(cfg: Conf) -> str:
-    """Create a descriptive run name from configuration.
-    Format: task_ld{latent_dim}_de{depth}_he{heads}_lr{lr}_l2{l2}_dr{dropout}
-    Example: miiii_ld128_de2_he4_lr1e-3_l20.1_dr0.1
-    """
-    return (
-        # f"{cfg.task}"
-        f"_pm{cfg.p}"
-        f"_ld{cfg.latent_dim}"
-        f"_de{cfg.depth}"
-        f"_he{cfg.heads}"
-        f"_lr{cfg.lr:g}"  # :g removes trailing zeros
-        f"_l2{cfg.l2:g}"
-        f"_dr{cfg.dropout:g}"
-        f"_ep{cfg.epochs}"
-    )
+# Initialize the S3 client for DigitalOcean Spaces
+s3_client = boto3.client(
+    's3',
+    region_name=spaces_region,
+    endpoint_url=spaces_endpoint,
+    aws_access_key_id=spaces_access_key_id,
+    aws_secret_access_key=spaces_secret_access_key
+)
