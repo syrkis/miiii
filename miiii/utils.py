@@ -176,6 +176,7 @@ def log_fn(cfg, ds, state, metrics, acts):
     run.set_artifacts_uri("s3://syrkis/")
     grand_parent = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     run_hash_dir = os.path.join(grand_parent, "data/artifacts", run.hash)
+    print(cfg)
     print(run.hash)
     os.makedirs(run_hash_dir, exist_ok=True)
 
