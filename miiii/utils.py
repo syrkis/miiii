@@ -6,10 +6,9 @@
 import os
 import jax.numpy as jnp
 import numpy as np
-from tqdm import tqdm
 from functools import partial
 from chex import dataclass
-from aim import Run, Image as AImage
+from aim import Run, Image as AImage, Repo
 from PIL import Image as PImage
 import esch
 import pickle
@@ -18,12 +17,11 @@ import random
 from omegaconf import DictConfig, ListConfig
 
 
-
 # Define your DigitalOcean Spaces endpoint
-spaces_access_key_id = os.getenv('SPACES_ACCESS_KEY_ID')
-spaces_secret_access_key = os.getenv('SPACES_SECRET_ACCESS_KEY')
-spaces_endpoint = os.getenv('SPACES_ENDPOINT')
-spaces_region = os.getenv('SPACES_REGION', 'ams3')  #
+spaces_access_key_id = os.getenv("SPACES_ACCESS_KEY_ID")
+spaces_secret_access_key = os.getenv("SPACES_SECRET_ACCESS_KEY")
+spaces_endpoint = os.getenv("SPACES_ENDPOINT")
+spaces_region = os.getenv("SPACES_REGION", "ams3")  #
 
 
 @dataclass
@@ -84,9 +82,7 @@ def log_split(run, cfg, metrics, epoch, task, task_idx, split):
     fn = partial(log_metric, cfg, metrics, epoch, task_idx, split)
     task = -1 if task == "prime" else int(task)
     run.track(
-        {"acc": fn("acc"), "f1": fn("f1"), "loss": fn("loss")},
-        context={"split": split, "task": task},
-        step=epoch
+        {"acc": fn("acc"), "f1": fn("f1"), "loss": fn("loss")}, context={"split": split, "task": task}, step=epoch
     )
 
 
@@ -101,19 +97,19 @@ def cfg_to_dirname(cfg: Conf) -> str:
     Example: nanda_ld128_de1_he4_ep1000_lr1e-3_l21.0_dr0.5_tf0.5
     """
     param_order = [
-        ('project', ''),
-        ('latent_dim', 'ld'),
-        ('depth', 'de'),
-        ('heads', 'he'),
-        ('epochs', 'ep'),
-        ('lr', 'lr'),
-        ('l2', 'l2'),
-        ('dropout', 'dr'),
-        ('train_frac', 'tf'),
-        ('alpha', 'al'),
-        ('lamb', 'la'),
-        ('gamma', 'ga'),
-        ('p', 'p'),
+        ("project", ""),
+        ("latent_dim", "ld"),
+        ("depth", "de"),
+        ("heads", "he"),
+        ("epochs", "ep"),
+        ("lr", "lr"),
+        ("l2", "l2"),
+        ("dropout", "dr"),
+        ("train_frac", "tf"),
+        ("alpha", "al"),
+        ("lamb", "la"),
+        ("gamma", "ga"),
+        ("p", "p"),
     ]
 
     name_parts = []
@@ -124,7 +120,7 @@ def cfg_to_dirname(cfg: Conf) -> str:
             continue
 
         if isinstance(value, float):
-            value = f"{value:.2e}" if attr in ['lr'] else f"{value:g}"
+            value = f"{value:.2e}" if attr in ["lr"] else f"{value:g}"
 
         name_parts.append(f"{abbrev}{value}")
 
@@ -133,7 +129,7 @@ def cfg_to_dirname(cfg: Conf) -> str:
 
 def log_fn(cfg, ds, state, metrics, acts):
     run = Run(experiment=cfg.project, system_tracking_interval=None)
-    run.set_artifacts_uri('s3://syrkis/')
+    run.set_artifacts_uri("s3://syrkis/")
     grand_parent = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     run_hash_dir = os.path.join(grand_parent, "data/artifacts", run.hash)
     os.makedirs(run_hash_dir, exist_ok=True)
@@ -153,7 +149,7 @@ def log_fn(cfg, ds, state, metrics, acts):
     run["dataset"] = {"prime": cfg.p, "project": cfg.project}
 
     metrics_dict = metrics_to_dict(metrics)
-    tasks = [p for p in oeis["A000040"][1:cfg.p] if p < cfg.p]
+    tasks = [p for p in oeis["A000040"][1 : cfg.p] if p < cfg.p]
 
     log_steps = 1000
     for epoch in range(0, cfg.epochs, max(1, cfg.epochs // log_steps)):
@@ -167,4 +163,22 @@ def log_fn(cfg, ds, state, metrics, acts):
     run.close()
 
 
-# Initialize the S3 client for DigitalOcean Spaces
+def get_metrics_and_params(hash):
+    hash_run_dir = os.path.join(os.getcwd(), "data/artifacts", hash)
+    os.makedirs(hash_run_dir, exist_ok=True)
+    repo = Repo("aim://localhost:53800")  # make sure this is running
+    run = repo.get_run(hash)
+    outs = {"state": None, "metrics": None, "acts": None}
+
+    for thing in outs.keys():
+        file_path = os.path.join(hash_run_dir, f"{thing}.pkl")
+
+        # Check if the file already exists before downloading
+        if not os.path.exists(file_path):
+            run.artifacts[f"{thing}.pkl"].download(hash_run_dir)  # type: ignore
+
+        # Load the file content
+        with open(file_path, "rb") as f:
+            outs[thing] = pickle.load(f)
+
+    return outs["state"], (outs["metrics"], outs["acts"])

@@ -65,7 +65,6 @@ def update_fn(opt, ds: Dataset, cfg: Conf):
 
 
 def grad_fn(params: Params, rng, ds: Dataset, cfg: Conf, apply, loss_fn) -> Tuple[Array, Array, Activation, Array]:
-
     @jit
     def loss_and_logits(params: Params) -> Tuple[jnp.ndarray, Tuple[Array, Activation]]:
         acts: Activation = apply(params, rng, ds.train[0], cfg.dropout)
@@ -88,7 +87,7 @@ def step_fn(ds: Dataset, cfg: Conf, opt, scope):
     update, apply, loss_fn = update_fn(opt, ds, cfg)
     evaluate = evaluate_fn(ds, cfg, apply, loss_fn)
 
-    consort = lambda x, y: jnp.concat((x, y))[jnp.argsort(ds.idxs)].astype(jnp.float16)
+    consort = lambda x, y: jnp.concat((x, y))[jnp.argsort(ds.idxs)].astype(jnp.float16)  # noqa
     output_fn = (lambda x, y: tree.map(consort, x, y)) if scope else lambda *_: None
 
     @jit

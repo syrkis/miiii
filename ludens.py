@@ -4,27 +4,19 @@
 
 
 # %% Imports
-from aim import Repo
-import os
-import pickle
+import miiii as mi
+import esch
+import jax.numpy as jnp
 
 
 # %%
-hash = "09411cac9a174bb3a95db629"
-
-
-def get_metrics_and_params(hash):
-    hash_run_dir = os.path.join(os.getcwd(), "data/artifacts", hash)
-    os.makedirs(hash_run_dir, exist_ok=True)
-    repo = Repo("aim://localhost:53800")
-    run = repo.get_run(hash)
-    outs = {"state": None, "metrics": None, "acts": None}
-    for thing in ["matrics", "state", "acts"]:
-        run.artifacts[f"{thing}.pkl"].download(os.path.join(hash_run_dir))  # type: ignore
-        with open(os.path.join(hash_run_dir, f"{thing}.pkl"), "rb") as f:
-            outs[thing] = pickle.load(f)
-    return outs["state"], (outs["metrics"], outs["acts"])
-
+hash = "de87b3900af64fdeb34bea42"
+state: mi.train.State
+metrics: mi.train.Metrics
+acts: mi.model.Activation
+state, (metrics, acts) = mi.utils.get_metrics_and_params(hash)  # type: ignore
 
 # %%
-state, (metrics, acts) = get_metrics_and_params(hash)
+U, S, V = jnp.linalg.svd(state.params.embeds.tok_emb)
+esch.plot(U)
+esch.plot(S[None, :])

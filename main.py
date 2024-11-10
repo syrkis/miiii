@@ -19,7 +19,9 @@ from omegaconf import OmegaConf
 
 
 # %% Configuration
-cfg = mi.utils.Conf(project="miiii", p=37, latent_dim=32,epochs=1000, lamb=2, dropout=0.5, l2=1.0, heads=4, depth=1, gamma=2.0, lr=3e-4)
+cfg = mi.utils.Conf(
+    project="miiii", p=37, latent_dim=32, epochs=1000, lamb=2, dropout=0.5, l2=1.0, heads=4, depth=1, gamma=2.0, lr=3e-4
+)
 rng, *keys = random.split(random.PRNGKey(0), 3)
 ds = mi.tasks.task_fn(keys[0], cfg)
 state, (metrics, acts) = mi.train.train(keys[1], cfg, ds)  # scope=True)
@@ -29,7 +31,7 @@ params = mi.model.init_fn(rng, cfg, ds)
 x = jnp.concat((ds.train[0], ds.valid[0]), axis=0)[jnp.argsort(ds.idxs)]
 y = jnp.concat((ds.train[1], ds.valid[1]), axis=0)[jnp.argsort(ds.idxs)]
 apply = mi.model.apply_fn(cfg)
-acts = apply(state.params, rng, x, 0.0)
+# acts = apply(state.params, rng, x, 0.0)
 
 # %%
 # W_E = state.params.embeds.tok_emb
