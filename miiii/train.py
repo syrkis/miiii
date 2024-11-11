@@ -37,20 +37,22 @@ class Metrics:
 
 
 # Train
-@partial(vmap, in_axes=(1, 1, 0, None))  # type: ignore vmap across task (not sample)
-def focal_loss_fn(logits, y, alpha, gamma):
-    logits = logits.astype(jnp.float64)  # enable with some jax bullshit to avoid slingshot
-    return optax.sigmoid_focal_loss(logits, y, alpha, gamma).astype(jnp.float32).mean()  # mean across samples
+# @partial(vmap, in_axes=(1, 1, 0, None))  # type: ignore vmap across task (not sample)
+# def focal_loss_fn(logits, y, alpha, gamma):
+#     logits = logits.astype(jnp.float64)  # enable with some jax bullshit to avoid slingshot
+#     return optax.sigmoid_focal_loss(logits, y, alpha, gamma).astype(jnp.float32).mean()  # mean across samples
 
 
-def cross_entropy_loss_fn(logits, y, *args):
+@partial(vmap, in_axes=(1, 1))
+def loss_fn(logits, y):
     logits = logits.astype(jnp.float64)  # enable with some jax bullshit to avoid slingshot
     return optax.softmax_cross_entropy_with_integer_labels(logits, y).astype(jnp.float32).mean()
 
 
 def update_fn(opt, ds: Dataset, cfg: Conf):
     apply = apply_fn(cfg)
-    loss_fn = focal_loss_fn if cfg.project == "miiii" else cross_entropy_loss_fn
+    # loss_fn = focal_loss_fn if cfg.project == "miiii" else cross_entropy_loss_fn
+    # loss_fn = cross_entropy_loss_fn
 
     @jit
     def update(state, key):
@@ -68,7 +70,7 @@ def grad_fn(params: Params, rng, ds: Dataset, cfg: Conf, apply, loss_fn) -> Tupl
     @jit
     def loss_and_logits(params: Params) -> Tuple[jnp.ndarray, Tuple[Array, Activation]]:
         acts: Activation = apply(params, rng, ds.train[0], cfg.dropout)
-        losses = loss_fn(acts.logits, ds.train[1], 1 - ds.train[1].mean(axis=0), cfg.gamma)
+        losses = loss_fn(acts.logits, ds.train[1])
         return losses.mean(), (losses, acts)
 
     (loss, (losses, acts)), grads = value_and_grad(loss_and_logits, has_aux=True)(params)
@@ -122,20 +124,15 @@ def train(rng, cfg: Conf, ds: Dataset, scope=False) -> Tuple[State, Tuple[Metric
 def evaluate_fn(ds: Dataset, cfg: Conf, apply, loss_fn):
     f1_score = vmap(f1_score_fn, in_axes=(1, 1)) if cfg.project == "miiii" else f1_score_fn  # type: ignore
     accuracy = vmap(accuracy_fn, in_axes=(1, 1)) if cfg.project == "miiii" else accuracy_fn  # type: ignore
-    pred_fn = (
-        (lambda x: (nn.sigmoid(x) > 0.5).astype(jnp.int8))
-        if cfg.project == "miiii"
-        else lambda x: jnp.argmax(x, axis=-1)
-    )
 
     def aux_fn(logits, y, loss):
-        pred = pred_fn(logits)
+        pred = jnp.argmax(logits, axis=-1)
         f1, acc = f1_score(pred, y), accuracy(pred, y)
         return Split(loss=loss, f1=f1, acc=acc)
 
     def evaluate(params, key, train_loss, train_logits):
         valid_output = apply(params, key, ds.valid[0], cfg.dropout)
-        valid_loss = loss_fn(valid_output.logits, ds.valid[1], 1 - ds.train[1].mean(axis=0), cfg.gamma)
+        valid_loss = loss_fn(valid_output.logits, ds.valid[1])
 
         valid_metrics = aux_fn(valid_output.logits, ds.valid[1], valid_loss)
         train_metrics = aux_fn(train_logits, ds.train[1], train_loss)

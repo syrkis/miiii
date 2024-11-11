@@ -65,7 +65,9 @@ def apply_fn(cfg: Conf):
         step_fn = partial(block_fn, dropout=dropout)
         keys = random.split(rng, cfg.depth * 2).reshape(cfg.depth, 2, 2)
         z, acts = lax.scan(step_fn, embeds, (keys, params.attn, params.ffwd))
-        acts.logits = (z @ params.unbeds)[-1]
+        acts.logits = (z[None, ...] @ params.unbeds)[:, -1]
+        # print(z.shape, params.unbeds.shape, acts.logits.shape)
+        # exit()
         return acts
 
     return apply
@@ -132,17 +134,17 @@ def init_block(cfg: Conf, rng: jnp.ndarray) -> Tuple[Attention, Feedforward]:
 def init_fn(rng: Array, cfg: Conf, ds: Dataset):  # -> mi.types.Params:
     keys = random.split(rng, 2 + cfg.depth)
     embeds = init_embed_fn(keys[0], cfg)
-    unbeds = initializer(keys[1], (cfg.latent_dim, y_fn(cfg)))  # type: ignore
+    unbeds = initializer(keys[1], (n_tasks(cfg), cfg.latent_dim, cfg.p))  # type: ignore
     attn, ffwd = lax.map(partial(init_block, cfg), keys[2:])
     return Params(embeds=embeds, unbeds=unbeds, attn=attn, ffwd=ffwd)
 
 
 # %% Evaluation
-def y_fn(cfg: Conf) -> int:  # infers the number of tasks we are solving
+def n_tasks(cfg: Conf) -> int:  # infers the number of tasks we are solving
     primes = jnp.array(A000040[1 : cfg.p])
     primes = primes[primes < cfg.p]
     tasks = primes.shape[0]  #  if cfg.project == "prime" else cfg.vocab_size
-    return tasks if cfg.project == "miiii" else cfg.p  # if project is nanda we wanna guess the mod
+    return tasks  # if cfg.project == "miiii" else cfg.p  # if project is nanda we wanna guess the mod
 
 
 def dropout_fn(key: Array, x: Array, dropout: float) -> Array:
