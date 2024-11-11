@@ -105,9 +105,31 @@ $<miiii>
 While #cite(<nanda2023>, form: "prose") follows the template $a + b mod 113 = x$ for all $a, b < 113$,
 this paper, when using base `113` numbers, follows the template $a times 113 + b times 1 in PP$ for all $a, b < 113$.
 The choice of $113$ as a base (when n is $113^2$) ensures that the structure of our dataset is similar to that of #cite(<nanda2023>, form: "prose").
+
+
+#figure(
+  image("figs/ds_miiii_11_x.svg"),
+  caption: [Representation of $X$, showing all pairs of $(x_0, x_1)$ for $p=11$. Top left shows (base 11) representation of 0, and bottom right represention of 120],
+)<miiii_x_11>
+
+
 Using the cube-root one could extend the task to include a $c * 113^2$-term. However, as the cartestian product of 113 and 113
 lends itself much better to visualization (than the 113, 113, 113 cube), we choose to stick with the square, usoing base-113 numbers,
 in the initial phase of our experiment.
+
+
+#figure(
+  image("figs/ds_miiii_11_y.svg"),
+  caption: [Representation of our $Y$ for $p = 11$. 2, 3, 5 and 7 and the four primes (and therefore tasks) less than 11.],
+)<miiii_y_11>
+
+
+#figure(
+  image("figs/ds_nanda_11_y.svg"),
+  caption: [Represenation of $Y$ for $p=11$ for #cite(<nanda2023>, form: "prose")],
+)<nanda_y_11>
+
+
 
 #figure(
   image("figs/attention_one.svg"),

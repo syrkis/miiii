@@ -6,11 +6,12 @@
 from miiii.model import Params, apply_fn, init_fn, Activation
 from miiii.tasks import Dataset
 from miiii.utils import Conf
-from jax import random, value_and_grad, vmap, nn, lax, tree, jit
+from jax import random, value_and_grad, vmap, lax, tree, jit
 import jax.numpy as jnp
 from jax_tqdm import scan_tqdm
 import optax
-from functools import partial
+
+# from functools import partial
 from typing import Tuple
 from chex import dataclass, Array
 

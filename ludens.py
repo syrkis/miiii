@@ -129,3 +129,61 @@ esch.plot(F @ neuron_acts[ds.idxs[2222]] @ F.T)
 # W_logit[:, 0] @ F.T
 # W_logit.shape, F.shape
 esch.plot((state.params.ffwd.w_out[0] @ state.params.unbeds)[-1].T, path="out.svg")
+
+
+# %%
+plt.hist(acts.logits.argmax(-1))
+
+# %%
+plt.hist(y)
+
+
+# %%
+esch.plot(x[:7, :2])
+jnp.arange(7) % 2
+
+# %%
+
+esch.plot(y.min(-1).reshape((113, 113)))
+
+# %%
+esch.plot(jnp.tri(10).at[0, 0].set(2))
+
+
+# %%
+esch.plot(rearrange(x[:, :-1], "(a b) c -> a b c", a=cfg.p, b=cfg.p))
+
+##############################################################################
+# %% Plot ####################################################################
+##############################################################################
+
+cfg = mi.utils.Conf(p=11, project="nanda")
+rng = random.PRNGKey(0)
+ds = mi.tasks.task_fn(rng, cfg)
+x, y = map(lambda x, y: jnp.concat((x, y), axis=0)[jnp.argsort(ds.idxs)], ds.train, ds.valid)
+
+
+# %% Plotting x
+if cfg.project == "miiii":
+    left = esch.EdgeConfig(ticks=[(i, str(i)) for i in range(cfg.p)], show_on="first")
+    top = esch.EdgeConfig(label=[f"{i}" for i in range(cfg.p)], show_on="all")
+    # top = esch.EdgeConfig(ticks=[(1, str(0))], show_on="all")
+    edge = esch.EdgeConfigs(left=left, bottom=top)
+    esch.plot(
+        rearrange(x[:, :-1], "(a b) c -> b a c", a=cfg.p, b=cfg.p),
+        edge=edge,
+        path=f"paper/figs/ds_{cfg.project}_{cfg.p}_x.svg",
+    )
+
+    # %% Plotting y
+    top = esch.EdgeConfig(label=[f"Task {p}" for p in [2, 3, 5, 7]], show_on="all")
+    bottom = esch.EdgeConfig(label="x_0", show_on="first")
+    left = esch.EdgeConfig(label="x_1", show_on="first")
+    edge = esch.EdgeConfigs(top=top, bottom=bottom, left=left)
+    esch.plot(
+        rearrange(y, "(a b) t -> t b a", a=cfg.p, b=cfg.p), edge=edge, path=f"paper/figs/ds_{cfg.project}_{cfg.p}_y.svg"
+    )
+
+
+# %%
+esch.plot(y.reshape(cfg.p, cfg.p), path=f"paper/figs/ds_{cfg.project}_{cfg.p}_y.svg")
