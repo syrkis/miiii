@@ -65,9 +65,7 @@ def apply_fn(cfg: Conf):
         step_fn = partial(block_fn, dropout=dropout)
         keys = random.split(rng, cfg.depth * 2).reshape(cfg.depth, 2, 2)
         z, acts = lax.scan(step_fn, embeds, (keys, params.attn, params.ffwd))
-        acts.logits = (z[None, ...] @ params.unbeds)[:, -1].squeeze()
-        # print(z.shape, params.unbeds.shape, acts.logits.shape)
-        # exit()
+        acts.logits = (z @ params.unbeds)[-1]  # binary preidction on if x is mul of f.
         return acts
 
     return apply
@@ -143,7 +141,7 @@ def init_fn(rng: Array, cfg: Conf, ds: Dataset):  # -> mi.types.Params:
 def n_tasks(cfg: Conf):  # infers the number of tasks we are solving
     primes = jnp.array(A000040[1 : cfg.p])
     primes = primes[primes < cfg.p]
-    shape = (primes.shape[0], cfg.latent_dim, cfg.p) if cfg.project == "miiii" else (cfg.latent_dim, cfg.p)
+    shape = (cfg.latent_dim, primes.shape[0]) if cfg.project == "miiii" else (cfg.latent_dim, cfg.p)
     return shape
 
 

@@ -10,6 +10,7 @@ import jax.numpy as jnp
 from jax import random
 from einops import rearrange
 import matplotlib.pyplot as plt
+from oeis import oeis
 
 
 # %%  Load dataset and declare hash, etc.
@@ -150,15 +151,12 @@ esch.plot(y.min(-1).reshape((113, 113)))
 esch.plot(jnp.tri(10).at[0, 0].set(2))
 
 
-# %%
-esch.plot(rearrange(x[:, :-1], "(a b) c -> a b c", a=cfg.p, b=cfg.p))
-
 ##############################################################################
 # %% Plot ####################################################################
 ##############################################################################
 
-cfg = mi.utils.Conf(p=11, project="nanda")
 rng = random.PRNGKey(0)
+cfg = mi.utils.Conf(p=11, project="miiii")
 ds = mi.tasks.task_fn(rng, cfg)
 x, y = map(lambda x, y: jnp.concat((x, y), axis=0)[jnp.argsort(ds.idxs)], ds.train, ds.valid)
 
@@ -181,9 +179,20 @@ if cfg.project == "miiii":
     left = esch.EdgeConfig(label="x_1", show_on="first")
     edge = esch.EdgeConfigs(top=top, bottom=bottom, left=left)
     esch.plot(
-        rearrange(y, "(a b) t -> t b a", a=cfg.p, b=cfg.p), edge=edge, path=f"paper/figs/ds_{cfg.project}_{cfg.p}_y.svg"
+        rearrange(y, "(a b) t -> t a b", a=cfg.p, b=cfg.p), edge=edge, path=f"paper/figs/ds_{cfg.project}_{cfg.p}_y.svg"
     )
 
 
 # %%
-esch.plot(y.reshape(cfg.p, cfg.p), path=f"paper/figs/ds_{cfg.project}_{cfg.p}_y.svg")
+esch.plot(y.reshape(cfg.p, cfg.p))
+
+# %%
+bottom = esch.EdgeConfig(
+    ticks=[(i, str(p)) for i, p in enumerate(oeis["A000040"][1:30]) if i % 2 >= 0], show_on="first"
+)
+edge = esch.EdgeConfigs(bottom=bottom)
+esch.plot(
+    1 / (metrics.train.loss[-1][None, :] + metrics.valid.loss[-1][None, :]),
+    edge=edge,
+    path="paper/figs/miiii_acc_tasks_113.svg",
+)

@@ -38,10 +38,23 @@
 
 = Introduction
 
-It is well established that deep learning models can function as both archives (overfitting to training data) and algorithms (learning a generalizing rule), with more recent work focusing on the transition between these two modes @power2022, @nanda2023, @conmy2023. This work aims to further understand this dynamic, by training a deep learning model to solve an array of tasks of increasing difficulty. Specifucally, the tasks asks if a given natural number $n_0$ less than $n$ is a multiple of every prime number less than $sqrt(n)$. The reader should note that a natural number $n$ is prime if and only if it is not a multiple of any prime number less than $sqrt(n)$ (Sieve of Eratosthenes).
+Recent years have seen deep learning models demonstrate remarkable proficiency in solving complex computational tasks. These models exhibit parallels to information-theoretic concepts, particularly in lossy data compression. For instance, the weights of GPT-2 are about a tenth of the size of its training data, akin to the compression ratios achieved by techniques like Huffman coding (mention lossy technique instead). Importantly, deep learning architectures can function both as archives—overfitting to training data—and as generalized algorithms @power2022.
+
+A system capable of transitioning from archive to algorithm presents intriguing questions: Why doesn't it skip the archiving step and directly learn algorithms? What types of algorithms does it learn, and how reliably? Can the learning process be expedited? Critically, what specific algorithm has been learned by a given system? Addressing these questions is essential for advancing the theoretical understanding of deep learning and enhancing their practical applications.
+
+In deep learning, however, theory often lags behind practice, limiting our ability to mechanistically explain basic models that have generalized on even relatively simple, synthetically generated tasks. Exploring the mechanics of deep learning models is perhaps more akin to studying biology or botany than traditional computer science. This paper, for example, reverse-engineers a simple transformer model trained to solve modular arithmetic tasks. The simplicity of this training is akin to discovering an intriguing plant in a botanical garden (easy), while understanding its mechanics is akin to dissecting the plant to uncover the principles governing its growth and function (hard).
+
+My investigation probes the fundamental algorithmic structures internalized by a transformer model trained on basic modular arithmetic tasks, with slight variations in complexity. This approach provides insights into how and why specific algorithmic patterns emerge from seemingly straightforward learning processes. @generalization_levels the levels of generalization achieved across these tasks.
+
+#figure(
+  image("figs/miiii_acc_tasks_113.svg", width: 120%),
+  caption: [Generalization levels of the tasks],
+)<generalization_levels>
 
 
 = Related work
+
+This transition between archival and algorithmic modes is smooth under at least some circumstances @nanda2023. Recent research has revealed that amplifying slow-varying gradients can significantly accelerate generalization @lee2024a.
 
 *Generalization and grokking* — #cite(<power2022>, form: "prose") shows generalization can happen #quote(attribution: cite(<power2022>), "[...] well past the point of overfitting"), dubbing the phenomenon "grokking". The phenomenon is now well established @nanda2023, @humayun2024, @wang2024, @conmy2023, @lee2024a. By regarding the series of gradients as a stochastic signal, #cite(<lee2024a>, form: "prose") propose decomposing the signal into two components: a fast-varying overfitting component and a slow-varying generalization component. They then show that amplification of the slow-varying component significantly accelerates grokking substantially (more than fifty-fold in some cases). This is similar to momentum and AdamW, but the authors explain why it is not the same and can be used in alongside AdamW #cite(<lee2024a>, supplement: "p. 8") (I am trying to understand this better).
 
@@ -91,20 +104,7 @@ The task is referred to as $cal(T)$, with a subscript indicating the task number
 
 = Methods
 
-Like #cite(<nanda2023>, form: "prose"), $cal(D)$ is constructed from the first 12 769 natural numbers ($113^2$).
-113 was chosen as it allows for a small dataset that can fit in memory, while still being large enough to be interesting.
-Indeed, their model was able to generalize modular addition to the held-out test set.
-
-
-$
-  y_i = (
-    x_0 dot p^0 + x_1 dot p^1
-  ) mod t_i, quad forall t_i < p "where" t_i "is prime",
-$<miiii>
-
-While #cite(<nanda2023>, form: "prose") follows the template $a + b mod 113 = x$ for all $a, b < 113$,
-this paper, when using base `113` numbers, follows the template $a times 113 + b times 1 in PP$ for all $a, b < 113$.
-The choice of $113$ as a base (when n is $113^2$) ensures that the structure of our dataset is similar to that of #cite(<nanda2023>, form: "prose").
+My dataset, like that of #cite(<nanda2023>, form: "prose"), has as $X$ the cartestian product of $p$. @miiii_x_11 represents $X$ for $p=11$, varying $x_0$ and $x_1$ through the rows and columns respectively.
 
 
 #figure(
@@ -113,9 +113,13 @@ The choice of $113$ as a base (when n is $113^2$) ensures that the structure of 
 )<miiii_x_11>
 
 
-Using the cube-root one could extend the task to include a $c * 113^2$-term. However, as the cartestian product of 113 and 113
-lends itself much better to visualization (than the 113, 113, 113 cube), we choose to stick with the square, usoing base-113 numbers,
-in the initial phase of our experiment.
+$Y$ is constructed by, for each potential prime factor $f_j < p$ we compute the $x_i mod f_j$ . In the simplified case of $p=11$, the potential prime factors are 2, 3, 5, and 7. In that case, $Y$ thus becomes a $11^2 times 4$ (11^2 samples, and 4 tasks for each) matrix, which is shown rearranged to $4 times 11 times 11$ in @miiii_y_11. The most second to top left most value of the left-most plot in the figure, shows $0 dot 11^1 + 0 dot 11^0 mod 2$ to be 0.
+
+$
+  y_i = (
+    x_0 dot p^0 + x_1 dot p^1
+  ) mod f_j, quad forall f_j < p "where" t_j "is prime",
+$<miiii>
 
 
 #figure(
@@ -123,13 +127,10 @@ in the initial phase of our experiment.
   caption: [Representation of our $Y$ for $p = 11$. 2, 3, 5 and 7 and the four primes (and therefore tasks) less than 11.],
 )<miiii_y_11>
 
-
 #figure(
   image("figs/ds_nanda_11_y.svg"),
   caption: [Represenation of $Y$ for $p=11$ for #cite(<nanda2023>, form: "prose")],
 )<nanda_y_11>
-
-
 
 #figure(
   image("figs/attention_one.svg"),
