@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 
 
 # %%  Load dataset and declare hash, etc.
-hash = "c5420362ad014e7a84fa4c71"
+hash = "315376a04a0843f0a4fa6f75"
 cfg = mi.utils.construct_cfg_from_hash(hash)
 rng = random.PRNGKey(0)
 ds = mi.tasks.task_fn(rng, cfg)
@@ -103,7 +103,7 @@ esch.plot(F @ F.T)
 esch.plot(F @ W_E)
 
 # %%
-plt.plot((jnp.linalg.norm(F @ W_E, axis=-1)))
+esch.plot((jnp.linalg.norm(F @ W_E, axis=-1))[None, :])
 
 # %%
 jnp.linalg.norm(F @ W_E, axis=-1).argsort()
@@ -112,7 +112,7 @@ esch.plot(W_E)
 
 # %%
 
-key_freqs = jnp.array([32, 55, 80, 54])
+key_freqs = jnp.array([97, 94, 96, 93, 92, 0, 1])
 key_idxs = (key_freqs.repeat(2) + jnp.tile(jnp.eye(2)[1], (len(key_freqs),))).astype(jnp.int32)
 key_embed = (F @ W_E)[key_idxs]
 esch.plot(key_embed @ key_embed.T)
@@ -124,11 +124,8 @@ esch.plot(F[40][None, :] * F[40][:, None])
 
 # %%
 neuron_acts = rearrange(acts.ffwd.squeeze()[:, -1], "(a b) neuron -> neuron a b", a=cfg.p, b=cfg.p)
-esch.plot(F @ neuron_acts[ds.idxs[1]] @ F.T)
+esch.plot(F @ neuron_acts[ds.idxs[-1]] @ F.T)
 # %%
 # W_logit[:, 0] @ F.T
 # W_logit.shape, F.shape
-(
-    state.params.ffwd.w_out[0].shape,
-    state.params.unbeds.shape,
-)  # i gotta switch to one hot encoding of correct answer, rather than just binary == 0
+esch.plot((state.params.ffwd.w_out[0] @ state.params.unbeds)[-1].T, path="out.svg")
