@@ -17,7 +17,7 @@ if __name__ == "__main__" and "ipykernel" not in sys.argv[0]:
 
 
 else:
-    cfg = mi.utils.Conf(project="nanda", p=37, train_frac=0.8, lr=3e-4, epochs=1000, latent_dim=32)
+    cfg = mi.utils.Conf(project="nanda", p=113, train_frac=0.8, lr=3e-4, epochs=10000, latent_dim=128)
 
 rng, *keys = random.split(random.PRNGKey(0), 3)
 ds = mi.tasks.task_fn(keys[0], cfg)

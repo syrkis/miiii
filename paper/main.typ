@@ -1,9 +1,7 @@
-#import "@preview/unequivocal-ams:0.1.1": ams-article, theorem, proof
-#import "@preview/equate:0.2.0": equate // <- for numbering equations
+#import "@preview/unequivocal-ams:0.1.2": ams-article, theorem, proof
+#import "@preview/equate:0.2.1": equate // <- for numbering equations
 
 #let run = "2024-09-19_20-12-55"
-
-
 #show: equate.with(breakable: true, sub-numbering: true)
 #set math.equation(numbering: "(1.1)")
 
@@ -13,16 +11,16 @@
     (
       name: "Noah Syrkis",
       // department: [Department of Computer Science],
-      // organization: [University of Copenhagen],
-      // location: [Copenhagen, Denmark],
-      // url: "www.syrkis.com",
+      organization: [University of Copenhagen],
+      location: [Copenhagen, Denmark],
+      url: "syrkis.com",
     ),
     (
       name: "Anders Søgaard",
       // department: [Department of Computer Science],
-      // organization: [University of Copenhagen],
-      // location: [Copenhagen, Denmark],
-      // url: "www.angbo.com",n
+      organization: [University of Copenhagen],
+      location: [Copenhagen, Denmark],
+      url: "anderssoegaard.github.io/",
     ),
   ),
   abstract: [
@@ -40,15 +38,24 @@
 
 = Introduction
 
-It is well established that deep learning models can function as both archives (overfitting to training data) and algorithms (learning a generalizing rule), with more recent work focusing on the transition between these two modes @power2022, @nanda2023, @conmy2023. This work aims to further understand this dynamic, by training a deep learning model to solve a set of tasks, whose difficulty are spaced on a gradient. Specifucally, the tasks asks if a given natural number $n_0$ less than $n$ is a multiple of every prime number less than $sqrt(n)$, or if $n_0$ is prime. Given that the generelized solution to each varries in difficulty, the model will have varying degrees of generalization for any of the tasks, at given point during traing. The goal is to explore, and perhaps understand, the transition between overfitting and generalization.
+It is well established that deep learning models can function as both archives (overfitting to training data) and algorithms (learning a generalizing rule), with more recent work focusing on the transition between these two modes @power2022, @nanda2023, @conmy2023. This work aims to further understand this dynamic, by training a deep learning model to solve an array of tasks of increasing difficulty. Specifucally, the tasks asks if a given natural number $n_0$ less than $n$ is a multiple of every prime number less than $sqrt(n)$. The reader should note that a natural number $n$ is prime if and only if it is not a multiple of any prime number less than $sqrt(n)$ (Sieve of Eratosthenes).
+
 
 = Related work
 
-*Generalization / Grokking* — #cite(<power2022>, form: "prose") shows generalization can happen #quote(attribution: cite(<power2022>), "[...] well past the point of overfitting"), dubbing the phenomenon "grokking". The phenomenon is now well established @nanda2023, @humayun2024, @wang2024, @conmy2023, @lee2024a. By regarding the series of gradients as a stochastic signal, #cite(<lee2024a>, form: "prose") propose decomposing the signal into two components: a fast-varying overfitting component and a slow-varying generalization component. They then show that amplification of the slow-varying component significantly accelerates grokking substantially (more than fifty-fold in some cases). This is similar to momentum and AdamW, but the authors explain why it is not the same and can be used in alongside AdamW #cite(<lee2024a>, supplement: "p. 8") (I am trying to understand this better).
+*Generalization and grokking* — #cite(<power2022>, form: "prose") shows generalization can happen #quote(attribution: cite(<power2022>), "[...] well past the point of overfitting"), dubbing the phenomenon "grokking". The phenomenon is now well established @nanda2023, @humayun2024, @wang2024, @conmy2023, @lee2024a. By regarding the series of gradients as a stochastic signal, #cite(<lee2024a>, form: "prose") propose decomposing the signal into two components: a fast-varying overfitting component and a slow-varying generalization component. They then show that amplification of the slow-varying component significantly accelerates grokking substantially (more than fifty-fold in some cases). This is similar to momentum and AdamW, but the authors explain why it is not the same and can be used in alongside AdamW #cite(<lee2024a>, supplement: "p. 8") (I am trying to understand this better).
 
-*Mechanistic interpretability (MI)* — #cite(<nanda2023>, form:"prose") trains a transformer model to generalize the modular addition task ($(a + b) mod 113$ for all $a, b$ pairs, $a, b < 113$).
+*Mechanistic interpretability (MI)* — #cite(<nanda2023>, form:"prose") reverse engineers a transformer model trained to generalize to compute solutions to @nanda
+
+$
+  y = (x_1 + x_2) mod p, quad forall x_1, x_2 in {
+    0, 1, ..., p-1
+  }, quad p "is prime"
+$<nanda>
+
 The learned algorithm is then reverse engineered using a qualitative approach (probing, plotting, and guessing).
 It is discovered that the generalized circuit uses a discrete Fourier transform (rotation in the complex plane) to solve the problem.
+
 #cite(<conmy2023>, form: "prose") further attempts to automate aspects of the mechanistic interpretability work flow.
 MI is a relatively new field, and the methods are still being developed.
 #cite(<lipton2018>, form: "prose") discusses various definitions of interpretability, including mechanistic interpretability (though they don't call it that).
@@ -87,6 +94,13 @@ The task is referred to as $cal(T)$, with a subscript indicating the task number
 Like #cite(<nanda2023>, form: "prose"), $cal(D)$ is constructed from the first 12 769 natural numbers ($113^2$).
 113 was chosen as it allows for a small dataset that can fit in memory, while still being large enough to be interesting.
 Indeed, their model was able to generalize modular addition to the held-out test set.
+
+
+$
+  y_i = (
+    x_0 dot p^0 + x_1 dot p^1
+  ) mod t_i, quad forall t_i < p "where" t_i "is prime",
+$<miiii>
 
 While #cite(<nanda2023>, form: "prose") follows the template $a + b mod 113 = x$ for all $a, b < 113$,
 this paper, when using base `113` numbers, follows the template $a times 113 + b times 1 in PP$ for all $a, b < 113$.

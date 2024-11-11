@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 
 
 # %%  Load dataset and declare hash, etc.
-hash = "315376a04a0843f0a4fa6f75"
+hash = "05caf328edae42f9852c1c41"
 cfg = mi.utils.construct_cfg_from_hash(hash)
 rng = random.PRNGKey(0)
 ds = mi.tasks.task_fn(rng, cfg)
@@ -26,8 +26,8 @@ metrics: mi.train.Metrics
 acts: mi.model.Activation
 state, (metrics, _) = mi.utils.get_metrics_and_params(hash)  # type: ignore
 # %%
-# plt.plot(metrics.train.f1)
-# plt.plot(metrics.valid.f1)
+plt.plot(metrics.train.loss)
+plt.plot(metrics.valid.loss)
 
 # %% Get activations
 apply = mi.model.apply_fn(cfg)
@@ -85,7 +85,7 @@ esch.plot(V, path="V.svg")
 
 # %%
 fig, ax = plt.subplots(figsize=(30, 5))
-ax.plot(U[:, :8])
+ax.plot(U[:, :4])
 # %% get fourier basis
 F = []
 for freq in range(1, cfg.p // 2 + 1):
@@ -117,14 +117,14 @@ key_idxs = (key_freqs.repeat(2) + jnp.tile(jnp.eye(2)[1], (len(key_freqs),))).as
 key_embed = (F @ W_E)[key_idxs]
 esch.plot(key_embed @ key_embed.T)
 # %%
-# esch.plot(rearrange(acts.ffwd.squeeze()[:, -1], "(a b) neuron -> neuron a b", a=cfg.p, b=cfg.p)[0], path="ffwd.svg")
+esch.plot(rearrange(acts.ffwd.squeeze()[:, -1], "(a b) neuron -> neuron a b", a=cfg.p, b=cfg.p)[10], path="ffwd.svg")
 
 # %%
 esch.plot(F[40][None, :] * F[40][:, None])
 
 # %%
 neuron_acts = rearrange(acts.ffwd.squeeze()[:, -1], "(a b) neuron -> neuron a b", a=cfg.p, b=cfg.p)
-esch.plot(F @ neuron_acts[ds.idxs[-1]] @ F.T)
+esch.plot(F @ neuron_acts[ds.idxs[2222]] @ F.T)
 # %%
 # W_logit[:, 0] @ F.T
 # W_logit.shape, F.shape

@@ -43,16 +43,14 @@ class Metrics:
 #     return optax.sigmoid_focal_loss(logits, y, alpha, gamma).astype(jnp.float32).mean()  # mean across samples
 
 
-@partial(vmap, in_axes=(1, 1))
-def loss_fn(logits, y):
+def cross_entropy(logits, y):
     logits = logits.astype(jnp.float64)  # enable with some jax bullshit to avoid slingshot
     return optax.softmax_cross_entropy_with_integer_labels(logits, y).astype(jnp.float32).mean()
 
 
 def update_fn(opt, ds: Dataset, cfg: Conf):
     apply = apply_fn(cfg)
-    # loss_fn = focal_loss_fn if cfg.project == "miiii" else cross_entropy_loss_fn
-    # loss_fn = cross_entropy_loss_fn
+    loss_fn = vmap(cross_entropy, in_axes=(1, 1)) if cfg.project == "miiii" else cross_entropy
 
     @jit
     def update(state, key):
