@@ -6,6 +6,7 @@
 import os
 import jax.numpy as jnp
 import numpy as np
+from jax import Array
 from functools import partial
 from chex import dataclass
 from aim import Run, Image as AImage, Repo
@@ -13,17 +14,67 @@ from PIL import Image as PImage
 import esch
 import pickle
 from oeis import oeis
-import random
-from omegaconf import DictConfig, ListConfig
 import argparse
+from dataclasses import field
 
 
-# # Define your DigitalOcean Spaces endpoint
-# spaces_access_key_id = os.getenv("SPACES_ACCESS_KEY_ID")
-# spaces_secret_access_key = os.getenv("SPACES_SECRET_ACCESS_KEY")
-# spaces_endpoint = os.getenv("SPACES_ENDPOINT")
-# spaces_region = os.getenv("SPACES_REGION", "ams3")  #
-#
+# %% Types
+
+
+@dataclass
+class Activation:
+    wei: Array
+    ffwd: Array = field(default_factory=lambda: jnp.array([]))
+    logits: Array = field(default_factory=lambda: jnp.array([]))
+
+
+@dataclass
+class Split:
+    loss: Array
+    f1: Array
+    acc: Array
+
+
+@dataclass
+class Metrics:
+    train: Split
+    valid: Split
+
+
+# %% Data classes
+@dataclass
+class Feedforward:
+    w_in: Array
+    w_out: Array
+
+
+@dataclass
+class Attention:
+    q: Array
+    k: Array
+    v: Array
+    o: Array
+
+
+@dataclass
+class Embedding:
+    tok_emb: Array
+    pos_emb: Array
+
+
+@dataclass
+class Params:
+    embeds: Embedding
+    ffwd: Feedforward
+    attn: Attention
+    unbeds: Array  # should be a linear layer ?
+
+
+@dataclass
+class State:
+    params: Params
+    opt_state: Params
+    emas: Params
 
 
 def parse_args():
@@ -85,20 +136,20 @@ def create_cfg(args: argparse.Namespace) -> Conf:
     )
 
 
-def sample_config(omegaconf: DictConfig | ListConfig) -> Conf:
-    """
-    Randomly samples from the configuration options provided in a DictConfig object
-    and returns a Conf object with those selected hyperparameters.
-    """
-    return Conf(
-        project="miiii",
-        lr=random.choice(omegaconf.lr),
-        l2=random.choice(omegaconf.l2),
-        dropout=random.choice(omegaconf.dropout),
-        heads=random.choice(omegaconf.heads),
-        epochs=omegaconf.epochs,
-        latent_dim=omegaconf.latent_dim,
-    )
+# def sample_config(omegaconf: DictConfig | ListConfig) -> Conf:
+#     """
+#     Randomly samples from the configuration options provided in a DictConfig object
+#     and returns a Conf object with those selected hyperparameters.
+#     """
+#     return Conf(
+#         project="miiii",
+#         lr=random.choice(omegaconf.lr),
+#         l2=random.choice(omegaconf.l2),
+#         dropout=random.choice(omegaconf.dropout),
+#         heads=random.choice(omegaconf.heads),
+#         epochs=omegaconf.epochs,
+#         latent_dim=omegaconf.latent_dim,
+#     )
 
 
 def digit_fn(n, base):
@@ -227,7 +278,10 @@ def get_metrics_and_params(hash):
         with open(file_path, "rb") as f:
             outs[thing] = pickle.load(f)
 
-    return outs["state"], (outs["metrics"], outs["acts"])
+    state: State = outs["state"]  # type: ignore
+    metrics: Metrics = outs["metrics"]  # type: ignore
+    acts: Activation = outs["acts"]  # type: ignore
+    return state, (metrics, acts)
 
 
 def construct_cfg_from_hash(hash: str) -> Conf:

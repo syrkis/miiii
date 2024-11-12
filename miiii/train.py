@@ -3,39 +3,15 @@
 # by: Noah Syrkis
 
 # %% Imports
-from miiii.model import Params, apply_fn, init_fn, Activation
-from miiii.tasks import Dataset
-from miiii.utils import Conf
+from miiii.model import apply_fn, init_fn
+from miiii.tasks import Dataset, task_fn
+from miiii.utils import Conf, log_fn, Params, Activation, State, Metrics, Split
 from jax import random, value_and_grad, vmap, lax, tree, jit, nn
 import jax.numpy as jnp
 from jax_tqdm import scan_tqdm
 import optax
-from functools import partial
-
-# from functools import partial
 from typing import Tuple
-from chex import dataclass, Array
-
-
-# %% Types
-@dataclass
-class State:
-    params: Params
-    opt_state: Params
-    emas: Params
-
-
-@dataclass
-class Split:
-    loss: Array
-    f1: Array
-    acc: Array
-
-
-@dataclass
-class Metrics:
-    train: Split
-    valid: Split
+from chex import Array
 
 
 # Train
@@ -51,7 +27,6 @@ def cross_entropy(logits, y, *_):
 
 def update_fn(opt, ds: Dataset, cfg: Conf):
     apply = apply_fn(cfg)
-    # loss_fn = vmap(cross_entropy, in_axes=(1, 1)) if cfg.project == "miiii" else cross_entropy
     loss_fn = vmap(focal_loss_fn, in_axes=(1, 1, 0, None)) if cfg.project == "miiii" else cross_entropy
 
     @jit
@@ -118,6 +93,13 @@ def train(rng, cfg: Conf, ds: Dataset, scope=False) -> Tuple[State, Tuple[Metric
     xs = (jnp.arange(cfg.epochs), rngs)
     state, output = lax.scan(step, state, xs)
     return state, output
+
+
+def run_fn(rng, cfg: Conf):
+    keys = random.split(rng)  # create random keys
+    ds = task_fn(keys[0], cfg)  # create dataset
+    state, (metrics, acts) = train(keys[1], cfg, ds)  # train
+    log_fn(cfg, ds, state, metrics, acts)  # log
 
 
 # Evaluate

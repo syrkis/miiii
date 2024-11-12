@@ -3,9 +3,8 @@
 # by: Noah Syrkis
 
 # %% Imports
-from miiii.utils import Conf
+from miiii.utils import Conf, Params, Activation, Feedforward, Attention, Embedding
 from miiii.tasks import Dataset
-from dataclasses import field
 import jax
 from jax import random, lax, nn, vmap
 import jax.numpy as jnp
@@ -14,47 +13,10 @@ from functools import partial
 from einops import rearrange
 from oeis import A000040
 from typing import Tuple
-from chex import dataclass
 
 
 # %% Constants
 initializer = nn.initializers.he_normal()
-
-
-# %% Data classes
-@dataclass
-class Feedforward:
-    w_in: Array
-    w_out: Array
-
-
-@dataclass
-class Attention:
-    q: Array
-    k: Array
-    v: Array
-    o: Array
-
-
-@dataclass
-class Embedding:
-    tok_emb: Array
-    pos_emb: Array
-
-
-@dataclass
-class Params:
-    embeds: Embedding
-    ffwd: Feedforward
-    attn: Attention
-    unbeds: Array  # should be a linear layer ?
-
-
-@dataclass
-class Activation:
-    wei: Array
-    ffwd: Array = field(default_factory=lambda: jnp.array([]))
-    logits: Array = field(default_factory=lambda: jnp.array([]))
 
 
 # %% Forward

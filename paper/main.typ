@@ -222,27 +222,50 @@ Furthermore, a one-hot vector is used to mask tasks to shield the model from a p
 
 = Results
 
-$cal(M)$ was trained on $cal(D)$ for 6 000 epochs, with a batch size of 12 769.
-It generalized to some of the $sqrt(n)$ tasks, but not all.
-$cal(M)$ thus exists in a particularly interesting state,
-of partial generalization to the tasks in $cal(T)_2$,
-As $cal(T)_1$ is strictly harder than $cal(T)_2$, the model has not generalized to $cal(T)_1$.
-@train_loss_hinton shows the focal loss of the tasks in $cal(T)$ on the train data during training.
-@valid_loss_hinton shows the focal loss of the tasks in $cal(T)$ on the validation data during training.
+#figure(
+  image("figs/weis_miiii_113_slice_23.svg", width: 110%),
+  caption: [Top left $23 times 23$ slice of attention from $y$ to $x_0$ for $p=113$],
+)
+
 
 #figure(
-  image("figs/runs/" + run + "/train_loss_hinton.svg"),
-  caption: [The focal loss of $cal(T)$ on the train data during training.],
-)<train_loss_hinton>
+  image("figs/ffwd_miiii_113_4_neurons_slice_23.svg", width: 110%),
+  caption: [Top left $23 times 23$ slice of attention from $y$ to $x_0$ for $p=113$],
+)
+
 
 #figure(
-  image("figs/runs/" + run + "/valid_loss_hinton.svg"),
+  stack(
+    dir: ttb,
+    spacing: 1em,
+    image("figs/miiii_113_U_top_10.svg", width: 110%),
+    image("figs/miiii_113_S_top_37.svg", width: 100%),
+  ),
+  caption: [We see that the 10 most significant vectors of $U$ are periodic!],
+)
+
+
+#figure(
+  image("figs/miiii_113_W_E.svg"),
   caption: [The focal loss of $cal(T)$ on the validation data during training.],
-)<valid_loss_hinton>
+)
 
-@train_loss_hinton shows the focal loss decreasing significantly across tasks in $cal(T)$. Classification of primes $PP$ (i.e. $cal(T)_1$)
+#figure(
+  image("figs/miiii_113_F_W_E.svg"),
+  caption: [The focal loss of $cal(T)$ on the validation data during training.],
+)
+
+
+#figure(
+  image("figs/miiii_113_F_neuron_0.svg"),
+  caption: [The focal loss of $cal(T)$ on the validation data during training.],
+)
+
+
+
+shows the focal loss decreasing significantly across tasks in $cal(T)$. Classification of primes $PP$ (i.e. $cal(T)_1$)
 starts with a slightly higher loss than other tasks but quickly converges to the same loss as the other tasks, blah blah.
-We see in @valid_loss_hinton that we are indeed overfitting in spite of the heavy regularization, as the validation loss is increasing, blah blah.
+We see in that we are indeed overfitting in spite of the heavy regularization, as the validation loss is increasing, blah blah.
 
 It is also clear that the sub-tasks in $cal(T)_2$ increase in difficulty
 with the $p$ is being tested for. This makes intuitive sense, as it is easier to see if a number is a multiple of 2 than if it is a multiple of 17. There are also more multiples of 2 than 17, though the use of $alpha$ in the focal loss should account for this (should I square and sqrt for alpha?).
