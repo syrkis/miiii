@@ -10,6 +10,7 @@ import jax.numpy as jnp
 from einops import rearrange
 from jax import nn, random
 from oeis import oeis
+from copy import deepcopy
 
 import miiii as mi
 
@@ -19,7 +20,7 @@ if __name__ == "__main__" and "ipykernel" not in sys.argv[0]:
     exit()  # Below is notebook
 
 
-hash = "35298bcc99114cc9be8388b1"
+hash = "fa31250f124241b38a045fdb"
 slice = 23
 subscript = lambda i: chr(0x2080 + i)  # noqa
 
@@ -91,10 +92,11 @@ def plot_y(y, cfg):
     top = esch.EdgeConfig(label=[f"Task {p}" for p in [2, 3, 5, 7]] + ["Modular addition task"], show_on="all")
     bottom = esch.EdgeConfig(label="𝑥₀", show_on="all")
     left = esch.EdgeConfig(label="𝑥₁", show_on="all")
+    # right = esch.EdgeConfig(label="", show_on="last")
     edge = esch.EdgeConfigs(top=top, bottom=bottom, left=left)
     data = rearrange(y, "(a b) t -> t a b", a=cfg.p, b=cfg.p)[:4, :11, :11]
     # nanda_y = (jnp.arange(121) // 11).reshape(11, 11)
-    nanda_cfg = cfg
+    nanda_cfg = deepcopy(cfg)
     nanda_cfg.p = 11
     nanda_cfg.project = "nanda"
     nanda_ds = mi.tasks.task_fn(random.PRNGKey(0), nanda_cfg)
@@ -118,26 +120,46 @@ def polar_plot():
     plt.close()
 
 
-def plot_embeddings(W_E, F, U, S, cfg):
-    fifty = jnp.where((S / S.sum()).cumsum() < 0.5)[0].max()
-    ninety = jnp.where((S / S.sum()).cumsum() < 0.9)[0].max()
-    bottom = esch.EdgeConfig(ticks=[(int(fifty.item()), "0.5"), (ninety.item(), "0.9")], show_on="first")
-    left = esch.EdgeConfig(label="Singular Value", show_on="first")
-    edge = esch.EdgeConfigs(bottom=bottom, left=left)
-    esch.plot(S[None, :37], path=f"paper/figs/{cfg.project}_{cfg.p}_S_top_37.svg", edge=edge)
+# def plot_embeddings(W_E, F, U, S, cfg):
+#     tmp = F @ W_E
+#     esch.plot(tmp if tmp.shape[0] < tmp.shape[1] else tmp.T)
 
-    left = esch.EdgeConfig(ticks=[(i, "𝘶" + subscript(i)) for i in range(fifty)], show_on="first")
-    edge = esch.EdgeConfigs(left=left)
-    esch.plot(U[:, :fifty].T, path=f"paper/figs/{cfg.project}_{cfg.p}_U_top_{fifty}.svg", edge=edge)
+#     most_significat = jnp.linalg.norm(F @ W_E, axis=-1).argsort()[-fifty:]
+#     # print(most_significat)
+#     ticks = [(i.item(), "cos " + str(i // 2)) for i in most_significat if i % 2 == 1]
+#     bottom = esch.EdgeConfig(ticks=ticks, show_on="first")
+#     left = esch.EdgeConfig(ticks=[(0, "constant")], show_on="first")
+#     ticks = [(i.item(), "sin " + str(i // 2)) for i in most_significat if i % 2 == 0]
+#     top = esch.EdgeConfig(ticks=ticks, show_on="all")
+#     edge = esch.EdgeConfigs(bottom=bottom, top=top, left=left)
+#     esch.plot(
+#         (jnp.linalg.norm(F @ W_E, axis=-1))[None, :], edge=edge, path=f"paper/figs/{cfg.project}_{cfg.p}_F_W_E.svg"
+#     )
 
+#     key_embed = (F @ W_E)[most_significat]
+#     esch.plot(key_embed @ key_embed.T, path=f"paper/figs/{cfg.project}_{cfg.p}_key_embed.svg")
+
+
+# %%
+def embedding_report_fn(state, cfg):
+    W_E = state.params.embeds.tok_emb[:-1]  # p x latent_dim
+    U, S, V = jnp.linalg.svd(W_E)  # p x p, p, latent_dim x latent_dim
+    F = fourier_basis(cfg.p)
+    singular_values(S, cfg)
+    top_singular_vectors(U, S, cfg)
+    embed_in_fourier(W_E, F, S, cfg)
+
+
+def embed_in_fourier(W_E, F, S, cfg):
     tmp = F @ W_E
+    fifty = jnp.where((S / S.sum()).cumsum() < 0.5)[0].max()
     esch.plot(tmp if tmp.shape[0] < tmp.shape[1] else tmp.T)
-
     most_significat = jnp.linalg.norm(F @ W_E, axis=-1).argsort()[-fifty:]
     # print(most_significat)
     ticks = [(i.item(), "cos " + str(i // 2)) for i in most_significat if i % 2 == 1]
     bottom = esch.EdgeConfig(ticks=ticks, show_on="first")
-    ticks = [(i.item(), "sin " + str(i // 2)) for i in most_significat if i % 2 == 0]
+    # left = esch.EdgeConfig(ticks=[(0, "constant")], show_on="first")
+    ticks = [(i.item(), "sin " + str(i // 2)) for i in most_significat if i % 2 == 0] + [(0, "constant")]
     top = esch.EdgeConfig(ticks=ticks, show_on="all")
     edge = esch.EdgeConfigs(bottom=bottom, top=top)
     esch.plot(
@@ -148,15 +170,20 @@ def plot_embeddings(W_E, F, U, S, cfg):
     esch.plot(key_embed @ key_embed.T, path=f"paper/figs/{cfg.project}_{cfg.p}_key_embed.svg")
 
 
-# %%
-def embedding_report_fn(state, cfg):
-    W_E = state.params.embeds.tok_emb[:-1]  # p x latent_dim
-    U, S, V = jnp.linalg.svd(W_E)  # p x p, p, latent_dim x latent_dim
-    singular_values(S, cfg)
-
-
 def singular_values(S, cfg):
-    esch.plot(S[None, :], path=f"paper/figs/{cfg.project}_{cfg.p}_S_top_37.svg")
+    fifty = jnp.where((S / S.sum()).cumsum() < 0.5)[0].max()
+    ninety = jnp.where((S / S.sum()).cumsum() < 0.9)[0].max()
+    bottom = esch.EdgeConfig(ticks=[(int(fifty.item()), "0.5"), (ninety.item(), "0.9")], show_on="first")
+    left = esch.EdgeConfig(ticks=[(0, "S")], show_on="first")
+    edge = esch.EdgeConfigs(bottom=bottom, left=left)
+    esch.plot(S[None, :], path=f"paper/figs/{cfg.project}_{cfg.p}_S_top_37.svg", edge=edge)
+
+
+def top_singular_vectors(U, S, cfg):
+    fifty = jnp.where((S / S.sum()).cumsum() < 0.5)[0].max()
+    left = esch.EdgeConfig(ticks=[(i, "𝘶" + subscript(i)) for i in range(fifty)], show_on="first")
+    edge = esch.EdgeConfigs(left=left)
+    esch.plot(U[:, :fifty].T, path=f"paper/figs/{cfg.project}_{cfg.p}_U_top_{fifty}.svg", edge=edge)
 
 
 def data_report_fn(x, y, cfg):
@@ -172,13 +199,12 @@ def report_fn(hash, slice):
     ds = mi.tasks.task_fn(random.PRNGKey(0), cfg)  # and the dataset
     merge = lambda x, y: jnp.concat((x, y), axis=0)[ds.idxs.argsort()]  # noqa
     x, y = map(merge, ds.train, ds.valid)  # merge the train and valid sets
-    data_report_fn(x, y, cfg)
 
-    return
+    data_report_fn(x, y, cfg)
     embedding_report_fn(state, cfg)
 
-    apply = mi.model.apply_fn(cfg)  # get the apply function
-    acts = apply(state.params, random.PRNGKey(0), x, 0.0)  # and finally the activations
+    # apply = mi.model.apply_fn(cfg)  # get the apply function
+    # acts = apply(state.params, random.PRNGKey(0), x, 0.0)  # and finally the activations
 
     # %% Create arrays
     # W_E = state.params.embeds.tok_emb[:-1]
@@ -192,8 +218,6 @@ def report_fn(hash, slice):
     # plot_attention_samples(acts, slice, cfg)
     # plot_n_neurons(acts, slice, 5, cfg)
     # plot_embeddings(W_E, F, U, S, cfg)
-    # plot_x(x, cfg)
-    # plot_y(y, cfg)
     # esch.plot((state.params.ffwd.w_out @ state.params.unbeds).squeeze().T)
 
 

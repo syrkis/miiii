@@ -24,13 +24,7 @@
     ),
   ),
   abstract: [
-    An attention-based deep learning model $cal(M)$ is trained to solve tasks related to prime numbers.
-    Specifically, $cal(M)$ is trained to predict if a given natural number $n$ is prime and what, if any,
-    prime numbers it can be factorized by. The model is then reverse engineered to understand the
-    learned algorithms for the tasks for which it generalizes well. Similar to #cite(<nanda2023>, form: "prose"),
-    who trained a transformer model to perform modular addition ($a + b$ mod $113$ for all $a, b < 113$),
-    focuses on the task "is $a * n^1 + b * n^0$ prime?" for all $a, b < n$. Setting $n$ to 113 yields
-    a dataset of size 12,769. The code for this project is available at github.com/syrkis/miiii.
+    We investigate the emergence and nature of algorithmic learning in transformer models through the lens of prime factorization. Our study trains a transformer model on multiple related tasks: predicting whether a number is prime and identifying its prime factors. Building upon recent work in mechanistic interpretability @nanda2023, we analyze how the model transitions from memorization to algorithmic generalization across these tasks. For numbers represented as $a + b$ (where $a,b < n$), we examine the model's learned representations and attention patterns using Fourier analysis and custom visualization techniques. Setting $n=113$ yields a dataset of 12,769 samples, allowing us to study how the model develops different generalization behaviors for tasks of varying complexity. Our findings reveal distinct patterns in the model's attention mechanisms and intermediate representations, suggesting the emergence of modular arithmetic operations similar to the Sieve of Eratosthenes. This work contributes to our understanding of how neural networks discover and implement mathematical algorithms #footnote[https://github.com/syrkis/miiii].
   ],
   bibliography: bibliography("zotero.bib"),
 )
@@ -42,6 +36,7 @@ Recent years have seen deep learning models demonstrate remarkable proficiency i
 
 A system capable of transitioning from archive to algorithm presents intriguing questions: Why doesn't it skip the archiving step and directly learn algorithms? What types of algorithms does it learn, and how reliably? Can the learning process be expedited? How does the presence of multiple tasks affect the learning process? Critically, what specific algorithm has been learned by a given system? Addressing these questions is essential for advancing the theoretical understanding of deep learning and enhancing their practical applications.
 
+
 In deep learning, however, theory often lags behind practice, limiting our ability to mechanistically explain basic models that have generalized on even relatively simple, synthetically generated tasks. Exploring the mechanics of deep learning models is perhaps more akin to studying biology or botany than traditional computer science. This paper, for example, reverse-engineers a simple transformer model trained to solve modular arithmetic tasks. The simplicity of this training is akin to discovering an intriguing plant in a botanical garden (easy), while understanding its mechanics is akin to dissecting the plant to uncover the principles governing its growth and function (hard).
 
 My investigation probes the fundamental algorithmic structures internalized by a transformer model trained on basic modular arithmetic tasks, with slight variations in complexity. This approach provides insights into how and why specific algorithmic patterns emerge from seemingly straightforward learning processes. @generalization_levels the levels of generalization achieved across these tasks.
@@ -50,13 +45,6 @@ My investigation probes the fundamental algorithmic structures internalized by a
   image("figs/miiii_f1_tasks_113_20000_last.svg", width: 110%),
   caption: [Final per task F1 scores (note generalization on primes 2, 3, 5 and 7).],
 )<generalization_levels>
-
-
-#figure(
-  image("figs/miiii_f1_tasks_113_20000.svg", width: 100%),
-  caption: [Evolution of per task F1 scores.],
-)<generalization_levels_>
-
 
 = Related work
 
@@ -110,16 +98,35 @@ The task is referred to as $cal(T)$, with a subscript indicating the task number
 
 = Methods
 
-My dataset, like that of #cite(<nanda2023>, form: "prose"), has as $X$ the cartestian product of $p$. @miiii_x_11 represents $X$ for $p=11$, varying $x_0$ and $x_1$ through the rows and columns respectively.
+Our methodology closely follows #cite(<nanda2023>, form: "prose"), with key modifications to address prime factorization rather than modular addition. For a given prime $p$, we construct a dataset $[X|Y]$ where $X$ is the cartesian product of digits less than $p$, representing all numbers of the form $x_0 dot p^0 + x_1 dot p^1$ where $x_0, x_1 < p$ (all two-digit base $p$ numbers). $Y$ is a binary vector indicating which primes $t < p$ are factors of the represented number. A transformer model is trained to predict $Y$ from $X$, with various hyperparameter configurations explored to study the emergence of generalization across different factorization tasks.
 
+== Tasks
+
+In natural language, the task can be desribed as "is $x$ a multiple of $t$?". Forexample, is $x=12$ a multiple of $t=3$? Is $x=53$ a multiple of $t=7$?
+A number $x$ being a multiple of another $t$ means that $x mod t$ is zero. We are thus still in the domain of modular arithmtic.
+
+== Data
+
+
+*Input Space ($X$)*
+Each input $x in X$ represents a number in base $p$ using two digits, $(a,b)$, where the represented number is $a + b$. For example, with $p=11$, the input space consists of all pairs $(a,b)$ where $a,b < 11$, representing numbers up to $11^2-1 = 120$. @miiii_x_11 visualizes this input space, with each cell showing the pair $(a,b)$.
 
 #figure(
-  image("figs/ds_miiii_11_x.svg"),
+  image("figs/ds_miiii_11_x.svg", width: 110%),
   caption: [Representation of $X$, showing all pairs of $(x_0, x_1)$ for $p=11$. Top left shows (base 11) representation of 0, and bottom right represention of 120],
 )<miiii_x_11>
 
 
-$Y$ is constructed by, for each potential prime factor $f_j < p$ we compute the $x_i mod f_j$ . In the simplified case of $p=11$, the potential prime factors are 2, 3, 5, and 7. In that case, $Y$ thus becomes a $11^2 times 4$ (11^2 samples, and 4 tasks for each) matrix, which is shown rearranged to $4 times 11 times 11$ in @miiii_y_11. The most second to top left most value of the left-most plot in the figure, shows $0 dot 11^1 + 0 dot 11^0 mod 2$ to be 0.
+*Output Space ($Y$)*
+For each input $x$, we construct a binary vector $y in Y$ indicating which prime factors less than $p$ divide the number represented by $x$. For $p=11$, we test for divisibility by the primes 2, 3, 5, and 7, resulting in a binary vector of length 4. @miiii_y_11 visualizes these binary classifications, with each subplot showing divisibility by a specific prime, as well as $Y$ from the modular addition task.
+
+#figure(
+  image("figs/ds_11_y.svg", width: 120%),
+  caption: [Representation of our $Y$ for $p = 11$. 2, 3, 5 and 7 and the four primes (and therefore tasks) less than 11, and $Y$ for the modular addition task.],
+)<miiii_y_11>
+
+
+The relationship between inputs and outputs can be formally expressed as:
 
 $
   y_i = (
@@ -127,31 +134,101 @@ $
   ) mod f_j, quad forall f_j < p "where" t_j "is prime",
 $<miiii>
 
+Note that $y_i$ indicates divisibility, rather than remainder (as it does for the modular arithmetic task).
+
+
+To provide additional insight into the structure of these numbers (and encourage the reader to think in rotational terms), @nats visualizes the distribution of various numerical properties in polar coordinates.
 
 #figure(
-  image("figs/ds_11_y.svg", width: 120%),
-  caption: [Representation of our $Y$ for $p = 11$. 2, 3, 5 and 7 and the four primes (and therefore tasks) less than 11.],
-)<miiii_y_11>
+  image("figs/polar.svg"),
+  caption: [
+    Multiples of 7 or 23 (left), 11 (middle), and primes (right) less than $113^2$ in polar coordinates ($n$, $n$).
+  ],
+)<nats>
 
 
-#figure(
-  image("figs/attention_one.svg"),
-  caption: [Attenion from digit $b$ to itself in the first head of the first layer for all ($a$, $b$)-pairs.],
-)<atten_weight>
+
+
+== Model
+
+The trained model follows the transformer architecture with several key design choices aligned with recent work on mechanistic interpretability @nanda2023, @lee2024a. The model consists of three main components: an embedding layer, transformer blocks, and an output layer. All weights are initialized as per #cite(<he2015>, form: "prose").
+
+Input tokens are embedded into a $d$-dimensional space ($d=128$) using learned token and positional embeddings:
+$
+  z = "TokenEmbed"(x) + "PosEmbed"("pos")
+$<embed>
+
+The model contains three transformer blocks, each comprising multi-head attention with 4 heads (32 dimensions per head):
+$
+  "Attention"(Q, K, V) = "softmax"(Q K^T / sqrt(d_k))V
+$<attn>
+where $Q$, $K$, and $V$ are linear projections of the input (attention heads are combined through addition, not concatenation), followed by a feed-forward network with ReLU activation:
+$
+  "FFN"(x) = "ReLU"(x W_1)W_2
+$<ffn>
+mapping from 128 → 512 → 128 dimensions. Each component is followed by dropout (rate = 0.5) and includes residual connections.
+
+The final representation is projected to binary predictions for each potential prime factor:
+$
+  hat(y) = z_(-1) W_("out")
+$<output>
+where $W_("out")$ projects to the number of prime factors being tested, and read the logits from the last position.
+
+== Training
+
+== Training
+
+The model is trained using AdamW @loshchilov2019 with learning rate $10^(-4)$, weight decay 1.0, and $beta_1=0.9$, $beta_2=0.98$ following @nanda2023. We employ focal loss @lin2018 to handle class imbalance:
+
+$
+  L_("focal") = -alpha times (1 - p_t)^gamma times log(p_t)
+$<focal_loss>
+
+where $alpha$ is inversely proportional to class frequency and $gamma=2$ controls the contribution of well-classified examples. To accelerate generalization, we implement gradient filtering @lee2024a:
+
+$
+  g_t = nabla_theta L + lambda(alpha e_(t-1) + (1-alpha)g_(t-1))
+$<grad>
+
+where $e_t$ is the exponential moving average of gradients with decay rate $alpha=0.98$, and $lambda=2$ controls the influence of the slow-varying component.
+
+Training is done with all samples at each step (full batch) for 100,000 epochs. The model is evaluated on the validation set after each epoch, and the F1 score of the tasks in $cal(T)$ on the validation data during training is shown in @valid_f1_hinton.
+
+In accordance with the mechanistic interpretability literature, extreme regularization is used with a dropout rate of 0.5, and weight decay of 1.0 (that's right!).
+
+
+
+== Mechanistic Interpretability
+
+Our interpretability approach combines visualization techniques with frequency analysis to understand the learned algorithmic patterns. Following @nanda2023, we analyze both the attention patterns and the learned representations through several lenses:
+
+*Attention Visualization*
+We developed a custom visualization library#footnote[https://github.com/syrkis/esch] to visualize attention weights and intermediate representations. The library allows for the visualization of attention patterns across different layers, as well as the visualization of intermediate representations at each layer. These visualizations provide insights into the learned patterns and help identify potential areas of improvement.
+
+*Fourier Analysis*
+To quantify periodic patterns in both attention weights and intermediate representations, we decompose them into their constituent frequencies using the discrete Fourier transform:
+
+$
+  X_k = sum_(n=0)^(N-1) x_n e^(-2pi i k n / N)
+$<fourier>
+
+This analysis helps identify the dominant frequencies in the model's computational patterns, particularly those corresponding to potential modular arithmetic operations.
+
+*Activation Patterns*
+We track how representations evolve through the network by:
+- Visualizing activation matrices at each layer
+- Computing correlation matrices between different positions and features
+- Analyzing the residual stream contributions
+
+These analyses are performed across different input patterns to understand how the model distinguishes between prime and composite numbers.
+Note that that in figures with periodicity only a top left most $37 times 37$ slice is shown, so as to not overwhelm the reader. Visualizations are available in the Appendix.
+
+== Evaluation
 
 In @atten_weight we see a vertical peroiodic pattern, which is expected, as the model is trained to predict the prime factorization of the number $a * 113 + b$.
 #lorem(140)
 
 
-#figure(
-  image("figs/attention_layer_0.svg"),
-  caption: "Attenion from digit a to digit b",
-)
-
-#figure(
-  image("figs/attention_layer_1.svg"),
-  caption: "Attenion from digit a to digit b",
-)
 
 The model, $cal(M)$, is trained to predict if a given natural number $n$ is prime ($cal(T)_1$) and what primes it can be factorized by if it is not prime ($cal(T)_2)$. $cal(T)_1$ is strictly harder than $cal(T)_2$, as $cal(T)_1$ is a binary classification indicating failure to factorize by all primes tested for in Task 2. A Task 3, predicting the remainder of the division of $n$ by the prime it is attempted to factorize by, is also defined, but not used in this paper.
 
@@ -178,12 +255,21 @@ $T_1$ is being strictly harder than $T_2$,
 might merit and increase in the number of layers, heads, and hidden size,
 which I am currently investigating (update for Anders).
 
+
 #figure(
-  image("figs/polar.svg"),
-  caption: [
-    Multiples of 7 or 23 (left), 11 (middle), and primes (right) less than $113^2$ in polar coordinates ($n$, $n$).
-  ],
-)<nats>
+  image("figs/attention_one.svg"),
+  caption: [Attenion from digit $b$ to itself in the first head of the first layer for all ($a$, $b$)-pairs.],
+)<atten_weight>
+
+#figure(
+  image("figs/attention_layer_0.svg"),
+  caption: "Attenion from digit a to digit b",
+)
+
+#figure(
+  image("figs/attention_layer_1.svg"),
+  caption: "Attenion from digit a to digit b",
+)
 
 The rotational inclinations of the transformer model shown by #cite(<nanda2023>, form: "prose") motivate the use of a polar coordinate system to visualize the distribution of primes. Each prime number $p$ is mapped to the point $(p, p mod tau)$ in polar coordinates, as seen in and @nats.
 
@@ -209,15 +295,19 @@ The inclusion of these extra tasks also allows for interpretability to be on sim
 This allows for comparison of how the model solves the different tasks, when learning them in isolation versus in conjunction.
 For each of the $sqrt(n) + 1$ tasks, the focal loss @lin2018 (@focal_loss) and f1 score are calculated every epoch. Focal loss is cross-entropy weighted by the inverse of the frequency of the positive class ($alpha$) in the task. The loss function can be tweaked to emphasize difficult samples with the $gamma$ parameter.
 
-$
-  L_("focal") = -alpha times (1 - p_t)^gamma times log(p_t)
-$
-<focal_loss>
+
 
 The frequency of a positive sample in task $i$ is used as the weight for the focal loss during training.
 Furthermore, a one-hot vector is used to mask tasks to shield the model from a particular signal during training.
 
 = Results
+
+#figure(
+  image("figs/miiii_f1_tasks_113_20000.svg", width: 100%),
+  caption: [Evolution of per task F1 scores.],
+)<generalization_levels_>
+
+
 
 - sin/cos lookup tables in embedding layer.
 - does pos not matter for this task? No, cos it is not comotative. (a + b) mod p = (b + a) mod p -> Nanda. But (a p^1 + b p^0) mod p != (b p^1 + a p^0) mod p.
