@@ -23,11 +23,15 @@ initializer = nn.initializers.he_normal()
 def apply_fn(cfg: Conf):
     @partial(vmap, in_axes=(None, None, 0, None))  # type: ignore
     def apply(params, rng: Array, x: Array, dropout: float) -> Activation:
-        embeds = embed_fn(params.embeds, x)
+        # setup
         step_fn = partial(block_fn, dropout=dropout)
         keys = random.split(rng, cfg.depth * 2).reshape(cfg.depth, 2, 2)
+
+        # forward
+        embeds = embed_fn(params.embeds, x)
         z, acts = lax.scan(step_fn, embeds, (keys, params.attn, params.ffwd))
         acts.logits = (z @ params.unbeds)[-1]  # binary preidction on if x is mul of f.
+
         return acts
 
     return apply

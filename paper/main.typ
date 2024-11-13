@@ -30,7 +30,7 @@
     learned algorithms for the tasks for which it generalizes well. Similar to #cite(<nanda2023>, form: "prose"),
     who trained a transformer model to perform modular addition ($a + b$ mod $113$ for all $a, b < 113$),
     focuses on the task "is $a * n^1 + b * n^0$ prime?" for all $a, b < n$. Setting $n$ to 113 yields
-    a dataset of size 12,769.
+    a dataset of size 12,769. The code for this project is available at github.com/syrkis/miiii.
   ],
   bibliography: bibliography("zotero.bib"),
 )
@@ -40,16 +40,22 @@
 
 Recent years have seen deep learning models demonstrate remarkable proficiency in solving complex computational tasks. These models exhibit parallels to information-theoretic concepts, particularly in lossy data compression. For instance, the weights of GPT-2 are about a tenth of the size of its training data, akin to the compression ratios achieved by techniques like Huffman coding (mention lossy technique instead). Importantly, deep learning architectures can function both as archives—overfitting to training data—and as generalized algorithms @power2022.
 
-A system capable of transitioning from archive to algorithm presents intriguing questions: Why doesn't it skip the archiving step and directly learn algorithms? What types of algorithms does it learn, and how reliably? Can the learning process be expedited? Critically, what specific algorithm has been learned by a given system? Addressing these questions is essential for advancing the theoretical understanding of deep learning and enhancing their practical applications.
+A system capable of transitioning from archive to algorithm presents intriguing questions: Why doesn't it skip the archiving step and directly learn algorithms? What types of algorithms does it learn, and how reliably? Can the learning process be expedited? How does the presence of multiple tasks affect the learning process? Critically, what specific algorithm has been learned by a given system? Addressing these questions is essential for advancing the theoretical understanding of deep learning and enhancing their practical applications.
 
 In deep learning, however, theory often lags behind practice, limiting our ability to mechanistically explain basic models that have generalized on even relatively simple, synthetically generated tasks. Exploring the mechanics of deep learning models is perhaps more akin to studying biology or botany than traditional computer science. This paper, for example, reverse-engineers a simple transformer model trained to solve modular arithmetic tasks. The simplicity of this training is akin to discovering an intriguing plant in a botanical garden (easy), while understanding its mechanics is akin to dissecting the plant to uncover the principles governing its growth and function (hard).
 
 My investigation probes the fundamental algorithmic structures internalized by a transformer model trained on basic modular arithmetic tasks, with slight variations in complexity. This approach provides insights into how and why specific algorithmic patterns emerge from seemingly straightforward learning processes. @generalization_levels the levels of generalization achieved across these tasks.
 
 #figure(
-  image("figs/miiii_acc_tasks_113.svg", width: 120%),
-  caption: [Generalization levels of the tasks],
+  image("figs/miiii_f1_tasks_113_20000_last.svg", width: 110%),
+  caption: [Final per task F1 scores (note generalization on primes 2, 3, 5 and 7).],
 )<generalization_levels>
+
+
+#figure(
+  image("figs/miiii_f1_tasks_113_20000.svg", width: 100%),
+  caption: [Evolution of per task F1 scores.],
+)<generalization_levels_>
 
 
 = Related work
@@ -123,14 +129,10 @@ $<miiii>
 
 
 #figure(
-  image("figs/ds_miiii_11_y.svg"),
+  image("figs/ds_11_y.svg", width: 120%),
   caption: [Representation of our $Y$ for $p = 11$. 2, 3, 5 and 7 and the four primes (and therefore tasks) less than 11.],
 )<miiii_y_11>
 
-#figure(
-  image("figs/ds_nanda_11_y.svg"),
-  caption: [Represenation of $Y$ for $p=11$ for #cite(<nanda2023>, form: "prose")],
-)<nanda_y_11>
 
 #figure(
   image("figs/attention_one.svg"),
@@ -177,18 +179,14 @@ might merit and increase in the number of layers, heads, and hidden size,
 which I am currently investigating (update for Anders).
 
 #figure(
-  image("figs/polar_nats_and_sixes.svg"),
+  image("figs/polar.svg"),
   caption: [
-    $NN < 2^(10)$, $2 NN < 2^(10)$, and $(3NN union 6NN) < 2^(10)$ in polar coordinates.
+    Multiples of 7 or 23 (left), 11 (middle), and primes (right) less than $113^2$ in polar coordinates ($n$, $n$).
   ],
 )<nats>
 
-The rotational inclinations of the transformer model shown by #cite(<nanda2023>, form: "prose") motivate the use of a polar coordinate system to visualize the distribution of primes. Each prime number $p$ is mapped to the point $(p, p mod tau)$ in polar coordinates, as seen in @primes and @nats.
+The rotational inclinations of the transformer model shown by #cite(<nanda2023>, form: "prose") motivate the use of a polar coordinate system to visualize the distribution of primes. Each prime number $p$ is mapped to the point $(p, p mod tau)$ in polar coordinates, as seen in and @nats.
 
-#figure(
-  image("figs/exploration/polar_primes.svg"),
-  caption: "The first 2048 primes minus the first 1024 primes.",
-)<primes>
 
 One could imagine tightening and loosening the spiral by multiplying $tau$ by a constant, to align multiples of a given number in a straight line (imagining this is encouraged).
 
@@ -199,7 +197,6 @@ in which the multiples of the prime numbers are not filtered deterministically,
 but rather probabilistically—and inappropriately—by using a deep learning model.
 
 // BELOW HERE IS A MESS
-
 This vector was then converted to the desired number system.
 // $Y$ was constructed by first querying all prime numbers less than or equal to $n+1$, creating a one hot vector for each sample, in $X$ indicating primality. $Y$ was further augmented by $sqrt(n)$ vectors, each indicating divisibility by the $i$th prime number up to $sqrt(n)$.
 Thus, the sum of all $y$ of primes is 1#footnote[Except for primes less than $sqrt(n)$ as those are both primes and a multiple of themselves (i.e., 2 is a prime number, but it is also a multiple of 2) (note to self: account for this in @task_1).], and the sum of all $y$ of non-primes is $>= 1$.
@@ -221,6 +218,9 @@ The frequency of a positive sample in task $i$ is used as the weight for the foc
 Furthermore, a one-hot vector is used to mask tasks to shield the model from a particular signal during training.
 
 = Results
+
+- sin/cos lookup tables in embedding layer.
+- does pos not matter for this task? No, cos it is not comotative. (a + b) mod p = (b + a) mod p -> Nanda. But (a p^1 + b p^0) mod p != (b p^1 + a p^0) mod p.
 
 #figure(
   image("figs/weis_miiii_113_slice_23.svg", width: 110%),
@@ -245,10 +245,10 @@ Furthermore, a one-hot vector is used to mask tasks to shield the model from a p
 )
 
 
-#figure(
-  image("figs/miiii_113_W_E.svg"),
-  caption: [The focal loss of $cal(T)$ on the validation data during training.],
-)
+// #figure(
+//   image("figs/miiii_113_W_E.svg"),
+//   caption: [The focal loss of $cal(T)$ on the validation data during training.],
+// )
 
 #figure(
   image("figs/miiii_113_F_W_E.svg"),
@@ -290,5 +290,3 @@ The f1 score of the tasks in $cal(T)$ on the train data during training is shown
 = Discussion
 
 = Conclusion
-
-// Bibliography

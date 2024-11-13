@@ -86,7 +86,7 @@ def parse_args():
     parser.add_argument("--depth", type=int, default=1, help="Depth of the model")
     parser.add_argument("--heads", type=int, default=4, help="Number of attention heads")
     parser.add_argument("--epochs", type=int, default=10000, help="Number of training epochs")
-    parser.add_argument("--lr", type=float, default=3e-4, help="Learning rate")
+    parser.add_argument("--lr", type=float, default=1e-4, help="Learning rate")
     parser.add_argument("--l2", type=float, default=1.0, help="L2 regularization")
     parser.add_argument("--dropout", type=float, default=0.5, help="Dropout rate")
     parser.add_argument("--train_frac", type=float, default=0.5, help="Fraction of data used for training")
@@ -101,15 +101,15 @@ def parse_args():
 @dataclass
 class Conf:
     p: int = 113
-    project: str = "nanda"
+    project: str = "miiii"
     alpha: float = 0.98
     lamb: float = 2
     gamma: float = 2
     latent_dim: int = 128
     depth: int = 1
     heads: int = 4
-    epochs: int = 1000
-    lr: float = 3e-4
+    epochs: int = 10000
+    lr: float = 1e-4
     l2: float = 1.0
     dropout: float = 0.5
     train_frac: float = 0.5

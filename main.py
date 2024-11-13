@@ -3,14 +3,15 @@
 # by: Noah Syrkis
 
 # %% Imports
-import miiii as mi
 import sys
-from jax import random
+
 import esch
 import jax.numpy as jnp
 from einops import rearrange
-import matplotlib.pyplot as plt
+from jax import nn, random
 from oeis import oeis
+
+import miiii as mi
 
 # %% Train if run as script
 if __name__ == "__main__" and "ipykernel" not in sys.argv[0]:
@@ -18,206 +19,182 @@ if __name__ == "__main__" and "ipykernel" not in sys.argv[0]:
     exit()  # Below is notebook
 
 
-# %% Get a run
-hash = "b0e0ebe95d1046078ba133e2"
-state, (metrics, _) = mi.utils.get_metrics_and_params(hash)
-cfg = mi.utils.construct_cfg_from_hash(hash)
+hash = "35298bcc99114cc9be8388b1"
+slice = 23
+subscript = lambda i: chr(0x2080 + i)  # noqa
 
 
-# %%
-ds = mi.tasks.task_fn(random.PRNGKey(0), cfg)
-merge = lambda x, y: jnp.concat((x, y), axis=0)[ds.idxs.argsort()]  # noqa
-x, y = map(merge, ds.train, ds.valid)
-
-# %%  Get metrics and params from s3 bucket
-apply = mi.model.apply_fn(cfg)
-acts = apply(state.params, random.PRNGKey(0), x, 0.0)
-
-# %% Attention patterns
-esch.plot(acts.wei.squeeze().mean(0)[:, -1, :-1])  # average attention is uniform. ( a and b are euqlly imporant)
-esch.plot(acts.wei.squeeze()[7][:, -1, :-1])  #   but it depends on the sample
+def fourier_basis(p):  # TODO This is a bit wrong
+    freqs = jnp.arange(1, p // 2 + 1)[:, None]
+    phase = 2 * jnp.pi * freqs * jnp.arange(p) / p
+    F = jnp.concatenate([jnp.sin(phase), jnp.cos(phase)])
+    return F / jnp.linalg.norm(F, axis=1, keepdims=True)
 
 
-# %%  Attention for result to and and b for the different heads.
-weis = rearrange(acts.wei, "(fst snd) layer head a b -> head fst snd layer a b", fst=cfg.p, snd=cfg.p).squeeze()[
-    :, :, :, -1, :
-]
-esch.plot(
-    weis[:, :, :, 0],
-    edge=esch.EdgeConfigs(bottom=esch.EdgeConfig(label=[f"Head {i}" for i in range(4)], show_on="all")),
-    path=f"paper/figs/weis_{cfg.project}_{cfg.p}_slice_23.svg",
-)
-esch.plot(
-    weis[:, :, :, 1],
-    edge=esch.EdgeConfigs(bottom=esch.EdgeConfig(label=[f"Head {i}" for i in range(4)], show_on="all")),
-    path=f"paper/figs/weis_{cfg.project}_{cfg.p}_slice_23.svg",
-)
-esch.plot(
-    weis[:, :, :, -1],
-    edge=esch.EdgeConfigs(bottom=esch.EdgeConfig(label=[f"Head {i}" for i in range(4)], show_on="all")),
-    path=f"paper/figs/weis_{cfg.project}_{cfg.p}_slice_23.svg",
-)
-
-# %%
-W_E = state.params.embeds.tok_emb[:-1]
-print("W_E", W_E.shape)
-W_neur = W_E @ state.params.attn.v[0] @ state.params.attn.o[0] @ state.params.ffwd.w_in
-print("W_neur", W_neur.shape)
-W_logit = state.params.ffwd.w_out[0] @ state.params.unbeds
-print("W_logit", W_logit.shape)
+def plot_training(metrics, acts, y, cfg):
+    plot_f1_final_tasks(metrics, cfg)
+    plot_f1_tasks(metrics, cfg)
+    y_hat = (nn.sigmoid(acts.logits) > 0.5).astype(jnp.int8)
+    data = [y_hat.mean(0)[None, :], y.mean(0)[None, :]]
+    esch.plot(data)
 
 
-# %%
-esch.plot(
-    rearrange(acts.ffwd.squeeze()[:, -1], "(a b) neuron -> neuron a b", a=cfg.p, b=cfg.p)[:4][:, :23, :23],
-    path=f"paper/figs/ffwd_{cfg.project}_{cfg.p}_4_neurons_slice_23.svg",
-)
+def plot_f1_final_tasks(metrics, cfg):
+    # axis stuff
+    left = esch.EdgeConfig(ticks=[(0, "Train"), (1, "Test")], show_on="first")
+    ticks = [(i, str(task)) for i, task in enumerate(oeis["A000040"][1 : metrics.train.f1.shape[1] + 1])]
+    bottom = esch.EdgeConfig(ticks=ticks, show_on="all")  # type: ignore
+    edge = esch.EdgeConfigs(left=left, bottom=bottom)
 
-# %%
-
-# %%
-U, S, V = jnp.linalg.svd(W_E)
-
-plt.plot(S)
-jnp.where((S / S.sum()).cumsum() < 0.9)[0].max()
-# %%
-
-bottom = esch.EdgeConfig(ticks=[(1, "0.5"), (9, "0.75"), (36, "0.9")], show_on="first")
-edge = esch.EdgeConfigs(bottom=bottom)
-esch.plot(S[None, :37], edge=edge, path=f"paper/figs/{cfg.project}_{cfg.p}_S_top_37.svg")
-(S / S.sum()).cumsum()[36]
+    data = jnp.concat((metrics.train.f1[-1][None, :], metrics.valid.f1[-1][None, :]), axis=0)
+    esch.plot(data, edge=edge, path=f"paper/figs/miiii_f1_tasks_{cfg.p}_{cfg.epochs}_last.svg")
 
 
-# %%
-esch.plot(U[:, :10].T, path=f"paper/figs/{cfg.project}_{cfg.p}_U_top_10.svg")
-esch.plot(U[:, -10:].T)
-# plt.imshow(U[:, :10].T)
-#
-#
-# %%
-esch.plot(
-    U, edge=esch.EdgeConfigs(bottom=esch.EdgeConfig(label=f"{U.shape[0]}x{U.shape[1]}", show_on="first")), path="U.svg"
-)
-esch.plot(S[None, :], path="S.svg")
-esch.plot(V, path="V.svg")
+def plot_f1_tasks(metrics, cfg):
+    # axis stuff
+    left = esch.EdgeConfig(ticks=[(0, "2"), (28, "109")], show_on="first", label="Task")
+    bottom = esch.EdgeConfig(label="Time", show_on="all", ticks=[(0, str(0)), (99, f"{cfg.epochs - 1:,}")])
+    edge = esch.EdgeConfigs(left=left, top=bottom)
+
+    data = jnp.clip(metrics.train.loss.T[:, :: (cfg.epochs // 100)], 0, 0.1)
+    esch.plot(data, path=f"paper/figs/miiii_f1_tasks_{cfg.p}_{cfg.epochs}.svg", edge=edge)
 
 
-# %%
-fig, ax = plt.subplots(figsize=(30, 5))
-ax.plot(U[:, :10])
-# %% get fourier basis
-F = []
-for freq in range(1, cfg.p // 2 + 1):
-    F.append(jnp.sin(jnp.arange(cfg.p) * 2 * jnp.pi * freq / cfg.p))
-    F.append(jnp.cos(jnp.arange(cfg.p) * 2 * jnp.pi * freq / cfg.p))
+def plot_attention_samples(acts, slice, cfg):
+    # axis stuff
+    top = esch.EdgeConfig(label=[f"Head {i}" for i in range(4)], show_on="all")
+    left = esch.EdgeConfig(label="𝑥₁", show_on="first")
+    bottom = esch.EdgeConfig(label="𝑥₀", show_on="all")
+    edge = esch.EdgeConfigs(top=top, left=left, bottom=bottom)
 
-F = jnp.stack(F, axis=0)
-F = F / jnp.linalg.norm(F, axis=-1, keepdims=True)
-esch.plot(F)
-
-# %%
-esch.plot(F @ F.T)
-
-# %%
-esch.plot((F @ W_E), path=f"paper/figs/{cfg.project}_{cfg.p}_F_W_E.svg")
+    reshape = "(fst snd) layer head a b -> head fst snd layer a b"
+    wei = rearrange(acts.wei, reshape, fst=cfg.p, snd=cfg.p)[..., -1, -1, 0]
+    esch.plot(wei[:, :slice, :slice], edge=edge, path=f"paper/figs/weis_{cfg.project}_{cfg.p}_slice_{slice}.svg")
 
 
-# %%
-esch.plot((jnp.linalg.norm(F @ W_E, axis=-1))[None, :])
-
-# %%
-jnp.linalg.norm(F @ W_E, axis=-1).argsort()
-# %%
-esch.plot(W_E, path=f"paper/figs/{cfg.project}_{cfg.p}_W_E.svg")
-W_E.shape
-
-# %%
-
-key_idxs = jnp.array([2, 24, 109, 108, 1, 0, 110, 111])
-key_embed = (F @ W_E)[key_idxs]
-esch.plot(key_embed @ key_embed.T)
-# %%
-# esch.plot(rearrange(acts.ffwd.squeeze()[:, -1], "(a b) neuron -> neuron a b", a=cfg.p, b=cfg.p)[10], path="ffwd.svg")
-
-# %%
-esch.plot(F[40][None, :] * F[40][:, None])
-
-# %%
-neuron_acts = rearrange(acts.ffwd.squeeze()[:, -1], "(a b) neuron -> neuron a b", a=cfg.p, b=cfg.p)
-esch.plot(F @ neuron_acts[0] @ F.T, path=f"paper/figs/{cfg.project}_{cfg.p}_F_neuron_0.svg")
-
-# %%
-# W_logit[:, 0] @ F.T
-# W_logit.shape, F.shape
-(state.params.ffwd.w_out @ state.params.unbeds).T.shape
+def plot_n_neurons(acts, slice, n, cfg):
+    reshape = "(a b) neuron -> neuron a b"
+    neurons = rearrange(acts.ffwd.squeeze()[:, -1], reshape, a=cfg.p, b=cfg.p)[:n][:, :slice, :slice]
+    esch.plot(neurons, path=f"paper/figs/ffwd_{cfg.project}_{cfg.p}_{n}_neurons_slice_{slice}.svg")
 
 
-# %%
-plt.hist(acts.logits.argmax(-1))
-
-# %%
-plt.hist(y)
-
-
-# %%
-esch.plot(x[:7, :2])
-
-# %%
-
-esch.plot(y.min(-1).reshape((113, 113)))
-
-# %%
-# %% Plot ####################################################################
-##############################################################################
-
-rng = random.PRNGKey(0)
-cfg = mi.utils.Conf(p=11, project="miiii")
-ds = mi.tasks.task_fn(rng, cfg)
-x, y = map(lambda x, y: jnp.concat((x, y), axis=0)[jnp.argsort(ds.idxs)], ds.train, ds.valid)
-
-
-# %% Plotting x
-if cfg.project == "miiii":
-    left = esch.EdgeConfig(ticks=[(i, str(i)) for i in range(cfg.p)], show_on="first")
-    top = esch.EdgeConfig(label=[f"{i}" for i in range(cfg.p)], show_on="all")
-    # top = esch.EdgeConfig(ticks=[(1, str(0))], show_on="all")
+def plot_x(x, cfg):
+    left = esch.EdgeConfig(ticks=[(i, str(i)) for i in range(11)], show_on="first")
+    top = esch.EdgeConfig(label=[f"{i}" for i in range(11)], show_on="all")
     edge = esch.EdgeConfigs(left=left, bottom=top)
-    esch.plot(
-        rearrange(x[:, :-1], "(a b) c -> b a c", a=cfg.p, b=cfg.p),
-        edge=edge,
-        path=f"paper/figs/ds_{cfg.project}_{cfg.p}_x.svg",
-    )
+    data = rearrange(x[:, :-1], "(a b) c -> b a c", a=cfg.p, b=cfg.p)[:11, :11, :11]
+    esch.plot(data, edge=edge, path=f"paper/figs/ds_{cfg.project}_{cfg.p}_x.svg")
 
+
+def plot_y(y, cfg):
     # %% Plotting y
-    top = esch.EdgeConfig(label=[f"Task {p}" for p in [2, 3, 5, 7]], show_on="all")
-    bottom = esch.EdgeConfig(label="x_0", show_on="first")
-    left = esch.EdgeConfig(label="x_1", show_on="first")
+    top = esch.EdgeConfig(label=[f"Task {p}" for p in [2, 3, 5, 7]] + ["Modular addition task"], show_on="all")
+    bottom = esch.EdgeConfig(label="𝑥₀", show_on="all")
+    left = esch.EdgeConfig(label="𝑥₁", show_on="all")
     edge = esch.EdgeConfigs(top=top, bottom=bottom, left=left)
+    data = rearrange(y, "(a b) t -> t a b", a=cfg.p, b=cfg.p)[:4, :11, :11]
+    # nanda_y = (jnp.arange(121) // 11).reshape(11, 11)
+    nanda_cfg = cfg
+    nanda_cfg.p = 11
+    nanda_cfg.project = "nanda"
+    nanda_ds = mi.tasks.task_fn(random.PRNGKey(0), nanda_cfg)
+    nanda_y = jnp.concat((nanda_ds.train[1], nanda_ds.valid[1]))[nanda_ds.idxs.argsort()].reshape(1, 11, 11) / 10
+    data = jnp.concatenate((data, nanda_y), axis=0)
+    esch.plot(data, edge=edge, path="paper/figs/ds_11_y.svg")
+
+
+# %% polar plots
+def polar_plot():
+    primes = jnp.array(oeis["A000040"][1:1000])
+    ps = jnp.array(primes[primes < (113**2)])
+    _11s = jnp.arange(0, 113**2, 11)
+    _7_23 = jnp.concat((jnp.arange(0, 113**2, 7), jnp.arange(0, 113**2, 23)))
+    # set theme to light
+    import matplotlib.pyplot as plt
+
+    plt.style.use("default")
+    mi.plots.small_multiples(fnames=["n", "t", "n"], seqs=[_7_23, _11s, ps], f_name="polar", n_rows=1, n_cols=3)
+    # remove plot
+    plt.close()
+
+
+def plot_embeddings(W_E, F, U, S, cfg):
+    fifty = jnp.where((S / S.sum()).cumsum() < 0.5)[0].max()
+    ninety = jnp.where((S / S.sum()).cumsum() < 0.9)[0].max()
+    bottom = esch.EdgeConfig(ticks=[(int(fifty.item()), "0.5"), (ninety.item(), "0.9")], show_on="first")
+    left = esch.EdgeConfig(label="Singular Value", show_on="first")
+    edge = esch.EdgeConfigs(bottom=bottom, left=left)
+    esch.plot(S[None, :37], path=f"paper/figs/{cfg.project}_{cfg.p}_S_top_37.svg", edge=edge)
+
+    left = esch.EdgeConfig(ticks=[(i, "𝘶" + subscript(i)) for i in range(fifty)], show_on="first")
+    edge = esch.EdgeConfigs(left=left)
+    esch.plot(U[:, :fifty].T, path=f"paper/figs/{cfg.project}_{cfg.p}_U_top_{fifty}.svg", edge=edge)
+
+    tmp = F @ W_E
+    esch.plot(tmp if tmp.shape[0] < tmp.shape[1] else tmp.T)
+
+    most_significat = jnp.linalg.norm(F @ W_E, axis=-1).argsort()[-fifty:]
+    # print(most_significat)
+    ticks = [(i.item(), "cos " + str(i // 2)) for i in most_significat if i % 2 == 1]
+    bottom = esch.EdgeConfig(ticks=ticks, show_on="first")
+    ticks = [(i.item(), "sin " + str(i // 2)) for i in most_significat if i % 2 == 0]
+    top = esch.EdgeConfig(ticks=ticks, show_on="all")
+    edge = esch.EdgeConfigs(bottom=bottom, top=top)
     esch.plot(
-        rearrange(y, "(a b) t -> t a b", a=cfg.p, b=cfg.p), edge=edge, path=f"paper/figs/ds_{cfg.project}_{cfg.p}_y.svg"
+        (jnp.linalg.norm(F @ W_E, axis=-1))[None, :], edge=edge, path=f"paper/figs/{cfg.project}_{cfg.p}_F_W_E.svg"
     )
 
+    key_embed = (F @ W_E)[most_significat]
+    esch.plot(key_embed @ key_embed.T, path=f"paper/figs/{cfg.project}_{cfg.p}_key_embed.svg")
+
 
 # %%
-# esch.plot(y.reshape(cfg.p, cfg.p))
+def embedding_report_fn(state, cfg):
+    W_E = state.params.embeds.tok_emb[:-1]  # p x latent_dim
+    U, S, V = jnp.linalg.svd(W_E)  # p x p, p, latent_dim x latent_dim
+    singular_values(S, cfg)
 
-# %%
-bottom = esch.EdgeConfig(
-    ticks=[(i, str(p)) for i, p in enumerate(oeis["A000040"][1:30]) if i % 2 >= 0], show_on="first"
-)
 
-# %%
-edge = esch.EdgeConfigs(bottom=bottom)
-esch.plot(
-    (metrics.train.f1[-1][None, :] + metrics.valid.f1[-1][None, :]),
-    edge=edge,
-    path="paper/figs/miiii_acc_tasks_113.svg",
-)
+def singular_values(S, cfg):
+    esch.plot(S[None, :], path=f"paper/figs/{cfg.project}_{cfg.p}_S_top_37.svg")
 
-# %%
-esch.plot(
-    metrics.train.f1[:, None, :] + metrics.valid.f1[:, None, :],
-    animated=True,
-    edge=edge,
-    path="paper/figs/miiii_acc_tasks_113.svg",
-)
+
+def data_report_fn(x, y, cfg):
+    plot_x(x, cfg)
+    plot_y(y, cfg)
+    polar_plot()
+
+
+def report_fn(hash, slice):
+    # %% Setup
+    state, (metrics, _) = mi.utils.get_metrics_and_params(hash)  # get a run
+    cfg = mi.utils.construct_cfg_from_hash(hash)  # and associated config
+    ds = mi.tasks.task_fn(random.PRNGKey(0), cfg)  # and the dataset
+    merge = lambda x, y: jnp.concat((x, y), axis=0)[ds.idxs.argsort()]  # noqa
+    x, y = map(merge, ds.train, ds.valid)  # merge the train and valid sets
+    data_report_fn(x, y, cfg)
+
+    return
+    embedding_report_fn(state, cfg)
+
+    apply = mi.model.apply_fn(cfg)  # get the apply function
+    acts = apply(state.params, random.PRNGKey(0), x, 0.0)  # and finally the activations
+
+    # %% Create arrays
+    # W_E = state.params.embeds.tok_emb[:-1]
+    # W_neur = W_E @ state.params.attn.v[0] @ state.params.attn.o[0] @ state.params.ffwd.w_in  # noqa
+    # W_logit = state.params.ffwd.w_out[0] @ state.params.unbeds  # noqa
+    # U, S, V = jnp.linalg.svd(W_E)
+    # F = fourier_basis(cfg.p)
+
+    # %% Plot arrays
+    # plot_training(metrics, acts, y, cfg)
+    # plot_attention_samples(acts, slice, cfg)
+    # plot_n_neurons(acts, slice, 5, cfg)
+    # plot_embeddings(W_E, F, U, S, cfg)
+    # plot_x(x, cfg)
+    # plot_y(y, cfg)
+    # esch.plot((state.params.ffwd.w_out @ state.params.unbeds).squeeze().T)
+
+
+report_fn(hash, slice)

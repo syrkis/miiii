@@ -17,6 +17,7 @@ from chex import Array
 # Train
 def focal_loss_fn(logits, y, alpha, gamma):
     logits = logits.astype(jnp.float64)  # enable with some jax bullshit to avoid slingshot
+    # consider squaring alpha, and increasing gamma?
     return optax.sigmoid_focal_loss(logits, y, alpha, gamma).astype(jnp.float32).mean()  # mean across samples
 
 
