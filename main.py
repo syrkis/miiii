@@ -11,16 +11,16 @@ from einops import rearrange
 from jax import nn, random
 from oeis import oeis
 from copy import deepcopy
+import matplotlib.pyplot as plt
 
 import miiii as mi
 
 # %% Train if run as script
 if __name__ == "__main__" and "ipykernel" not in sys.argv[0]:
     mi.train.run_fn(random.PRNGKey(0), mi.utils.create_cfg(mi.utils.parse_args()))
-    exit()  # Below is notebook
 
 
-hash = "fa31250f124241b38a045fdb"
+hash = "96405be96dea494e9c0d921c"
 slice = 23
 subscript = lambda i: chr(0x2080 + i)  # noqa
 
@@ -35,9 +35,10 @@ def fourier_basis(p):  # TODO This is a bit wrong
 def plot_training(metrics, acts, y, cfg):
     plot_f1_final_tasks(metrics, cfg)
     plot_f1_tasks(metrics, cfg)
-    y_hat = (nn.sigmoid(acts.logits) > 0.5).astype(jnp.int8)
-    data = [y_hat.mean(0)[None, :], y.mean(0)[None, :]]
-    esch.plot(data)
+    print(acts.logits.shape, y.shape)
+    # y_hat = (nn.sigmoid(acts.logits) > 0.5).astype(jnp.int8)[:, -1]
+    # data = jnp.array([y_hat.mean(0)[None, :], y.mean(0)[None, :]])
+    # esch.plot(data)
 
 
 def plot_f1_final_tasks(metrics, cfg):
@@ -46,7 +47,6 @@ def plot_f1_final_tasks(metrics, cfg):
     ticks = [(i, str(task)) for i, task in enumerate(oeis["A000040"][1 : metrics.train.f1.shape[1] + 1])]
     bottom = esch.EdgeConfig(ticks=ticks, show_on="all")  # type: ignore
     edge = esch.EdgeConfigs(left=left, bottom=bottom)
-
     data = jnp.concat((metrics.train.f1[-1][None, :], metrics.valid.f1[-1][None, :]), axis=0)
     esch.plot(data, edge=edge, path=f"paper/figs/miiii_f1_tasks_{cfg.p}_{cfg.epochs}_last.svg")
 
@@ -111,9 +111,6 @@ def polar_plot():
     ps = jnp.array(primes[primes < (113**2)])
     _11s = jnp.arange(0, 113**2, 11)
     _7_23 = jnp.concat((jnp.arange(0, 113**2, 7), jnp.arange(0, 113**2, 23)))
-    # set theme to light
-    import matplotlib.pyplot as plt
-
     plt.style.use("default")
     mi.plots.small_multiples(fnames=["n", "t", "n"], seqs=[_7_23, _11s, ps], f_name="polar", n_rows=1, n_cols=3)
     # remove plot
@@ -171,6 +168,10 @@ def embed_in_fourier(W_E, F, S, cfg):
 
 
 def singular_values(S, cfg):
+    import matplotlib.pyplot as plt
+
+    plt.plot(S)
+
     fifty = jnp.where((S / S.sum()).cumsum() < 0.5)[0].max()
     ninety = jnp.where((S / S.sum()).cumsum() < 0.9)[0].max()
     bottom = esch.EdgeConfig(ticks=[(int(fifty.item()), "0.5"), (ninety.item(), "0.9")], show_on="first")
@@ -181,6 +182,7 @@ def singular_values(S, cfg):
 
 def top_singular_vectors(U, S, cfg):
     fifty = jnp.where((S / S.sum()).cumsum() < 0.5)[0].max()
+    print(fifty)
     left = esch.EdgeConfig(ticks=[(i, "𝘶" + subscript(i)) for i in range(fifty)], show_on="first")
     edge = esch.EdgeConfigs(left=left)
     esch.plot(U[:, :fifty].T, path=f"paper/figs/{cfg.project}_{cfg.p}_U_top_{fifty}.svg", edge=edge)
@@ -200,25 +202,25 @@ def report_fn(hash, slice):
     merge = lambda x, y: jnp.concat((x, y), axis=0)[ds.idxs.argsort()]  # noqa
     x, y = map(merge, ds.train, ds.valid)  # merge the train and valid sets
 
-    data_report_fn(x, y, cfg)
+    data_report_fn(x, y, cfg) if cfg.project == "miiii" else None
     embedding_report_fn(state, cfg)
 
-    # apply = mi.model.apply_fn(cfg)  # get the apply function
-    # acts = apply(state.params, random.PRNGKey(0), x, 0.0)  # and finally the activations
+    apply = mi.model.apply_fn(cfg)  # get the apply function
+    acts = apply(state.params, random.PRNGKey(0), x, 0.0)  # and finally the activations
 
     # %% Create arrays
-    # W_E = state.params.embeds.tok_emb[:-1]
     # W_neur = W_E @ state.params.attn.v[0] @ state.params.attn.o[0] @ state.params.ffwd.w_in  # noqa
     # W_logit = state.params.ffwd.w_out[0] @ state.params.unbeds  # noqa
     # U, S, V = jnp.linalg.svd(W_E)
     # F = fourier_basis(cfg.p)
 
     # %% Plot arrays
-    # plot_training(metrics, acts, y, cfg)
-    # plot_attention_samples(acts, slice, cfg)
-    # plot_n_neurons(acts, slice, 5, cfg)
-    # plot_embeddings(W_E, F, U, S, cfg)
+    plot_training(metrics, acts, y, cfg) if cfg.project == "miiii" else None
+    plot_attention_samples(acts, slice, cfg)
+    plot_n_neurons(acts, slice, 5, cfg)
     # esch.plot((state.params.ffwd.w_out @ state.params.unbeds).squeeze().T)
 
 
-report_fn(hash, slice)
+# report_fn(hash, slice)
+
+# %%

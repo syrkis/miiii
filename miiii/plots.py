@@ -2,13 +2,6 @@
 #    miii plots
 # by: Noah Syrkis
 
-"""
-plot types:
-    1. hinton plot for model weights
-    2. syrkis plot for training progress of metrics
-    3. polar plot for number sequences
-    4. curve plot for training progress of loss
-"""
 
 # %% imports
 import miiii as mi
@@ -16,7 +9,6 @@ from jax import Array
 import numpy as np
 import os
 import matplotlib.pyplot as plt
-from matplotlib.patches import Rectangle
 from typing import Sequence
 import jax.numpy as jnp
 import datetime
@@ -40,12 +32,6 @@ def plot_run(metrics, ds: mi.tasks.Dataset, cfg: mi.utils.Conf, activations=None
     os.makedirs(path, exist_ok=True)
     os.makedirs(f"{path}/", exist_ok=True)
 
-    # hinton plots of all metrics
-    for split in ["train", "valid"]:  # if metrics is dictionary
-        for metric in metrics[split]:  # if metrics is dictionary
-            max_val = 1 if "f1" in metric else metrics["train"]["loss"].max().item()
-            hinton_metric(metrics[split][metric], metric, ds, path, split, max_val, cfg)
-            plt.close()
     # curve plots of all metrics
     for split in ["train", "valid"]:
         for metric in metrics[split]:
@@ -53,110 +39,8 @@ def plot_run(metrics, ds: mi.tasks.Dataset, cfg: mi.utils.Conf, activations=None
             plt.close()
 
 
-def name_run(cfg: mi.utils.Conf):
-    datum_name = f"base_{cfg.base}_n_{cfg.n}"
-    model_name = f"emb_{cfg.latent_dim}_heads_{cfg.heads}_depth_{cfg.depth}"
-    train_name = f"lr_{cfg.lr}_epochs_{cfg.epochs}_l2_{cfg.l2}_dropout_{cfg.dropout}"
-    name = f"{datum_name}_{model_name}_{train_name}"
-    return name
-
-
-def title_fn(cfg: mi.utils.Conf):
-    title = f"base : {cfg.base} | emb : {cfg.latent_dim} | heads : {cfg.heads} | depth : {cfg.depth} | lr : {cfg.lr} | l2 : {cfg.l2} | dropout : {cfg.dropout}"
-    # replce " | " with "    |    "
-    title = title.replace(" | ", "   |   ")
-    return title
-
-
 ########################################################################################
 # %% Hinton plots
-def hinton_weight(weight: Array, path: str):
-    assert len(weight.shape) >= 3
-    fig, ax = plt.subplots(ncols=weight.shape[0], figsize=(12, 12))
-    for i in range(weight.shape[0]):
-        hinton_fn(weight[i], ax[i])
-    plt.tight_layout()
-    plt.savefig(f"{path}/svg/weights.svg")
-
-
-def hinton_activations(acts: Array, path: str):
-    assert len(acts.shape) == 3
-    fig, axes = plt.subplots(nrows=acts.shape[0], figsize=(12, 12))
-    for i in range(acts.shape[0]):
-        hinton_fn(acts[i], axes[i])
-    plt.tight_layout()
-    plt.savefig(f"{path}/activations.svg")
-
-
-def hinton_metric(
-    data: Array, metric: str, ds: mi.tasks.Dataset, path: str, split: str, max_val: float, cfg: mi.utils.Conf
-):
-    fig, ax = plt.subplots(figsize=(12, 5))
-    pool_data = horizontal_mean_pooling(data)
-    hinton_fn(pool_data, ax, max_val)
-
-    # ax modifications
-    ax.set_xlim(0 - 1, len(pool_data[0]) + 1)
-    ax.set_ylim(0 - 1, len(pool_data) + 1)
-    ax.tick_params(axis="x", which="major", pad=10)
-    ax.tick_params(axis="y", which="major", pad=10)
-    ax.set_xticks([0, len(pool_data[0]) // 4, 3 * len(pool_data[0]) // 4, len(pool_data[0]) - 1])  # type: ignore
-    ax.set_xticklabels(["1", data.shape[1] // 4, 3 * data.shape[1] // 4, data.shape[1]])  # type: ignore
-    # ax.set_xlabel("Time")
-    ax.text(len(pool_data[0]) / 2, -1.75, "Time", ha="center")
-    # put config in the title with small text (center aligned)
-    title = title_fn(cfg)
-    ax.text(len(pool_data[0]) / 2, len(pool_data) + 0.1, title, ha="center", fontsize=10)
-    # y lbal (tasks)
-    # ax.set_ylabel("Task")
-    ax.text(-1.75, len(pool_data) / 2 - 0.5, "Task", va="center", rotation=90)
-    title_pos = len(pool_data[0]), len(pool_data) / 2 - 0.5
-    ax.text(*title_pos, f"{split} {metric}", va="center", rotation=90)
-    yticks = [i for i in range(len(ds.info.tasks))]  # type: ignore
-    y_tick_labels = ds.info.tasks[:-1] + ["ℙ"]
-    # remove the two middle ticks
-    yticks = yticks[: len(yticks) // 2 - 1] + yticks[len(yticks) // 2 + 1 :]
-    y_tick_labels = y_tick_labels[: len(y_tick_labels) // 2 - 1] + y_tick_labels[len(y_tick_labels) // 2 + 1 :]
-    ax.set_yticks(yticks)
-    ax.set_yticklabels(y_tick_labels)
-    plt.tight_layout()
-    plt.savefig(f"{path}/{split}_{metric}_hinton.svg")
-
-
-def plot_head_activations(acts):
-    fig, axes = plt.subplots(ncols=acts.shape[0], figsize=(12, 4))
-    for i, ax in enumerate(axes):  # type: ignore
-        # sns.heatmap(acts[i], ax=ax, square=True, cbar=False, cmap="grey")
-        mi.plots.hinton_fn((acts[i] / acts[i].max() - acts[i].min()), ax)
-        # ax.set_title(f"Head {i}")
-
-    # black line separating heads
-    for i in range(1, acts.shape[0]):
-        axes[i].axvline(-1, color="black", lw=1)  # type: ignore
-
-    axes[0].set_ylabel("Head weights")  # type: ignore
-    # move y label back a bit
-    axes[0].yaxis.set_label_coords(-0.1, 0.5)  # type: ignore
-    plt.show()
-
-
-def hinton_fn(data, ax=None, scale: float = 1.0):  # <- Hinton atomic
-    """Plot a matrix of data in a hinton diagram."""
-    ax = ax or plt.gca()
-    for (y, x), w in np.ndenumerate(data):
-        c = bg if w < 0 else fg  # color
-        s = np.sqrt(np.abs(w) / scale) * 0.8
-        if s == jnp.nan:
-            s = 0
-        s = jnp.clip(s, 0, 0.85).item()
-        ax.add_patch(Rectangle((x - s / 2, y - s / 2), s, s, facecolor=c, edgecolor=fg))
-
-    # ax modifications
-    [s.set_visible(False) for s in ax.spines.values()]
-    ax.set_xticks([])
-    ax.set_yticks([])
-    ax.autoscale_view()
-    ax.set_aspect("equal", "box")
 
 
 ########################################################################################

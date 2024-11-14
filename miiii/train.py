@@ -3,32 +3,36 @@
 # by: Noah Syrkis
 
 # %% Imports
+from typing import Tuple
+
+import jax.numpy as jnp
+import optax
+from chex import Array
+from jax import jit, lax, nn, random, tree, value_and_grad, vmap
+from jax_tqdm import scan_tqdm
+
 from miiii.model import apply_fn, init_fn
 from miiii.tasks import Dataset, task_fn
-from miiii.utils import Conf, log_fn, Params, Activation, State, Metrics, Split
-from jax import random, value_and_grad, vmap, lax, tree, jit, nn
-import jax.numpy as jnp
-from jax_tqdm import scan_tqdm
-import optax
-from typing import Tuple
-from chex import Array
+from miiii.utils import Activation, Conf, Metrics, Params, Split, State
 
 
 # Train
 def focal_loss_fn(logits, y, alpha, gamma):
-    logits = logits.astype(jnp.float64)  # enable with some jax bullshit to avoid slingshot
+    # logits = logits.astype(jnp.float64)  # enable with some jax bullshit to avoid slingshot
     # consider squaring alpha, and increasing gamma?
     return optax.sigmoid_focal_loss(logits, y, alpha, gamma).astype(jnp.float32).mean()  # mean across samples
 
 
-def cross_entropy(logits, y, *_):
-    logits = logits.astype(jnp.float64)  # enable with some jax bullshit to avoid slingshot
+def cross_entropy_fn(logits, y, *_):
+    # logits = logits.astype(jnp.float64)  # enable with some jax bullshit to avoid slingshot
     return optax.softmax_cross_entropy_with_integer_labels(logits, y).astype(jnp.float32).mean()
 
 
 def update_fn(opt, ds: Dataset, cfg: Conf):
     apply = apply_fn(cfg)
-    loss_fn = vmap(focal_loss_fn, in_axes=(1, 1, 0, None)) if cfg.project == "miiii" else cross_entropy
+    focal_loss = vmap(focal_loss_fn, in_axes=(1, 1, 0, None))
+    cross_entropy = vmap(cross_entropy_fn, in_axes=(1, 1, None, None)) if cfg.project == "miiii" else cross_entropy_fn
+    loss_fn = cross_entropy if cfg.task == "multi" else focal_loss
 
     @jit
     def update(state, key):
@@ -43,7 +47,6 @@ def update_fn(opt, ds: Dataset, cfg: Conf):
 
 
 def grad_fn(params: Params, rng, ds: Dataset, cfg: Conf, apply, loss_fn) -> Tuple[Array, Array, Activation, Array]:
-    @jit
     def loss_and_logits(params: Params) -> Tuple[jnp.ndarray, Tuple[Array, Activation]]:
         acts: Activation = apply(params, rng, ds.train[0], cfg.dropout)
         losses = loss_fn(acts.logits, ds.train[1], 1 - ds.train[1].mean(0), cfg.gamma)
@@ -100,14 +103,14 @@ def run_fn(rng, cfg: Conf):
     keys = random.split(rng)  # create random keys
     ds = task_fn(keys[0], cfg)  # create dataset
     state, (metrics, acts) = train(keys[1], cfg, ds)  # train
-    log_fn(cfg, ds, state, metrics, acts)  # log
+    # log_fn(cfg, ds, state, metrics, acts)  # log
 
 
 # Evaluate
 def evaluate_fn(ds: Dataset, cfg: Conf, apply, loss_fn):
-    f1_score = vmap(f1_score_fn, in_axes=(1, 1)) if cfg.project == "miiii" else f1_score_fn  # type: ignore
-    accuracy = vmap(accuracy_fn, in_axes=(1, 1)) if cfg.project == "miiii" else accuracy_fn  # type: ignore
-    pred_fn = (lambda x: x.argmax(-1)) if cfg.project == "nanda" else lambda x: (nn.sigmoid(x) > 0.5).astype(jnp.int8)  # noqa
+    f1_score = vmap(f1_score_fn, in_axes=(1, 1)) if cfg.project == "miiii" else f1_score_fn
+    accuracy = vmap(accuracy_fn, in_axes=(1, 1)) if cfg.project == "miiii" else accuracy_fn
+    pred_fn = (lambda x: x.argmax(-1)) if cfg.task == "multi" else lambda x: (nn.sigmoid(x) > 0.5).astype(jnp.int8)  # noqa. THIS IS CORRECT
 
     def aux_fn(logits, y, loss):
         pred = pred_fn(logits)

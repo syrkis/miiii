@@ -30,8 +30,7 @@ def apply_fn(cfg: Conf):
         # forward
         embeds = embed_fn(params.embeds, x)
         z, acts = lax.scan(step_fn, embeds, (keys, params.attn, params.ffwd))
-        acts.logits = (z @ params.unbeds)[-1]  # binary preidction on if x is mul of f.
-
+        acts.logits = z[-1] @ params.unbeds  # binary preidction on if x is mul of f.
         return acts
 
     return apply
@@ -98,19 +97,25 @@ def init_block(cfg: Conf, rng: jnp.ndarray) -> Tuple[Attention, Feedforward]:
 def init_fn(rng: Array, cfg: Conf, ds: Dataset):  # -> mi.types.Params:
     keys = random.split(rng, 2 + cfg.depth)
     embeds = init_embed_fn(keys[0], cfg)
-    unbeds = initializer(keys[1], n_tasks(cfg))  # type: ignore
+    unbeds = initializer(keys[1], task_size(cfg))  # type: ignore
     attn, ffwd = lax.map(partial(init_block, cfg), keys[2:])
     return Params(embeds=embeds, unbeds=unbeds, attn=attn, ffwd=ffwd)
-
-
-# %% Evaluation
-def n_tasks(cfg: Conf):  # infers the number of tasks we are solving
-    primes = jnp.array(A000040[1 : cfg.p])
-    primes = primes[primes < cfg.p]
-    shape = (cfg.latent_dim, primes.shape[0]) if cfg.project == "miiii" else (cfg.latent_dim, cfg.p)
-    return shape
 
 
 def dropout_fn(key: Array, x: Array, dropout: float) -> Array:
     mask = random.bernoulli(key, 1 - dropout, x.shape)
     return jnp.where(dropout == 0.0, x, x * mask / (1 - dropout))
+
+
+def task_size(cfg: Conf):  # infers the number of tasks we are solving
+    match cfg.project:
+        case "nanda":
+            return cfg.latent_dim, cfg.p
+        case "miiii":
+            primes = jnp.array(A000040[1 : cfg.p])
+            primes = primes[primes < cfg.p]
+            match cfg.task:
+                case "binary":
+                    return (cfg.latent_dim, primes.shape[0])
+                case "multi":
+                    return (primes.shape[0], cfg.latent_dim, cfg.p)

@@ -34,7 +34,8 @@ def miiii_fn(key, cfg):  # we go from 0 instead of 2 to avoid annoying index bug
     factors = primes[primes < cfg.p]  # prime factors
     idxs = random.permutation(key, jnp.arange(cfg.p**2))  # permute the indices
     x = repr_fn(jnp.arange(cfg.p**2), cfg.p)  # x is the representation of the numbers
-    y = ((jnp.arange(cfg.p**2)[:, None] % factors[None, :]) == 0).astype(jnp.int8)
+    y = (jnp.arange(cfg.p**2)[:, None] % factors[None, :]).astype(jnp.int8)
+    y = y if cfg.task == "multi" else (y == 0).astype(jnp.int8)
     x, y = x[idxs], y[idxs]
     train_split = x[: int(cfg.train_frac * cfg.p**2)], y[: int(cfg.train_frac * cfg.p**2)]
     valid_split = x[int(cfg.train_frac * cfg.p**2) :], y[int(cfg.train_frac * cfg.p**2) :]

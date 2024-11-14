@@ -19,8 +19,6 @@ from dataclasses import field
 
 
 # %% Types
-
-
 @dataclass
 class Activation:
     wei: Array
@@ -87,6 +85,7 @@ def parse_args():
     parser.add_argument("--heads", type=int, default=4, help="Number of attention heads")
     parser.add_argument("--epochs", type=int, default=10000, help="Number of training epochs")
     parser.add_argument("--lr", type=float, default=1e-4, help="Learning rate")
+    parser.add_argument("--task", type=str, default="multi", help="Task")
     parser.add_argument("--l2", type=float, default=1.0, help="L2 regularization")
     parser.add_argument("--dropout", type=float, default=0.5, help="Dropout rate")
     parser.add_argument("--train_frac", type=float, default=0.5, help="Fraction of data used for training")
@@ -104,6 +103,7 @@ class Conf:
     project: str = "miiii"
     alpha: float = 0.98
     lamb: float = 2
+    task: str = "multi"  # binary, multi
     gamma: float = 2
     latent_dim: int = 128
     depth: int = 1
@@ -120,6 +120,7 @@ def create_cfg(args: argparse.Namespace) -> Conf:
     Create a configuration object from parsed command-line arguments.
     """
     return Conf(
+        task=args.task,
         project=args.project,
         p=args.p,
         latent_dim=args.latent_dim,
@@ -297,10 +298,11 @@ def construct_cfg_from_hash(hash: str) -> Conf:
 
     # Retrieve hyperparameters stored in the run
     hparams = run["hparams"]
+    dataset = run["dataset"]
 
     # Create and return a Conf instance using the retrieved parameters from the run
     return Conf(
-        project=hparams.get("project", "miiii"),  # type: ignore
+        project=dataset.get("project", "miiii"),  # type: ignore
         p=run["dataset"].get("prime", 113),  # assuming it stores the prime as well  # type: ignore
         alpha=hparams.get("alpha", 0.98),  # type: ignore
         lamb=hparams.get("lamb", 2),  # type: ignore
