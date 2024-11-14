@@ -13,7 +13,7 @@ from jax_tqdm import scan_tqdm
 
 from miiii.model import apply_fn, init_fn
 from miiii.tasks import Dataset, task_fn
-from miiii.utils import Activation, Conf, Metrics, Params, Split, State
+from miiii.utils import Activation, Conf, Metrics, Params, Split, State, log_fn
 
 
 # Train
@@ -103,7 +103,7 @@ def run_fn(rng, cfg: Conf):
     keys = random.split(rng)  # create random keys
     ds = task_fn(keys[0], cfg)  # create dataset
     state, (metrics, acts) = train(keys[1], cfg, ds)  # train
-    # log_fn(cfg, ds, state, metrics, acts)  # log
+    log_fn(cfg, ds, state, metrics, acts)  # log
 
 
 # Evaluate
