@@ -20,8 +20,6 @@ if __name__ == "__main__" and "ipykernel" not in sys.argv[0]:
     mi.train.run_fn(random.PRNGKey(0), mi.utils.create_cfg(mi.utils.parse_args()))
 
 
-hash = "96405be96dea494e9c0d921c"
-slice = 23
 subscript = lambda i: chr(0x2080 + i)  # noqa
 
 
@@ -35,7 +33,6 @@ def fourier_basis(p):  # TODO This is a bit wrong
 def plot_training(metrics, acts, y, cfg):
     plot_f1_final_tasks(metrics, cfg)
     plot_f1_tasks(metrics, cfg)
-    print(acts.logits.shape, y.shape)
     # y_hat = (nn.sigmoid(acts.logits) > 0.5).astype(jnp.int8)[:, -1]
     # data = jnp.array([y_hat.mean(0)[None, :], y.mean(0)[None, :]])
     # esch.plot(data)
@@ -100,7 +97,7 @@ def plot_y(y, cfg):
     nanda_cfg.p = 11
     nanda_cfg.project = "nanda"
     nanda_ds = mi.tasks.task_fn(random.PRNGKey(0), nanda_cfg)
-    nanda_y = jnp.concat((nanda_ds.train[1], nanda_ds.valid[1]))[nanda_ds.idxs.argsort()].reshape(1, 11, 11) / 10
+    nanda_y = jnp.concat((nanda_ds.y_train, nanda_ds.y_valid))[nanda_ds.idxs.argsort()].reshape(1, 11, 11) / 10
     data = jnp.concatenate((data, nanda_y), axis=0)
     esch.plot(data, edge=edge, path="paper/figs/ds_11_y.svg")
 
@@ -168,10 +165,6 @@ def embed_in_fourier(W_E, F, S, cfg):
 
 
 def singular_values(S, cfg):
-    import matplotlib.pyplot as plt
-
-    plt.plot(S)
-
     fifty = jnp.where((S / S.sum()).cumsum() < 0.5)[0].max()
     ninety = jnp.where((S / S.sum()).cumsum() < 0.9)[0].max()
     bottom = esch.EdgeConfig(ticks=[(int(fifty.item()), "0.5"), (ninety.item(), "0.9")], show_on="first")
@@ -182,7 +175,6 @@ def singular_values(S, cfg):
 
 def top_singular_vectors(U, S, cfg):
     fifty = jnp.where((S / S.sum()).cumsum() < 0.5)[0].max()
-    print(fifty)
     left = esch.EdgeConfig(ticks=[(i, "𝘶" + subscript(i)) for i in range(fifty)], show_on="first")
     edge = esch.EdgeConfigs(left=left)
     esch.plot(U[:, :fifty].T, path=f"paper/figs/{cfg.project}_{cfg.p}_U_top_{fifty}.svg", edge=edge)
@@ -200,7 +192,7 @@ def report_fn(hash, slice):
     cfg = mi.utils.construct_cfg_from_hash(hash)  # and associated config
     ds = mi.tasks.task_fn(random.PRNGKey(0), cfg)  # and the dataset
     merge = lambda x, y: jnp.concat((x, y), axis=0)[ds.idxs.argsort()]  # noqa
-    x, y = map(merge, ds.train, ds.valid)  # merge the train and valid sets
+    x, y = map(merge, (ds.x_train, ds.x_valid), (ds.y_train, ds.y_valid))
 
     data_report_fn(x, y, cfg) if cfg.project == "miiii" else None
     embedding_report_fn(state, cfg)
@@ -221,6 +213,8 @@ def report_fn(hash, slice):
     # esch.plot((state.params.ffwd.w_out @ state.params.unbeds).squeeze().T)
 
 
-# report_fn(hash, slice)
+hash = "08aea9ab146c4c22917a1920"
+slice = 23
+report_fn(hash, slice)
 
 # %%

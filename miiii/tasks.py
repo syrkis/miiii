@@ -19,8 +19,10 @@ def task_fn(key: Array, cfg: Conf):
 
 @dataclass
 class Dataset:
-    train: Tuple[Array, Array]
-    valid: Tuple[Array, Array]
+    x_train: Array
+    x_valid: Array
+    y_train: Array
+    y_valid: Array
     idxs: Array
 
 
@@ -37,9 +39,9 @@ def miiii_fn(key, cfg):  # we go from 0 instead of 2 to avoid annoying index bug
     y = (jnp.arange(cfg.p**2)[:, None] % factors[None, :]).astype(jnp.int8)
     y = y if cfg.task == "multi" else (y == 0).astype(jnp.int8)
     x, y = x[idxs], y[idxs]
-    train_split = x[: int(cfg.train_frac * cfg.p**2)], y[: int(cfg.train_frac * cfg.p**2)]
-    valid_split = x[int(cfg.train_frac * cfg.p**2) :], y[int(cfg.train_frac * cfg.p**2) :]
-    return Dataset(train=train_split, valid=valid_split, idxs=idxs)
+    x_train, y_train = x[: int(cfg.train_frac * cfg.p**2)], y[: int(cfg.train_frac * cfg.p**2)]
+    x_valid, y_valid = x[int(cfg.train_frac * cfg.p**2) :], y[int(cfg.train_frac * cfg.p**2) :]
+    return Dataset(x_train=x_train, y_train=y_train, x_valid=x_valid, y_valid=y_valid, idxs=idxs)
 
 
 # nanda task  ################################################################
@@ -55,4 +57,4 @@ def nanda_fn(key, cfg: Conf) -> Dataset:
     y = data[:, -1]
     x_train, x_valid = x[: int(len(x) * cfg.train_frac)], x[int(len(x) * cfg.train_frac) :]
     y_train, y_valid = y[: int(len(y) * cfg.train_frac)], y[int(len(y) * cfg.train_frac) :]
-    return Dataset(train=(x_train, y_train), valid=(x_valid, y_valid), idxs=idxs)
+    return Dataset(x_train=x_train, x_valid=x_valid, y_train=y_train, y_valid=y_valid, idxs=idxs)
