@@ -82,13 +82,13 @@ def loss_fn(task_type, task_span):
 
 # Train
 def focal_loss_fn(logits, y, alpha, gamma):
-    # logits = logits.astype(jnp.float64)  # enable with some jax bullshit to avoid slingshot
+    logits = logits.astype(jnp.float64)  # enable with some jax bullshit to avoid slingshot
     # consider squaring alpha, and increasing gamma?
     return optax.sigmoid_focal_loss(logits, y, alpha, gamma).astype(jnp.float32).mean()  # mean across samples
 
 
 def cross_entropy_fn(logits, y, *_):
-    # logits = logits.astype(jnp.float64)  # enable with some jax bullshit to avoid slingshot
+    logits = logits.astype(jnp.float64)  # enable with some jax bullshit to avoid slingshot
     return optax.softmax_cross_entropy_with_integer_labels(logits, y).astype(jnp.float32).mean()
 
 
