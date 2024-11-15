@@ -102,16 +102,14 @@ def parse_args():
 @dataclass
 class Conf:
     p: int = 113
-    # project: str = "miiii"
     alpha: float = 0.98
     lamb: float = 2
-    # task: str = "multi"  # binary, multi
     gamma: float = 2
     latent_dim: int = 128
     depth: int = 1
     heads: int = 4
     epochs: int = 10000
-    lr: float = 1e-4
+    lr: float = 1e-3
     l2: float = 1.0
     dropout: float = 0.5
     train_frac: float = 0.5
