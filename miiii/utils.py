@@ -81,13 +81,13 @@ def parse_args():
     parser = argparse.ArgumentParser(description="Run model with specified hyperparameters.")
 
     # Define all hyperparameters as optional arguments with defaults from Conf class
-    parser.add_argument("--project", type=str, help="Project name")
+    # parser.add_argument("--project", type=str, help="Project name")
     parser.add_argument("--latent_dim", type=int, help="Latent dimension size")
     parser.add_argument("--depth", type=int, help="Depth of the model")
     parser.add_argument("--heads", type=int, help="Number of attention heads")
     parser.add_argument("--epochs", type=int, help="Number of training epochs")
     parser.add_argument("--lr", type=float, help="Learning rate")
-    parser.add_argument("--task", type=str, help="Task")
+    # parser.add_argument("--task", type=str, help="Task")
     parser.add_argument("--l2", type=float, help="L2 regularization")
     parser.add_argument("--dropout", type=float, help="Dropout rate")
     parser.add_argument("--train_frac", type=float, help="Fraction of data used for training")
@@ -102,10 +102,10 @@ def parse_args():
 @dataclass
 class Conf:
     p: int = 113
-    project: str = "miiii"
+    # project: str = "miiii"
     alpha: float = 0.98
     lamb: float = 2
-    task: str = "multi"  # binary, multi
+    # task: str = "multi"  # binary, multi
     gamma: float = 2
     latent_dim: int = 128
     depth: int = 1

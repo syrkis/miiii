@@ -170,8 +170,8 @@ def report_fn(hash, slice):
     state, (metrics, _) = mi.utils.get_metrics_and_params(hash)  # get a run
     cfg = mi.utils.construct_cfg_from_hash(hash)  # and associated config
     ds = mi.tasks.task_fn(random.PRNGKey(0), cfg)  # and the dataset
-    merge = lambda x, y: jnp.concat((x, y), axis=0)[ds.idxs.argsort()]  # noqa
-    x, y = map(merge, (ds.x_train, ds.x_valid), (ds.y_train, ds.y_valid))
+    x = jnp.concat((ds.x_train, ds.x_valid), axis=0)[ds.idxs.argsort()]
+    y = jnp.concat((ds.y_train, ds.y_valid), axis=0)[ds.idxs.argsort()]
 
     data_report_fn(x, y, cfg) if cfg.project == "miiii" else None
     embedding_report_fn(state, cfg)
@@ -193,7 +193,6 @@ def report_fn(hash, slice):
 
 
 # %%
-if __name__ == "__main__" and "ipykernel" in sys.argv[0]:
-    hash = "08aea9ab146c4c22917a1920"
-    slice = 23
-    report_fn(hash, slice)
+hash = "49409e4c549346d4b57db8b3"
+slice = 23
+report_fn(hash, slice)

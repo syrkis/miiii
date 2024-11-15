@@ -17,34 +17,20 @@ from miiii.tasks import Dataset
 from miiii.utils import Activation, Conf, Metrics, Params, Split, State
 
 
-# Train
-def focal_loss_fn(logits, y, alpha, gamma):
-    # logits = logits.astype(jnp.float64)  # enable with some jax bullshit to avoid slingshot
-    # consider squaring alpha, and increasing gamma?
-    return optax.sigmoid_focal_loss(logits, y, alpha, gamma).astype(jnp.float32).mean()  # mean across samples
-
-
-def cross_entropy_fn(logits, y, *_):
-    # logits = logits.astype(jnp.float64)  # enable with some jax bullshit to avoid slingshot
-    return optax.softmax_cross_entropy_with_integer_labels(logits, y).astype(jnp.float32).mean()
-
-
+# %% Functions
 def update_fn(opt, ds: Dataset, cfg: Conf):
     train_apply = apply_fn(cfg, ds, eval=False)
     valid_apply = partial(apply_fn(cfg, ds, eval=True), random.PRNGKey(0))
-    focal_loss = vmap(focal_loss_fn, in_axes=(1, 1, 0, None))
-    cross_entropy = vmap(cross_entropy_fn, in_axes=(1, 1, None, None)) if cfg.project == "miiii" else cross_entropy_fn
-    loss_fn = focal_loss if (cfg.project == "miiii" and cfg.task == "binary") else cross_entropy
 
     def update(state, key):
-        loss, losses, output, grads = grad_fn(state.params, key, ds, cfg, train_apply, loss_fn)
+        loss, losses, output, grads = grad_fn(state.params, key, ds, cfg, train_apply, ds.loss_fn)
         grads, emas = filter_fn(grads, state.emas, cfg.alpha, cfg.lamb)  # grokfast values
         updates, opt_state = opt.update(grads, state.opt_state, state.params)
         params = optax.apply_updates(state.params, updates)
         state = State(params=params, emas=emas, opt_state=opt_state)  # type: ignore
         return state, (loss, losses, output)
 
-    return update, train_apply, valid_apply, loss_fn
+    return update, train_apply, valid_apply
 
 
 def grad_fn(params: Params, rng, ds: Dataset, cfg: Conf, apply, loss_fn) -> Tuple[Array, Array, Activation, Array]:
@@ -65,8 +51,8 @@ def filter_fn(grads, emas, alpha: float, lamb: float):
 
 def step_fn(ds: Dataset, cfg: Conf, opt, scope):
     opt = optax.adamw(cfg.lr, weight_decay=cfg.l2)
-    update, train_apply, valid_apply, loss_fn = update_fn(opt, ds, cfg)
-    evaluate = evaluate_fn(ds, cfg, valid_apply, loss_fn)
+    update, train_apply, valid_apply = update_fn(opt, ds, cfg)
+    evaluate = evaluate_fn(ds, cfg, valid_apply)
 
     consort = lambda x, y: jnp.concat((x, y))[jnp.argsort(ds.idxs)].astype(jnp.float16)  # noqa
     output_fn = (lambda x, y: tree.map(consort, x, y)) if scope else lambda *_: None
@@ -89,7 +75,7 @@ def init_state(rng, cfg: Conf, ds, opt):
     return State(params=params, opt_state=opt_state, emas=emas)
 
 
-def train(rng, cfg: Conf, ds: Dataset, scope=False) -> Tuple[State, Tuple[Metrics, Activation | None]]:
+def train(rng, cfg: Conf, ds, scope=False) -> Tuple[State, Tuple[Metrics, Activation | None]]:
     opt = optax.adamw(cfg.lr, weight_decay=cfg.l2, b1=0.9, b2=0.98)  # @nanda2023
     state = init_state(rng, cfg, ds, opt)
     step = step_fn(ds, cfg, opt, scope)
@@ -100,19 +86,25 @@ def train(rng, cfg: Conf, ds: Dataset, scope=False) -> Tuple[State, Tuple[Metric
 
 
 # Evaluate
-def evaluate_fn(ds: Dataset, cfg: Conf, apply, loss_fn):
-    f1_score = vmap(f1_score_fn, in_axes=(1, 1)) if cfg.project == "miiii" else f1_score_fn
-    accuracy = vmap(accuracy_fn, in_axes=(1, 1)) if cfg.project == "miiii" else accuracy_fn
-    pred_fn = (lambda x: x.argmax(-1)) if cfg.task == "multi" else lambda x: (nn.sigmoid(x) > 0.5).astype(jnp.int8)  # noqa. THIS IS CORRECT
+def evaluate_fn(ds: Dataset, cfg: Conf, apply):
+    f1_score = vmap(f1_score_fn, in_axes=(1, 1)) if ds.task_span == "batch" else f1_score_fn
+    accuracy = vmap(accuracy_fn, in_axes=(1, 1)) if ds.task_span == "batch" else accuracy_fn
+
+    pred_fn = (
+        (lambda x: x.argmax(-1)) if ds.task_type == "remainder" else lambda x: (nn.sigmoid(x) > 0.5).astype(jnp.int8)
+    )  # noqa
 
     def aux_fn(logits, y, loss):
+        # print(logits.shape, y.shape, loss.shape, ds.task_type, ds.task_span)
         pred = pred_fn(logits)
+        # print(pred.shape, y.shape, loss.shape, ds.task_type, ds.task_span)
+        # exit()
         f1, acc = f1_score(pred, y), accuracy(pred, y)
         return Split(loss=loss, f1=f1, acc=acc)
 
     def evaluate(params, train_loss, train_logits):
         valid_output = apply(params, ds.x_valid)
-        valid_loss = loss_fn(valid_output.logits, ds.y_valid, 1 - ds.y_train.mean(0), cfg.gamma)
+        valid_loss = ds.loss_fn(valid_output.logits, ds.y_valid, 1 - ds.y_train.mean(0), cfg.gamma)
 
         valid_metrics = aux_fn(valid_output.logits, ds.y_valid, valid_loss)
         train_metrics = aux_fn(train_logits, ds.y_train, train_loss)

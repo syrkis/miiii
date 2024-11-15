@@ -20,7 +20,7 @@ initializer = nn.initializers.he_normal()
 
 
 def mask_fn(cfg, ds):
-    if cfg.task == "multi" and cfg.project == "miiii":
+    if ds.task_type == "remainder" and ds.task_span == "batch":
         primes = jnp.array(A000040[1 : ds.y_train.shape[1] + 1])
         mask = jnp.tile(jnp.arange(primes.max()), primes.size).reshape((primes.size, -1)) < primes[:, None]
         return mask
@@ -38,7 +38,7 @@ def apply_fn(cfg: Conf, ds, eval):
         embeds = embed_fn(params.embeds, x)
         keys = random.split(rng, cfg.depth * 2).reshape(cfg.depth, 2, 2)
         z, acts = lax.scan(step, embeds, (keys, params.attn, params.ffwd))
-        acts.logits = (z[-1] @ params.unbeds) * mask
+        acts.logits = ((z[-1] @ params.unbeds) * mask).squeeze()
         return acts
 
     return apply
@@ -102,10 +102,10 @@ def init_block(cfg: Conf, rng: jnp.ndarray) -> Tuple[Attention, Feedforward]:
     return attn_w, ffwd_w
 
 
-def init_fn(rng: Array, cfg: Conf, ds: Dataset):  # -> mi.types.Params:
+def init_fn(rng: Array, cfg: Conf, ds: Dataset):
     keys = random.split(rng, 2 + cfg.depth)
     embeds = init_embed_fn(keys[0], cfg)
-    unbeds = initializer(keys[1], task_size(cfg))  # type: ignore
+    unbeds = initializer(keys[1], task_size(cfg, ds.task_type, ds.task_span))
     attn, ffwd = lax.map(partial(init_block, cfg), keys[2:])
     return Params(embeds=embeds, unbeds=unbeds, attn=attn, ffwd=ffwd)
 
@@ -115,15 +115,17 @@ def dropout_fn(key: Array, x: Array, dropout: float) -> Array:
     return jnp.where(dropout == 0.0, x, x * mask / (1 - dropout))
 
 
-def task_size(cfg: Conf):  # infers the number of tasks we are solving
-    match cfg.project:
-        case "nanda":
+def task_size(cfg: Conf, task_type, task_span):
+    primes = jnp.array(A000040[1 : cfg.p])
+    primes = primes[primes < cfg.p]
+    match task_type, task_span:
+        case "divisible", "atomic":
+            return cfg.latent_dim, 1
+        case "remainder", "atomic":
             return cfg.latent_dim, cfg.p
-        case "miiii":
-            primes = jnp.array(A000040[1 : cfg.p])
-            primes = primes[primes < cfg.p]
-            match cfg.task:
-                case "binary":
-                    return (cfg.latent_dim, primes.shape[0])
-                case "multi":
-                    return (primes.shape[0], cfg.latent_dim, primes.max())
+        case "divisible", "batch":
+            return cfg.latent_dim, primes.shape[0]
+        case "remainder", "batch":
+            return primes.shape[0], cfg.latent_dim, primes.max()
+        case _:
+            raise ValueError("Invalid task type or span")
