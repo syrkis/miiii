@@ -17,6 +17,10 @@ from miiii.tasks import Dataset, Task
 from miiii.utils import Activation, Conf, Metrics, Params, Split, State
 
 
+ADAM_BETA1 = 0.9
+ADAM_BETA2 = 0.98
+
+
 # %% Functions
 def update_fn(opt, ds: Dataset, task: Task, cfg: Conf):
     train_apply = apply_fn(cfg, ds, task, eval=False)
@@ -82,7 +86,7 @@ def init_state(rng, cfg: Conf, ds: Dataset, task: Task, opt):
 
 
 def train(rng, cfg: Conf, ds: Dataset, task: Task, scope=False) -> Tuple[State, Tuple[Metrics, Activation | None]]:
-    opt = optax.adamw(cfg.lr, weight_decay=cfg.l2, b1=0.9, b2=0.98)  # @nanda2023
+    opt = optax.adamw(cfg.lr, weight_decay=cfg.l2, b1=ADAM_BETA1, b2=ADAM_BETA2)  # @nanda2023
     state = init_state(rng, cfg, ds, task, opt)
     step = step_fn(ds, task, cfg, opt, scope)
     rngs = random.split(rng, cfg.epochs)
@@ -103,6 +107,7 @@ def evaluate_fn(ds: Dataset, task: Task, cfg: Conf, apply):
         f1, acc = f1_score(pred, y), accuracy(pred, y)
         return Split(loss=loss, f1=f1, acc=acc)
 
+    @jit
     def evaluate(params, train_loss, train_logits):
         valid_output = apply(params, ds.x_valid)
         valid_loss = task.loss_fn(valid_output.logits, ds.y_valid, 1 - ds.y_train.mean(0), cfg.gamma)
@@ -117,10 +122,12 @@ def evaluate_fn(ds: Dataset, task: Task, cfg: Conf, apply):
     return evaluate
 
 
+@jit
 def accuracy_fn(y_pred, y_true):
     return (y_pred == y_true).mean()
 
 
+@jit
 def f1_score_fn(y_pred, y_true):
     confusion = jnp.eye(2)[y_pred].T @ jnp.eye(2)[y_true]
     tp, fp, fn = confusion[1, 1], confusion[1, 0], confusion[0, 1]
