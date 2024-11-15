@@ -10,6 +10,7 @@ import optax
 from chex import dataclass
 from jax import Array, random, vmap
 from oeis import oeis
+from typing import Tuple
 
 from miiii.utils import Conf
 
@@ -22,12 +23,16 @@ class Dataset:
     y_train: Array
     y_valid: Array
     idxs: Array
-    task_type: str  # 'remainder', 'divisible'
-    task_span: str  # 'atomic, 'batch'
+
+
+@dataclass
+class Task:
+    type: str  # 'remainder', 'divisible'
+    span: str  # 'atomic, 'batch'
     loss_fn: Callable
 
 
-def task_fn(key: Array, cfg: Conf, task_type, task_span) -> Dataset:
+def task_fn(key: Array, cfg: Conf, task_type, task_span) -> Tuple[Dataset, Task]:
     match task_span:
         case "atomic":
             return nanda_fn(key, cfg, task_type, task_span)
@@ -54,16 +59,8 @@ def miiii_fn(key, cfg, task_type, task_span):
     x_train, y_train = x[: int(cfg.train_frac * cfg.p**2)], y[: int(cfg.train_frac * cfg.p**2)]
     x_valid, y_valid = x[int(cfg.train_frac * cfg.p**2) :], y[int(cfg.train_frac * cfg.p**2) :]
     loss = loss_fn(task_type, task_span)
-    return Dataset(
-        x_train=x_train,
-        y_train=y_train,
-        x_valid=x_valid,
-        y_valid=y_valid,
-        idxs=idxs,
-        loss_fn=loss,
-        task_type=task_type,
-        task_span=task_span,
-    )
+    task = Task(loss_fn=loss, type=task_type, span=task_span)
+    return Dataset(x_train=x_train, y_train=y_train, x_valid=x_valid, y_valid=y_valid, idxs=idxs), task
 
 
 def loss_fn(task_type, task_span):
@@ -94,7 +91,7 @@ def cross_entropy_fn(logits, y, *_):
 
 # MULTI FALSE
 # nanda task  ################################################################
-def nanda_fn(key, cfg: Conf, task_type, task_span) -> Dataset:
+def nanda_fn(key, cfg: Conf, task_type: str, task_span: str) -> Tuple[Dataset, Task]:
     # modular adition modulo prime
     a = jnp.arange(cfg.p).repeat(cfg.p)
     b = jnp.tile(jnp.arange(cfg.p), cfg.p)
@@ -109,13 +106,5 @@ def nanda_fn(key, cfg: Conf, task_type, task_span) -> Dataset:
     if task_type:
         y_train, y_valid = (y_train == 0).astype(jnp.int8), (y_valid == 0).astype(jnp.int8)
     loss = loss_fn(task_type, task_span)
-    return Dataset(
-        x_train=x_train,
-        x_valid=x_valid,
-        y_train=y_train,
-        y_valid=y_valid,
-        idxs=idxs,
-        loss_fn=loss,
-        task_type=task_type,
-        task_span=task_span,
-    )
+    task = Task(loss_fn=loss, type=task_type, span=task_span)
+    return Dataset(x_train=x_train, x_valid=x_valid, y_train=y_train, y_valid=y_valid, idxs=idxs), task

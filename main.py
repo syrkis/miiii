@@ -13,9 +13,9 @@ from itertools import product
 
 # %% Training
 def train_task_fn(rng, cfg, task_type, task_span):
-    ds = mi.tasks.task_fn(rng, cfg, task_type, task_span)  # create dataset
-    state, (metrics, acts) = mi.train.train(rng, cfg, ds)
-    return state, (metrics, acts)
+    ds, task = mi.tasks.task_fn(rng, cfg, task_type, task_span)  # create dataset
+    state, (metrics, acts) = mi.train.train(rng, cfg, ds, task)
+    return state, (metrics, acts), task
 
 
 rng = random.PRNGKey(0)
@@ -23,4 +23,4 @@ tasks = list(product(["divisible", "remainder"], ["atomic", "batch"]))
 cfg = mi.utils.create_cfg()
 train_task = partial(train_task_fn, rng, cfg)
 runs = list(map(lambda args: train_task(*args), tasks))
-mi.utils.log_fn(runs, cfg, tasks)
+mi.utils.log_fn(runs, cfg)

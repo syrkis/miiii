@@ -4,7 +4,7 @@
 
 # %% Imports
 from miiii.utils import Conf, Params, Activation, Feedforward, Attention, Embedding
-from miiii.tasks import Dataset
+from miiii.tasks import Dataset, Task
 import jax
 from jax import random, lax, nn, vmap, jit
 import jax.numpy as jnp
@@ -19,8 +19,8 @@ from typing import Tuple
 initializer = nn.initializers.he_normal()
 
 
-def mask_fn(cfg, ds):
-    match ds.task_type, ds.task_span:
+def mask_fn(cfg, ds: Dataset, task: Task):
+    match task.type, task.span:
         case "remainder", "batch":
             primes = jnp.array(A000040[1 : ds.y_train.shape[1] + 1])
             return jnp.tile(jnp.arange(primes.max()), primes.size).reshape((primes.size, -1)) < primes[:, None]
@@ -29,9 +29,9 @@ def mask_fn(cfg, ds):
 
 
 # %% Forward
-def apply_fn(cfg: Conf, ds, eval):
+def apply_fn(cfg: Conf, ds: Dataset, task: Task, eval):
     dropout = 0.0 if eval else cfg.dropout
-    mask = mask_fn(cfg, ds)
+    mask = mask_fn(cfg, ds, task)
     step = partial(block_fn, dropout=dropout)
 
     @jit
@@ -103,10 +103,10 @@ def init_block(cfg: Conf, rng: jnp.ndarray) -> Tuple[Attention, Feedforward]:
     return attn_w, ffwd_w
 
 
-def init_fn(rng: Array, cfg: Conf, ds: Dataset):
+def init_fn(rng: Array, cfg: Conf, ds: Dataset, task: Task):
     keys = random.split(rng, 2 + cfg.depth)
     embeds = init_embed_fn(keys[0], cfg)
-    unbeds = initializer(keys[1], task_size(cfg, ds.task_type, ds.task_span))
+    unbeds = initializer(keys[1], task_size(cfg, task))
     attn, ffwd = lax.map(partial(init_block, cfg), keys[2:])
     return Params(embeds=embeds, unbeds=unbeds, attn=attn, ffwd=ffwd)
 
@@ -116,10 +116,10 @@ def dropout_fn(key: Array, x: Array, dropout: float) -> Array:
     return jnp.where(dropout == 0.0, x, x * mask / (1 - dropout))
 
 
-def task_size(cfg: Conf, task_type, task_span):
+def task_size(cfg: Conf, task: Task):
     primes = jnp.array(A000040[1 : cfg.p])
     primes = primes[primes < cfg.p]
-    match task_type, task_span:
+    match task.type, task.span:
         case "divisible", "atomic":
             return cfg.latent_dim, 1
         case "remainder", "atomic":

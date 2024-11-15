@@ -202,35 +202,35 @@ def cfg_to_dirname(cfg: Conf) -> str:
     return "_".join(name_parts)
 
 
-def log_fn(rundata, cfg, tasks):
+def log_fn(rundata, cfg):
     run = Run(experiment="miiii", system_tracking_interval=None, repo="aim://localhost:53800")
     run.set_artifacts_uri("s3://syrkis/")
     grand_parent = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     run_hash_dir = os.path.join(grand_parent, "data/artifacts", run.hash)
     os.makedirs(run_hash_dir, exist_ok=True)
 
-    for (state, (metrics, acts)), (task_type, task_span) in zip(rundata, tasks):
-        with open(f"{run_hash_dir}/metrics_{task_type}_{task_span}.pkl", "wb") as f:
+    for state, (metrics, acts), task in rundata:
+        with open(f"{run_hash_dir}/metrics_{task.type}_{task.span}.pkl", "wb") as f:
             pickle.dump(metrics, f)
-        with open(f"{run_hash_dir}/state_{task_type}_{task_span}.pkl", "wb") as f:
+        with open(f"{run_hash_dir}/state_{task.type}_{task.span}.pkl", "wb") as f:
             pickle.dump(state, f)
-        with open(f"{run_hash_dir}/acts_{task_type}_{task_span}.pkl", "wb") as f:
+        with open(f"{run_hash_dir}/acts_{task.type}_{task.span}.pkl", "wb") as f:
             pickle.dump(acts, f)
 
-        run.log_artifact(f"{run_hash_dir}/metrics_{task_type}_{task_span}.pkl", name="metrics.pkl", block=True)
-        run.log_artifact(f"{run_hash_dir}/state_{task_type}_{task_span}.pkl", name="state.pkl", block=True)
-        run.log_artifact(f"{run_hash_dir}/acts_{task_type}_{task_span}.pkl", name="acts.pkl", block=True)
+        run.log_artifact(f"{run_hash_dir}/metrics_{task.type}_{task.span}.pkl", name="metrics.pkl", block=True)
+        run.log_artifact(f"{run_hash_dir}/state_{task.type}_{task.span}.pkl", name="state.pkl", block=True)
+        run.log_artifact(f"{run_hash_dir}/acts_{task.type}_{task.span}.pkl", name="acts.pkl", block=True)
 
         run["hparams"] = cfg.__dict__
 
         metrics_dict = metrics_to_dict(metrics)
-        tasks = [p for p in oeis["A000040"][1 : cfg.p] if p < cfg.p]
+        factors = [p for p in oeis["A000040"][1 : cfg.p] if p < cfg.p]
 
         log_steps = 1000
         for epoch in tqdm(range(0, cfg.epochs, max(1, cfg.epochs // log_steps))):
-            for task_idx, task in enumerate(tasks if task_span == "batch" else range(1)):
-                log_split(run, cfg, metrics_dict, epoch, task, task_idx, "train", task_type, task_span)
-                log_split(run, cfg, metrics_dict, epoch, task, task_idx, "valid", task_type, task_span)
+            for factor_idx, factor in enumerate(factors if task.span == "batch" else range(1)):
+                log_split(run, cfg, metrics_dict, epoch, factor, factor_idx, "train", task.type, task.span)
+                log_split(run, cfg, metrics_dict, epoch, factor, factor_idx, "valid", task.type, task.span)
 
         # p = esch.plot(state.params.embeds.tok_emb)
         # run.track(AImage(PImage.open(p.png)), name="tok_emb", step=cfg.epochs)  # type: ignore

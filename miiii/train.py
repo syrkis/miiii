@@ -13,15 +13,15 @@ from jax_tqdm import scan_tqdm
 from functools import partial
 
 from miiii.model import apply_fn, init_fn
-from miiii.tasks import Dataset
+from miiii.tasks import Dataset, Task
 from miiii.utils import Activation, Conf, Metrics, Params, Split, State
 
 
 # %% Functions
-def update_fn(opt, ds: Dataset, cfg: Conf):
-    train_apply = apply_fn(cfg, ds, eval=False)
-    valid_apply = partial(apply_fn(cfg, ds, eval=True), random.PRNGKey(0))
-    grad = grad_fn(ds, cfg, train_apply, ds.loss_fn)
+def update_fn(opt, ds: Dataset, task: Task, cfg: Conf):
+    train_apply = apply_fn(cfg, ds, task, eval=False)
+    valid_apply = partial(apply_fn(cfg, ds, task, eval=True), random.PRNGKey(0))
+    grad = grad_fn(ds, cfg, train_apply, task.loss_fn)
 
     def update(state, key):
         loss, losses, output, grads = grad(state.params, key)
@@ -55,10 +55,10 @@ def filter_fn(grads, emas, alpha: float, lamb: float):
     return grads, emas
 
 
-def step_fn(ds: Dataset, cfg: Conf, opt, scope):
+def step_fn(ds: Dataset, task: Task, cfg: Conf, opt, scope):
     opt = optax.adamw(cfg.lr, weight_decay=cfg.l2)
-    update, train_apply, valid_apply = update_fn(opt, ds, cfg)
-    evaluate = evaluate_fn(ds, cfg, valid_apply)
+    update, train_apply, valid_apply = update_fn(opt, ds, task, cfg)
+    evaluate = evaluate_fn(ds, task, cfg, valid_apply)
 
     consort = lambda x, y: jnp.concat((x, y))[jnp.argsort(ds.idxs)].astype(jnp.float16)  # noqa
     output_fn = (lambda x, y: tree.map(consort, x, y)) if scope else lambda *_: None
@@ -74,17 +74,17 @@ def step_fn(ds: Dataset, cfg: Conf, opt, scope):
     return step
 
 
-def init_state(rng, cfg: Conf, ds, opt):
-    params: Params = init_fn(rng, cfg, ds)
+def init_state(rng, cfg: Conf, ds: Dataset, task: Task, opt):
+    params: Params = init_fn(rng, cfg, ds, task)
     emas = tree.map(lambda x: jnp.zeros_like(x), params)
     opt_state = opt.init(params)
     return State(params=params, opt_state=opt_state, emas=emas)
 
 
-def train(rng, cfg: Conf, ds, scope=False) -> Tuple[State, Tuple[Metrics, Activation | None]]:
+def train(rng, cfg: Conf, ds: Dataset, task: Task, scope=False) -> Tuple[State, Tuple[Metrics, Activation | None]]:
     opt = optax.adamw(cfg.lr, weight_decay=cfg.l2, b1=0.9, b2=0.98)  # @nanda2023
-    state = init_state(rng, cfg, ds, opt)
-    step = step_fn(ds, cfg, opt, scope)
+    state = init_state(rng, cfg, ds, task, opt)
+    step = step_fn(ds, task, cfg, opt, scope)
     rngs = random.split(rng, cfg.epochs)
     xs = (jnp.arange(cfg.epochs), rngs)
     state, output = lax.scan(step, state, xs)
@@ -92,13 +92,11 @@ def train(rng, cfg: Conf, ds, scope=False) -> Tuple[State, Tuple[Metrics, Activa
 
 
 # Evaluate
-def evaluate_fn(ds: Dataset, cfg: Conf, apply):
-    f1_score = vmap(f1_score_fn, in_axes=(1, 1)) if ds.task_span == "batch" else f1_score_fn
-    accuracy = vmap(accuracy_fn, in_axes=(1, 1)) if ds.task_span == "batch" else accuracy_fn
+def evaluate_fn(ds: Dataset, task: Task, cfg: Conf, apply):
+    f1_score = vmap(f1_score_fn, in_axes=(1, 1)) if task.span == "batch" else f1_score_fn
+    accuracy = vmap(accuracy_fn, in_axes=(1, 1)) if task.span == "batch" else accuracy_fn
 
-    pred_fn = (
-        (lambda x: x.argmax(-1)) if ds.task_type == "remainder" else lambda x: (nn.sigmoid(x) > 0.5).astype(jnp.int8)
-    )  # noqa
+    pred_fn = (lambda x: x.argmax(-1)) if task.type == "remainder" else lambda x: (nn.sigmoid(x) > 0.5).astype(jnp.int8)
 
     def aux_fn(logits, y, loss):
         pred = pred_fn(logits)
@@ -107,7 +105,7 @@ def evaluate_fn(ds: Dataset, cfg: Conf, apply):
 
     def evaluate(params, train_loss, train_logits):
         valid_output = apply(params, ds.x_valid)
-        valid_loss = ds.loss_fn(valid_output.logits, ds.y_valid, 1 - ds.y_train.mean(0), cfg.gamma)
+        valid_loss = task.loss_fn(valid_output.logits, ds.y_valid, 1 - ds.y_train.mean(0), cfg.gamma)
 
         valid_metrics = aux_fn(valid_output.logits, ds.y_valid, valid_loss)
         train_metrics = aux_fn(train_logits, ds.y_train, train_loss)
