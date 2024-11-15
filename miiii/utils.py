@@ -14,10 +14,10 @@ from functools import partial
 import jax.numpy as jnp
 import numpy as np
 from aim import Repo, Run
-
 from chex import dataclass
 from jax import Array
 from oeis import oeis
+from tqdm import tqdm
 
 
 # %% Types
@@ -157,17 +157,19 @@ def metrics_to_dict(metrics):
     }
 
 
-def log_split(run, cfg, metrics, epoch, task, task_idx, split):
-    fn = partial(log_metric, cfg, metrics, epoch, task_idx, split)
-    task = -1 if task == "prime" else int(task)
+def log_split(run, cfg, metrics, epoch, factor, task_idx, split, task_type, task_span):
+    fn = partial(log_metric, cfg, metrics, epoch, task_idx, split, task_type, task_span)
+    factor = -1 if factor == "prime" else int(factor)
     run.track(
-        {"acc": fn("acc"), "f1": fn("f1"), "loss": fn("loss")}, context={"split": split, "task": task}, step=epoch
+        {"acc": fn("acc"), "f1": fn("f1"), "loss": fn("loss")},
+        context={"split": split, "factor": factor, "task_type": task_type, "task_span": task_span},
+        step=epoch,
     )
 
 
-def log_metric(cfg, metrics, epoch, task_idx, split, metric_name):
+def log_metric(cfg, metrics, epoch, task_idx, split, task_type, task_span, metric_name):
     metrics_value = metrics[metric_name][split]
-    return metrics_value[epoch, task_idx] if cfg.project == "miiii" else metrics_value[epoch]
+    return metrics_value[epoch, task_idx] if task_span == "batch" else metrics_value[epoch]
 
 
 def cfg_to_dirname(cfg: Conf) -> str:
@@ -206,40 +208,38 @@ def cfg_to_dirname(cfg: Conf) -> str:
     return "_".join(name_parts)
 
 
-def log_fn(cfg, ds, state, metrics, acts):
-    run = Run(experiment=cfg.project, system_tracking_interval=None, repo="aim://localhost:53800")
+def log_fn(rundata, cfg, tasks):
+    run = Run(experiment="miiii", system_tracking_interval=None, repo="aim://localhost:53800")
     run.set_artifacts_uri("s3://syrkis/")
     grand_parent = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     run_hash_dir = os.path.join(grand_parent, "data/artifacts", run.hash)
-    print(cfg)
-    print(run.hash)
     os.makedirs(run_hash_dir, exist_ok=True)
 
-    with open(f"{run_hash_dir}/metrics.pkl", "wb") as f:
-        pickle.dump(metrics, f)
-    with open(f"{run_hash_dir}/state.pkl", "wb") as f:
-        pickle.dump(state, f)
-    with open(f"{run_hash_dir}/acts.pkl", "wb") as f:
-        pickle.dump(acts, f)
+    for (state, (metrics, acts)), (task_type, task_span) in tqdm(zip(rundata, tasks)):
+        with open(f"{run_hash_dir}/metrics.pkl", "wb") as f:
+            pickle.dump(metrics, f)
+        with open(f"{run_hash_dir}/state.pkl", "wb") as f:
+            pickle.dump(state, f)
+        with open(f"{run_hash_dir}/acts.pkl", "wb") as f:
+            pickle.dump(acts, f)
 
-    run.log_artifact(f"{run_hash_dir}/metrics.pkl", name="metrics.pkl", block=True)
-    run.log_artifact(f"{run_hash_dir}/state.pkl", name="state.pkl", block=True)
-    run.log_artifact(f"{run_hash_dir}/acts.pkl", name="acts.pkl", block=True)
+        run.log_artifact(f"{run_hash_dir}/metrics.pkl", name="metrics.pkl", block=True)
+        run.log_artifact(f"{run_hash_dir}/state.pkl", name="state.pkl", block=True)
+        run.log_artifact(f"{run_hash_dir}/acts.pkl", name="acts.pkl", block=True)
 
-    run["hparams"] = {k: v for k, v in cfg.__dict__.items() if k not in ["project", "debug", "prime"]}
-    run["dataset"] = {"prime": cfg.p, "project": cfg.project}
+        run["hparams"] = cfg.__dict__
 
-    metrics_dict = metrics_to_dict(metrics)
-    tasks = [p for p in oeis["A000040"][1 : cfg.p] if p < cfg.p]
+        metrics_dict = metrics_to_dict(metrics)
+        tasks = [p for p in oeis["A000040"][1 : cfg.p] if p < cfg.p]
 
-    log_steps = 1000
-    for epoch in range(0, cfg.epochs, max(1, cfg.epochs // log_steps)):
-        for task_idx, task in enumerate(tasks if cfg.project == "miiii" else range(1)):
-            log_split(run, cfg, metrics_dict, epoch, task, task_idx, "train")
-            log_split(run, cfg, metrics_dict, epoch, task, task_idx, "valid")
+        log_steps = 1000
+        for epoch in tqdm(range(0, cfg.epochs, max(1, cfg.epochs // log_steps))):
+            for task_idx, task in enumerate(tasks if task_span == "batch" else range(1)):
+                log_split(run, cfg, metrics_dict, epoch, task, task_idx, "train", task_type, task_span)
+                log_split(run, cfg, metrics_dict, epoch, task, task_idx, "valid", task_type, task_span)
 
-    # p = esch.plot(state.params.embeds.tok_emb)
-    # run.track(AImage(PImage.open(p.png)), name="tok_emb", step=cfg.epochs)  # type: ignore
+        # p = esch.plot(state.params.embeds.tok_emb)
+        # run.track(AImage(PImage.open(p.png)), name="tok_emb", step=cfg.epochs)  # type: ignore
 
     run.close()
 

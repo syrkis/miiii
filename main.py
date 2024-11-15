@@ -5,8 +5,7 @@
 # %% Imports
 
 # import esch
-from jax import random, lax
-import jax.numpy as jnp
+from jax import random
 from functools import partial
 from itertools import product
 
@@ -40,14 +39,11 @@ import miiii as mi
 def train_task_fn(rng, cfg, task_type, task_span):
     ds = mi.tasks.task_fn(rng, cfg, task_type, task_span)  # create dataset
     state, (metrics, acts) = mi.train.train(rng, cfg, ds)
+    return state, (metrics, acts)
 
 
 rng = random.PRNGKey(0)
 tasks = list(product(["divisible", "remainder"], ["atomic", "batch"]))
-cfg = mi.utils.create_cfg(epochs=1000, latent_dim=16)
+cfg = mi.utils.create_cfg()
 train_task = partial(train_task_fn, rng, cfg)
-# train_task(*tasks[0])
-# train_task(*tasks[1])
-# train_task(*tasks[2])
-train_task(*tasks[3])
-# out = [train_task(*task) for task in tasks[1:]]
+mi.utils.log_fn([train_task(*task) for task in tasks], cfg, tasks)

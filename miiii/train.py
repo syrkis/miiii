@@ -95,10 +95,7 @@ def evaluate_fn(ds: Dataset, cfg: Conf, apply):
     )  # noqa
 
     def aux_fn(logits, y, loss):
-        # print(logits.shape, y.shape, loss.shape, ds.task_type, ds.task_span)
         pred = pred_fn(logits)
-        # print(pred.shape, y.shape, loss.shape, ds.task_type, ds.task_span)
-        # exit()
         f1, acc = f1_score(pred, y), accuracy(pred, y)
         return Split(loss=loss, f1=f1, acc=acc)
 
