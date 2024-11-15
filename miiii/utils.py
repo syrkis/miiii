@@ -79,15 +79,11 @@ class State:
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Run model with specified hyperparameters.")
-
-    # Define all hyperparameters as optional arguments with defaults from Conf class
-    # parser.add_argument("--project", type=str, help="Project name")
     parser.add_argument("--latent_dim", type=int, help="Latent dimension size")
     parser.add_argument("--depth", type=int, help="Depth of the model")
     parser.add_argument("--heads", type=int, help="Number of attention heads")
     parser.add_argument("--epochs", type=int, help="Number of training epochs")
     parser.add_argument("--lr", type=float, help="Learning rate")
-    # parser.add_argument("--task", type=str, help="Task")
     parser.add_argument("--l2", type=float, help="L2 regularization")
     parser.add_argument("--dropout", type=float, help="Dropout rate")
     parser.add_argument("--train_frac", type=float, help="Fraction of data used for training")
@@ -112,7 +108,7 @@ class Conf:
     lr: float = 1e-3
     l2: float = 1.0
     dropout: float = 0.5
-    train_frac: float = 0.5
+    train_frac: float = 0.3
 
 
 def create_cfg(**kwargs) -> Conf:
