@@ -3,14 +3,13 @@
 # by: Noah Syrkis
 
 # %% Imports
+import miiii as mi
 
 # import esch
 from jax import random
 from functools import partial
 from itertools import product
 
-
-import miiii as mi
 
 # %% Training
 # keys = random.split(random.PRNGKey(0), 2)
