@@ -6,7 +6,7 @@
 from miiii.utils import Conf, Params, Activation, Feedforward, Attention, Embedding
 from miiii.tasks import Dataset
 import jax
-from jax import random, lax, nn, vmap
+from jax import random, lax, nn, vmap, jit
 import jax.numpy as jnp
 from jax import Array
 from functools import partial
@@ -20,11 +20,12 @@ initializer = nn.initializers.he_normal()
 
 
 def mask_fn(cfg, ds):
-    if ds.task_type == "remainder" and ds.task_span == "batch":
-        primes = jnp.array(A000040[1 : ds.y_train.shape[1] + 1])
-        mask = jnp.tile(jnp.arange(primes.max()), primes.size).reshape((primes.size, -1)) < primes[:, None]
-        return mask
-    return 1
+    match ds.task_type, ds.task_span:
+        case "remainder", "batch":
+            primes = jnp.array(A000040[1 : ds.y_train.shape[1] + 1])
+            return jnp.tile(jnp.arange(primes.max()), primes.size).reshape((primes.size, -1)) < primes[:, None]
+        case _:
+            return 1
 
 
 # %% Forward
@@ -33,6 +34,7 @@ def apply_fn(cfg: Conf, ds, eval):
     mask = mask_fn(cfg, ds)
     step = partial(block_fn, dropout=dropout)
 
+    @jit
     @partial(vmap, in_axes=(None, None, 0))  # type: ignore
     def apply(rng, params, x) -> Activation:
         embeds = embed_fn(params.embeds, x)
@@ -55,16 +57,15 @@ def block_fn(z, args, dropout):
 
 def attn_fn(w, x: Array):
     q, k, v = x @ w.q, x @ w.k, x @ w.v
-    qk = q @ rearrange(k, "b t c -> b c t")
-    qk /= jnp.sqrt(w.k.shape[-1])
+    qk = (q @ rearrange(k, "b t c -> b c t")) / jnp.sqrt(w.k.shape[-1])
     wei = nn.softmax(qk, axis=-1)
     return (wei @ v @ w.o).sum(axis=0), Activation(wei=wei)
 
 
 def ffwd_fn(w: Feedforward, x: Array) -> Tuple[Array, Array]:
-    z = jnp.dot(x, w.w_in)  # + w.b1  # z: seq_len x emb_dim
+    z = jnp.dot(x, w.w_in)  # z: seq_len x emb_dim
     z = jax.nn.relu(z)  # grokfast relu
-    return z @ w.w_out, z  # + w.b2  # disable biases as per @nanda2023
+    return z @ w.w_out, z  # disable biases as per @nanda2023
 
 
 def embed_fn(w: Embedding, x: Array) -> Array:

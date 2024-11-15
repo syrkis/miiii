@@ -21,9 +21,10 @@ from miiii.utils import Activation, Conf, Metrics, Params, Split, State
 def update_fn(opt, ds: Dataset, cfg: Conf):
     train_apply = apply_fn(cfg, ds, eval=False)
     valid_apply = partial(apply_fn(cfg, ds, eval=True), random.PRNGKey(0))
+    grad = grad_fn(ds, cfg, train_apply, ds.loss_fn)
 
     def update(state, key):
-        loss, losses, output, grads = grad_fn(state.params, key, ds, cfg, train_apply, ds.loss_fn)
+        loss, losses, output, grads = grad(state.params, key)
         grads, emas = filter_fn(grads, state.emas, cfg.alpha, cfg.lamb)  # grokfast values
         updates, opt_state = opt.update(grads, state.opt_state, state.params)
         params = optax.apply_updates(state.params, updates)
@@ -33,16 +34,21 @@ def update_fn(opt, ds: Dataset, cfg: Conf):
     return update, train_apply, valid_apply
 
 
-def grad_fn(params: Params, rng, ds: Dataset, cfg: Conf, apply, loss_fn) -> Tuple[Array, Array, Activation, Array]:
-    def loss_and_logits(params: Params) -> Tuple[jnp.ndarray, Tuple[Array, Activation]]:
-        acts: Activation = apply(rng, params, ds.x_train)
-        losses = loss_fn(acts.logits, ds.y_train, 1 - ds.y_train.mean(0), cfg.gamma)
-        return losses.mean(), (losses, acts)
+def grad_fn(ds: Dataset, cfg: Conf, apply, loss_fn):
+    @jit
+    def grad(params: Params, rng) -> Tuple[Array, Array, Activation, Array]:
+        def loss_and_logits(params: Params) -> Tuple[jnp.ndarray, Tuple[Array, Activation]]:
+            acts: Activation = apply(rng, params, ds.x_train)
+            losses = loss_fn(acts.logits, ds.y_train, 1 - ds.y_train.mean(0), cfg.gamma)
+            return losses.mean(), (losses, acts)
 
-    (loss, (losses, acts)), grads = value_and_grad(loss_and_logits, has_aux=True)(params)
-    return loss, losses, acts, grads
+        (loss, (losses, acts)), grads = value_and_grad(loss_and_logits, has_aux=True)(params)
+        return loss, losses, acts, grads
+
+    return grad
 
 
+@jit
 def filter_fn(grads, emas, alpha: float, lamb: float):
     emas = tree.map(lambda grad, ema: ema * alpha + grad * (1 - alpha), grads, emas)
     grads = tree.map(lambda grad, ema: grad + lamb * ema, grads, emas)
@@ -107,7 +113,8 @@ def evaluate_fn(ds: Dataset, cfg: Conf, apply):
         train_metrics = aux_fn(train_logits, ds.y_train, train_loss)
 
         metrics = Metrics(train=train_metrics, valid=valid_metrics)
-        return tree.map(lambda x: x.astype(jnp.float16), metrics), valid_output
+        return metrics, valid_output
+        # return tree.map(lambda x: x.astype(jnp.float16), metrics), valid_output
 
     return evaluate
 
