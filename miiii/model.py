@@ -57,7 +57,7 @@ def block_fn(z, args, dropout):
 
 def attn_fn(w, x: Array):
     q, k, v = x @ w.q, x @ w.k, x @ w.v
-    qk = (q @ rearrange(k, "b t c -> b c t")) / jnp.sqrt(w.k.shape[-1])
+    qk = jnp.einsum("bth,bsh->bts", q, k) / jnp.sqrt(w.k.shape[-1])
     wei = nn.softmax(qk, axis=-1)
     return (wei @ v @ w.o).sum(axis=0), Activation(wei=wei)
 
