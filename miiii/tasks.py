@@ -7,7 +7,6 @@ from miiii.utils import Conf
 from oeis import oeis
 import jax.numpy as jnp
 from jax import Array, random
-from typing import Tuple
 from chex import dataclass
 
 

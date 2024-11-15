@@ -19,18 +19,26 @@ from typing import Tuple
 initializer = nn.initializers.he_normal()
 
 
-# %% Forward
-def apply_fn(cfg: Conf):
-    @partial(vmap, in_axes=(None, None, 0, None))  # type: ignore
-    def apply(params, rng: Array, x: Array, dropout: float) -> Activation:
-        # setup
-        step_fn = partial(block_fn, dropout=dropout)
-        keys = random.split(rng, cfg.depth * 2).reshape(cfg.depth, 2, 2)
+def mask_fn(cfg, ds):
+    if cfg.task == "multi" and cfg.project == "miiii":
+        primes = jnp.array(A000040[1 : ds.y_train.shape[1] + 1])
+        mask = jnp.tile(jnp.arange(primes.max()), primes.size).reshape((primes.size, -1)) < primes[:, None]
+        return mask
+    return 1
 
-        # forward
+
+# %% Forward
+def apply_fn(cfg: Conf, ds, eval):
+    dropout = 0.0 if eval else cfg.dropout
+    mask = mask_fn(cfg, ds)
+    step = partial(block_fn, dropout=dropout)
+
+    @partial(vmap, in_axes=(None, None, 0))  # type: ignore
+    def apply(rng, params, x) -> Activation:
         embeds = embed_fn(params.embeds, x)
-        z, acts = lax.scan(step_fn, embeds, (keys, params.attn, params.ffwd))
-        acts.logits = z[-1] @ params.unbeds  # binary preidction on if x is mul of f.
+        keys = random.split(rng, cfg.depth * 2).reshape(cfg.depth, 2, 2)
+        z, acts = lax.scan(step, embeds, (keys, params.attn, params.ffwd))
+        acts.logits = (z[-1] @ params.unbeds) * mask
         return acts
 
     return apply
@@ -118,4 +126,4 @@ def task_size(cfg: Conf):  # infers the number of tasks we are solving
                 case "binary":
                     return (cfg.latent_dim, primes.shape[0])
                 case "multi":
-                    return (primes.shape[0], cfg.latent_dim, cfg.p)
+                    return (primes.shape[0], cfg.latent_dim, primes.max())

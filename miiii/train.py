@@ -10,10 +10,11 @@ import optax
 from chex import Array
 from jax import jit, lax, nn, random, tree, value_and_grad, vmap
 from jax_tqdm import scan_tqdm
+from functools import partial
 
 from miiii.model import apply_fn, init_fn
-from miiii.tasks import Dataset, task_fn
-from miiii.utils import Activation, Conf, Metrics, Params, Split, State, log_fn
+from miiii.tasks import Dataset
+from miiii.utils import Activation, Conf, Metrics, Params, Split, State
 
 
 # Train
@@ -29,26 +30,26 @@ def cross_entropy_fn(logits, y, *_):
 
 
 def update_fn(opt, ds: Dataset, cfg: Conf):
-    apply = apply_fn(cfg)
+    train_apply = apply_fn(cfg, ds, eval=False)
+    valid_apply = partial(apply_fn(cfg, ds, eval=True), random.PRNGKey(0))
     focal_loss = vmap(focal_loss_fn, in_axes=(1, 1, 0, None))
     cross_entropy = vmap(cross_entropy_fn, in_axes=(1, 1, None, None)) if cfg.project == "miiii" else cross_entropy_fn
-    loss_fn = cross_entropy if cfg.task == "multi" else focal_loss
+    loss_fn = focal_loss if (cfg.project == "miiii" and cfg.task == "binary") else cross_entropy
 
-    @jit
     def update(state, key):
-        loss, losses, output, grads = grad_fn(state.params, key, ds, cfg, apply, loss_fn)
+        loss, losses, output, grads = grad_fn(state.params, key, ds, cfg, train_apply, loss_fn)
         grads, emas = filter_fn(grads, state.emas, cfg.alpha, cfg.lamb)  # grokfast values
         updates, opt_state = opt.update(grads, state.opt_state, state.params)
         params = optax.apply_updates(state.params, updates)
         state = State(params=params, emas=emas, opt_state=opt_state)  # type: ignore
         return state, (loss, losses, output)
 
-    return update, apply, loss_fn
+    return update, train_apply, valid_apply, loss_fn
 
 
 def grad_fn(params: Params, rng, ds: Dataset, cfg: Conf, apply, loss_fn) -> Tuple[Array, Array, Activation, Array]:
     def loss_and_logits(params: Params) -> Tuple[jnp.ndarray, Tuple[Array, Activation]]:
-        acts: Activation = apply(params, rng, ds.x_train, cfg.dropout)
+        acts: Activation = apply(rng, params, ds.x_train)
         losses = loss_fn(acts.logits, ds.y_train, 1 - ds.y_train.mean(0), cfg.gamma)
         return losses.mean(), (losses, acts)
 
@@ -56,7 +57,6 @@ def grad_fn(params: Params, rng, ds: Dataset, cfg: Conf, apply, loss_fn) -> Tupl
     return loss, losses, acts, grads
 
 
-@jit
 def filter_fn(grads, emas, alpha: float, lamb: float):
     emas = tree.map(lambda grad, ema: ema * alpha + grad * (1 - alpha), grads, emas)
     grads = tree.map(lambda grad, ema: grad + lamb * ema, grads, emas)
@@ -65,8 +65,8 @@ def filter_fn(grads, emas, alpha: float, lamb: float):
 
 def step_fn(ds: Dataset, cfg: Conf, opt, scope):
     opt = optax.adamw(cfg.lr, weight_decay=cfg.l2)
-    update, apply, loss_fn = update_fn(opt, ds, cfg)
-    evaluate = evaluate_fn(ds, cfg, apply, loss_fn)
+    update, train_apply, valid_apply, loss_fn = update_fn(opt, ds, cfg)
+    evaluate = evaluate_fn(ds, cfg, valid_apply, loss_fn)
 
     consort = lambda x, y: jnp.concat((x, y))[jnp.argsort(ds.idxs)].astype(jnp.float16)  # noqa
     output_fn = (lambda x, y: tree.map(consort, x, y)) if scope else lambda *_: None
@@ -76,7 +76,7 @@ def step_fn(ds: Dataset, cfg: Conf, opt, scope):
     def step(state, args):
         epoch, key = args
         state, (loss, losses, train_out) = update(state, key)
-        metrics, valid_out = evaluate(state.params, key, losses, train_out.logits)
+        metrics, valid_out = evaluate(state.params, losses, train_out.logits)
         return state, (metrics, output_fn(train_out, valid_out))
 
     return step
@@ -99,13 +99,6 @@ def train(rng, cfg: Conf, ds: Dataset, scope=False) -> Tuple[State, Tuple[Metric
     return state, output
 
 
-def run_fn(rng, cfg: Conf):
-    keys = random.split(rng)  # create random keys
-    ds = task_fn(keys[0], cfg)  # create dataset
-    state, (metrics, acts) = train(keys[1], cfg, ds)  # train
-    log_fn(cfg, ds, state, metrics, acts)  # log
-
-
 # Evaluate
 def evaluate_fn(ds: Dataset, cfg: Conf, apply, loss_fn):
     f1_score = vmap(f1_score_fn, in_axes=(1, 1)) if cfg.project == "miiii" else f1_score_fn
@@ -117,8 +110,8 @@ def evaluate_fn(ds: Dataset, cfg: Conf, apply, loss_fn):
         f1, acc = f1_score(pred, y), accuracy(pred, y)
         return Split(loss=loss, f1=f1, acc=acc)
 
-    def evaluate(params, key, train_loss, train_logits):
-        valid_output = apply(params, key, ds.x_valid, cfg.dropout)
+    def evaluate(params, train_loss, train_logits):
+        valid_output = apply(params, ds.x_valid)
         valid_loss = loss_fn(valid_output.logits, ds.y_valid, 1 - ds.y_train.mean(0), cfg.gamma)
 
         valid_metrics = aux_fn(valid_output.logits, ds.y_valid, valid_loss)

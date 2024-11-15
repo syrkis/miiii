@@ -6,7 +6,7 @@ os.environ["MPS_WATCHDOG_TIMEOUT"] = "60000"
 os.environ["JAX_DEBUG_NANS"] = "True"
 
 
-from . import scope  # noqa
+# from . import scope  # noqa
 from . import tasks  # noqa
 from . import utils  # noqa
 from . import plots  # noqa
@@ -16,7 +16,7 @@ from . import model  # noqa
 
 __all__ = [
     "model",
-    "scope",
+    # "scope",
     "tasks",
     "utils",
     "plots",

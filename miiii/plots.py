@@ -4,14 +4,16 @@
 
 
 # %% imports
-import miiii as mi
-from jax import Array
-import numpy as np
-import os
-import matplotlib.pyplot as plt
-from typing import Sequence
-import jax.numpy as jnp
 import datetime
+import os
+from typing import Sequence
+
+import jax.numpy as jnp
+import matplotlib.pyplot as plt
+import numpy as np
+from jax import Array
+
+import miiii as mi
 
 # %% Constants and configurations
 fg = "black"

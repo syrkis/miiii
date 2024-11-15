@@ -3,19 +3,21 @@
 # By: Noah Syrkis
 
 # %% Imports
+import argparse
 import os
+import pickle
+import sys
+from dataclasses import field
+from functools import partial
+
+# import esch
 import jax.numpy as jnp
 import numpy as np
-from jax import Array
-from functools import partial
+from aim import Repo, Run
+
 from chex import dataclass
-from aim import Run, Image as AImage, Repo
-from PIL import Image as PImage
-import esch
-import pickle
+from jax import Array
 from oeis import oeis
-import argparse
-from dataclasses import field
 
 
 # %% Types
@@ -79,20 +81,20 @@ def parse_args():
     parser = argparse.ArgumentParser(description="Run model with specified hyperparameters.")
 
     # Define all hyperparameters as optional arguments with defaults from Conf class
-    parser.add_argument("--project", type=str, default="miiii", help="Project name")
-    parser.add_argument("--latent_dim", type=int, default=128, help="Latent dimension size")
-    parser.add_argument("--depth", type=int, default=1, help="Depth of the model")
-    parser.add_argument("--heads", type=int, default=4, help="Number of attention heads")
-    parser.add_argument("--epochs", type=int, default=10000, help="Number of training epochs")
-    parser.add_argument("--lr", type=float, default=1e-4, help="Learning rate")
-    parser.add_argument("--task", type=str, default="multi", help="Task")
-    parser.add_argument("--l2", type=float, default=1.0, help="L2 regularization")
-    parser.add_argument("--dropout", type=float, default=0.5, help="Dropout rate")
-    parser.add_argument("--train_frac", type=float, default=0.5, help="Fraction of data used for training")
-    parser.add_argument("--alpha", type=float, default=0.98, help="Alpha value for optimization")
-    parser.add_argument("--lamb", type=float, default=2, help="Lambda value for regularization")
-    parser.add_argument("--gamma", type=float, default=2, help="Gamma value for optimization")
-    parser.add_argument("--p", type=int, default=113, help="Prime number for data configuration")
+    parser.add_argument("--project", type=str, help="Project name")
+    parser.add_argument("--latent_dim", type=int, help="Latent dimension size")
+    parser.add_argument("--depth", type=int, help="Depth of the model")
+    parser.add_argument("--heads", type=int, help="Number of attention heads")
+    parser.add_argument("--epochs", type=int, help="Number of training epochs")
+    parser.add_argument("--lr", type=float, help="Learning rate")
+    parser.add_argument("--task", type=str, help="Task")
+    parser.add_argument("--l2", type=float, help="L2 regularization")
+    parser.add_argument("--dropout", type=float, help="Dropout rate")
+    parser.add_argument("--train_frac", type=float, help="Fraction of data used for training")
+    parser.add_argument("--alpha", type=float, help="Alpha value for optimization")
+    parser.add_argument("--lamb", type=float, help="Lambda value for regularization")
+    parser.add_argument("--gamma", type=float, help="Gamma value for optimization")
+    parser.add_argument("--p", type=int, help="Prime number for data configuration")
 
     return parser.parse_args()
 
@@ -115,42 +117,23 @@ class Conf:
     train_frac: float = 0.5
 
 
-def create_cfg(args: argparse.Namespace) -> Conf:
+def create_cfg(**kwargs) -> Conf:
     """
     Create a configuration object from parsed command-line arguments.
     """
-    return Conf(
-        task=args.task,
-        project=args.project,
-        p=args.p,
-        latent_dim=args.latent_dim,
-        epochs=args.epochs,
-        lamb=args.lamb,
-        dropout=args.dropout,
-        l2=args.l2,
-        heads=args.heads,
-        depth=args.depth,
-        gamma=args.gamma,
-        lr=args.lr,
-        train_frac=args.train_frac,
-        alpha=args.alpha,
-    )
-
-
-# def sample_config(omegaconf: DictConfig | ListConfig) -> Conf:
-#     """
-#     Randomly samples from the configuration options provided in a DictConfig object
-#     and returns a Conf object with those selected hyperparameters.
-#     """
-#     return Conf(
-#         project="miiii",
-#         lr=random.choice(omegaconf.lr),
-#         l2=random.choice(omegaconf.l2),
-#         dropout=random.choice(omegaconf.dropout),
-#         heads=random.choice(omegaconf.heads),
-#         epochs=omegaconf.epochs,
-#         latent_dim=omegaconf.latent_dim,
-#     )
+    if "ipykernel" not in sys.argv[0]:
+        cli_args = parse_args()
+        for key in kwargs:
+            assert (
+                getattr(cli_args, key, None) is None
+            ), f"Duplicate argument: {key}"  # asset that everything in kwargs has none value in cliargs
+        # merge cli_args and kwargs
+        kwargs = {**cli_args.__dict__, **kwargs}
+        kwargs = {k: v for k, v in kwargs.items() if v is not None}
+        cfg = Conf(**kwargs)
+        return cfg
+    else:
+        return Conf(**kwargs)
 
 
 def digit_fn(n, base):
@@ -255,8 +238,8 @@ def log_fn(cfg, ds, state, metrics, acts):
             log_split(run, cfg, metrics_dict, epoch, task, task_idx, "train")
             log_split(run, cfg, metrics_dict, epoch, task, task_idx, "valid")
 
-    p = esch.plot(state.params.embeds.tok_emb)
-    run.track(AImage(PImage.open(p.png)), name="tok_emb", step=cfg.epochs)  # type: ignore
+    # p = esch.plot(state.params.embeds.tok_emb)
+    # run.track(AImage(PImage.open(p.png)), name="tok_emb", step=cfg.epochs)  # type: ignore
 
     run.close()
 
