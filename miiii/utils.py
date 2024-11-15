@@ -215,17 +215,17 @@ def log_fn(rundata, cfg, tasks):
     run_hash_dir = os.path.join(grand_parent, "data/artifacts", run.hash)
     os.makedirs(run_hash_dir, exist_ok=True)
 
-    for (state, (metrics, acts)), (task_type, task_span) in tqdm(zip(rundata, tasks)):
-        with open(f"{run_hash_dir}/metrics.pkl", "wb") as f:
+    for (state, (metrics, acts)), (task_type, task_span) in zip(rundata, tasks):
+        with open(f"{run_hash_dir}/metrics_{task_type}_{task_span}.pkl", "wb") as f:
             pickle.dump(metrics, f)
-        with open(f"{run_hash_dir}/state.pkl", "wb") as f:
+        with open(f"{run_hash_dir}/state_{task_type}_{task_span}.pkl", "wb") as f:
             pickle.dump(state, f)
-        with open(f"{run_hash_dir}/acts.pkl", "wb") as f:
+        with open(f"{run_hash_dir}/acts_{task_type}_{task_span}.pkl", "wb") as f:
             pickle.dump(acts, f)
 
-        run.log_artifact(f"{run_hash_dir}/metrics.pkl", name="metrics.pkl", block=True)
-        run.log_artifact(f"{run_hash_dir}/state.pkl", name="state.pkl", block=True)
-        run.log_artifact(f"{run_hash_dir}/acts.pkl", name="acts.pkl", block=True)
+        run.log_artifact(f"{run_hash_dir}/metrics_{task_type}_{task_span}.pkl", name="metrics.pkl", block=True)
+        run.log_artifact(f"{run_hash_dir}/state_{task_type}_{task_span}.pkl", name="state.pkl", block=True)
+        run.log_artifact(f"{run_hash_dir}/acts_{task_type}_{task_span}.pkl", name="acts.pkl", block=True)
 
         run["hparams"] = cfg.__dict__
 
