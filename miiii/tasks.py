@@ -103,7 +103,7 @@ def nanda_fn(key, cfg: Conf, task_type: str, task_span: str) -> Tuple[Dataset, T
     y = data[:, -1]
     x_train, x_valid = x[: int(len(x) * cfg.train_frac)], x[int(len(x) * cfg.train_frac) :]
     y_train, y_valid = y[: int(len(y) * cfg.train_frac)], y[int(len(y) * cfg.train_frac) :]
-    if task_type:
+    if task_type == "divisible":
         y_train, y_valid = (y_train == 0).astype(jnp.int8), (y_valid == 0).astype(jnp.int8)
     loss = loss_fn(task_type, task_span)
     task = Task(loss_fn=loss, type=task_type, span=task_span)

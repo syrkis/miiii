@@ -28,11 +28,12 @@
   ],
   bibliography: bibliography("zotero.bib"),
 )
+
 // body ///////////////////////////////////////////////////////////////////////
 
 = Introduction
 
-Recent years have seen deep learning models demonstrate remarkable proficiency in solving complex computational tasks. These models exhibit parallels to information-theoretic concepts, particularly in lossy data compression. For instance, the weights of GPT-2 are about a tenth of the size of its training data, akin to the compression ratios achieved by techniques like Huffman coding (mention lossy technique instead). Importantly, deep learning architectures can function both as archives—overfitting to training data—and as generalized algorithms @power2022.
+Recent years have seen deep learning models demonstrate remarkable proficiency in solving complex computational tasks. These models exhibit parallels to information-theoretic concepts, particularly in lossy data compression. For instance, the weights of GPT-2 are about a tenth of the size of its training data, akin to the compression ratios achieved by techniques like Huffman coding (mention lossy technique instead). Importantly, deep learning architectures can function both as archives—overfitting to training data—and as generalized algorithms @power2022. It can be both an archive and an algorithm for different tasks simultaneously.
 
 A system capable of transitioning from archive to algorithm presents intriguing questions: Why doesn't it skip the archiving step and directly learn algorithms? What types of algorithms does it learn, and how reliably? Can the learning process be expedited? How does the presence of multiple tasks affect the learning process? Critically, what specific algorithm has been learned by a given system? Addressing these questions is essential for advancing the theoretical understanding of deep learning and enhancing their practical applications.
 
@@ -67,7 +68,7 @@ It is discovered that the generalized circuit uses a discrete Fourier transform 
 MI is a relatively new field, and the methods are still being developed.
 #cite(<lipton2018>, form: "prose") discusses various definitions of interpretability, including mechanistic interpretability (though they don't call it that).
 
-*Mechanistic _implementability_* — #cite(<weiss2021>, form: "prose") presents the coding language RASP, which incorporates the architectural constraints of the transformer model into the language itself.
+*Mechanistic _Implementability_* — #cite(<weiss2021>, form: "prose") presents the coding language RASP, which incorporates the architectural constraints of the transformer model into the language itself.
 This forces the programmer to be "thinking like a transformer" (which is the title of their paper).
 The multilayer perception (MLP) can be thought of as performing a map, (applying a function to every element of a set.
 
@@ -98,12 +99,30 @@ The task is referred to as $cal(T)$, with a subscript indicating the task number
 
 = Methods
 
-Our methodology closely follows #cite(<nanda2023>, form: "prose"), with key modifications to address prime factorization rather than modular addition. For a given prime $p$, we construct a dataset $[X|Y]$ where $X$ is the cartesian product of digits less than $p$, representing all numbers of the form $x_0 dot p^0 + x_1 dot p^1$ where $x_0, x_1 < p$ (all two-digit base $p$ numbers). $Y$ is a binary vector indicating which primes $t < p$ are factors of the represented number. A transformer model is trained to predict $Y$ from $X$, with various hyperparameter configurations explored to study the emergence of generalization across different factorization tasks.
+Our methodology closely follows #cite(<nanda2023>, form: "prose"), with key modifications to address prime factorization rather than modular addition. For a given prime $p$, we construct a dataset $[X|Y]$ where $X$ is the Cartesian product of digits less than $p$, representing all numbers of the form $x_0 dot p^0 + x_1 dot p^1$ where $x_0, x_1 < p$ (all two-digit base $p$ numbers). $Y$ is a binary vector indicating which primes $t < p$ are factors of the represented number. A transformer model is trained to predict $Y$ from $X$, with various hyper parameter configurations explored to study the emergence of generalization across different factorization tasks.
 
 == Tasks
 
-In natural language, the task can be desribed as "is $x$ a multiple of $t$?". Forexample, is $x=12$ a multiple of $t=3$? Is $x=53$ a multiple of $t=7$?
-A number $x$ being a multiple of another $t$ means that $x mod t$ is zero. We are thus still in the domain of modular arithmtic.
+In natural language, the task can be described as "is $x$ a multiple of $t$?". For example, is $x=12$ a multiple of $t=3$? Is $x=53$ a multiple of $t=7$?
+A number $x$ being a multiple of another $t$ means that $x mod t$ is zero. We are thus still in the domain of modular arithmetic.
+
+#table(
+  columns: (1fr, 1fr, 1fr),
+  inset: 10pt,
+  align: horizon,
+  table.header(
+    [],
+    [${0, 1}$],
+    [${2, 3, ..., f-1}$],
+  ),
+
+  [$f = p$], [Divisible ${0, 1}$], [Prime $f$ = $p$],
+  [$f = {2, 3, ..., p_i}$], [Divisible ${0, 1}$], [Prime $f$ = $p$],
+)
+
+== Visualization
+
+Much of the data worked with here is inherently high dimensional. For trianing, for example, we have $n$ steps, two splits (train/valid) about $p/ln(p)$ tasks, and three metrics (F1 score, accuracy, and loss). This, along with the inherenint opaqueness of deep learning models, motivated the developed custom visualization library#footnote[https://github.com/syrkis/esch] to visualize attention weights, intermediate representations, training metrics, and more.
 
 == Data
 
@@ -113,7 +132,7 @@ Each input $x in X$ represents a number in base $p$ using two digits, $(a,b)$, w
 
 #figure(
   image("figs/ds_miiii_11_x.svg", width: 110%),
-  caption: [Representation of $X$, showing all pairs of $(x_0, x_1)$ for $p=11$. Top left shows (base 11) representation of 0, and bottom right represention of 120],
+  caption: [Representation of $X$, showing all pairs of $(x_0, x_1)$ for $p=11$. Top left shows (base 11) representation of 0, and bottom right representation of 120],
 )<miiii_x_11>
 
 
@@ -225,7 +244,7 @@ Note that that in figures with periodicity only a top left most $37 times 37$ sl
 
 == Evaluation
 
-In @atten_weight we see a vertical peroiodic pattern, which is expected, as the model is trained to predict the prime factorization of the number $a * 113 + b$.
+In @atten_weight we see a vertical periodic pattern, which is expected, as the model is trained to predict the prime factorization of the number $a * 113 + b$.
 #lorem(140)
 
 
@@ -236,7 +255,6 @@ Architectural decisions are made to align with #cite(<lee2024a>, form: "prose") 
 The model is trained using the AdamW optimizer with a learning rate of $10^(-3)$,
 and weight decay of $1.0$. Dropout is used with a rate of $0.5$.
 A hidden size of 128, a batch size of $|cal(D)|$, and a maximum of 6 000 epochs.
-GELU activation is used. Each attention layer has 4 heads (32 dimensions per head).
 The MLP layers map the input from 128 to 512 to 128.
 Layer normalization is also used.
 The gradients were modified in accordance with the method described by #cite(<lee2024a>, form: "prose"),
@@ -258,7 +276,7 @@ which I am currently investigating (update for Anders).
 
 #figure(
   image("figs/attention_one.svg"),
-  caption: [Attenion from digit $b$ to itself in the first head of the first layer for all ($a$, $b$)-pairs.],
+  caption: [Attention from digit $b$ to itself in the first head of the first layer for all ($a$, $b$)-pairs.],
 )<atten_weight>
 
 #figure(
@@ -310,7 +328,7 @@ Furthermore, a one-hot vector is used to mask tasks to shield the model from a p
 
 
 - sin/cos lookup tables in embedding layer.
-- does pos not matter for this task? No, cos it is not comotative. (a + b) mod p = (b + a) mod p -> Nanda. But (a p^1 + b p^0) mod p != (b p^1 + a p^0) mod p.
+- does pos not matter for this task? No, cos it is not commutative. (a + b) mod p = (b + a) mod p -> Nanda. But (a p^1 + b p^0) mod p != (b p^1 + a p^0) mod p.
 
 #figure(
   image("figs/weis_miiii_113_slice_23.svg", width: 110%),
@@ -358,7 +376,7 @@ starts with a slightly higher loss than other tasks but quickly converges to the
 We see in that we are indeed overfitting in spite of the heavy regularization, as the validation loss is increasing, blah blah.
 
 It is also clear that the sub-tasks in $cal(T)_2$ increase in difficulty
-with the $p$ is being tested for. This makes intuitive sense, as it is easier to see if a number is a multiple of 2 than if it is a multiple of 17. There are also more multiples of 2 than 17, though the use of $alpha$ in the focal loss should account for this (should I square and sqrt for alpha?).
+with the $p$ is being tested for. This makes intuitive sense, as it is easier to see if a number is a multiple of 2 than if it is a multiple of 17. There are also more multiples of 2 than 17, though the use of $alpha$ in the focal loss should account for this.
 
 #figure(
   image("figs/runs/" + run + "/train_f1_hinton.svg"),

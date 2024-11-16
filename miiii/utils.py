@@ -136,18 +136,9 @@ def digit_fn(n, base):
 
 def metrics_to_dict(metrics):
     return {
-        "loss": {
-            "train": np.array(metrics.train.loss, dtype=np.float16),
-            "valid": np.array(metrics.valid.loss, dtype=np.float16),
-        },
-        "f1": {
-            "train": np.array(metrics.train.f1, dtype=np.float16),
-            "valid": np.array(metrics.valid.f1, dtype=np.float16),
-        },
-        "acc": {
-            "train": np.array(metrics.train.acc, dtype=np.float16),
-            "valid": np.array(metrics.valid.acc, dtype=np.float16),
-        },
+        "loss": {"train": np.array(metrics.train.loss), "valid": np.array(metrics.valid.loss)},
+        "f1": {"train": np.array(metrics.train.f1), "valid": np.array(metrics.valid.f1)},
+        "acc": {"train": np.array(metrics.train.acc), "valid": np.array(metrics.valid.acc)},
     }
 
 
@@ -161,9 +152,9 @@ def log_split(run, cfg, metrics, epoch, factor, task_idx, split, task_type, task
     )
 
 
-def log_metric(cfg, metrics, epoch, task_idx, split, task_type, task_span, metric_name):
+def log_metric(cfg, metrics, epoch, factor_idx, split, task_type, task_span, metric_name):
     metrics_value = metrics[metric_name][split]
-    return metrics_value[epoch, task_idx] if task_span == "batch" else metrics_value[epoch]
+    return metrics_value[epoch, factor_idx] if task_span == "batch" else metrics_value[epoch]
 
 
 def cfg_to_dirname(cfg: Conf) -> str:
