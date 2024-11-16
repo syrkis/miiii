@@ -8,7 +8,7 @@ from typing import Tuple
 import jax.numpy as jnp
 import optax
 from chex import Array
-from jax import jit, lax, nn, random, tree, value_and_grad, vmap
+from jax import jit, lax, nn, random, tree, value_and_grad, vmap, debug
 from jax_tqdm import scan_tqdm
 from functools import partial
 
@@ -122,7 +122,7 @@ def evaluate_fn(ds: Dataset, task: Task, cfg: Conf, apply):
     return evaluate
 
 
-@jit
+# @jit
 def accuracy_fn(y_pred, y_true):
     return (y_pred == y_true).mean()
 

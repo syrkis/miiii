@@ -54,7 +54,7 @@ def miiii_fn(key, cfg, task_type, task_span):
     idxs = random.permutation(key, jnp.arange(cfg.p**2))  # permute the indices
     x = repr_fn(jnp.arange(cfg.p**2), cfg.p)  # x is the representation of the numbers
     y = (jnp.arange(cfg.p**2)[:, None] % factors[None, :]).astype(jnp.int8)
-    y = y if not task_type else (y == 0).astype(jnp.int8)
+    y = y if task_type == "remainder" else (y == 0).astype(jnp.int8)  # this was a serious bug i just fixed it
     x, y = x[idxs], y[idxs]
     x_train, y_train = x[: int(cfg.train_frac * cfg.p**2)], y[: int(cfg.train_frac * cfg.p**2)]
     x_valid, y_valid = x[int(cfg.train_frac * cfg.p**2) :], y[int(cfg.train_frac * cfg.p**2) :]

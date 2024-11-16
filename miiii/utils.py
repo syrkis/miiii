@@ -192,9 +192,9 @@ def cfg_to_dirname(cfg: Conf) -> str:
 
     return "_".join(name_parts)
 
-
 def log_fn(rundata, cfg):
-    run = Run(experiment="miiii", system_tracking_interval=None, repo="aim://localhost:53800")
+    # hash cfg
+    run = Run(experiment="miiii", system_tracking_interval=None, capture_terminal_logs=False)    #, repo="aim://localhost:53800")
     run.set_artifacts_uri("s3://syrkis/")
     grand_parent = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     run_hash_dir = os.path.join(grand_parent, "data/artifacts", run.hash)

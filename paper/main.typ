@@ -197,7 +197,6 @@ where $W_("out")$ projects to the number of prime factors being tested, and read
 
 == Training
 
-== Training
 
 The model is trained using AdamW @loshchilov2019 with learning rate $10^(-4)$, weight decay 1.0, and $beta_1=0.9$, $beta_2=0.98$ following @nanda2023. We employ focal loss @lin2018 to handle class imbalance:
 
@@ -220,6 +219,9 @@ In accordance with the mechanistic interpretability literature, extreme regulari
 
 
 == Mechanistic Interpretability
+
+A combination of linear products is itself a linear product. As a mechanistic interpretability rule of thumb, one should look at the ouputs of the non-linear transformations. In our case that will be the attention weights, and the intermediate representations with each transformer block's MLP (which follows a ReLU activation).
+Aditionally, the embeddings layers will be inspected. blah blah.
 
 Our interpretability approach combines visualization techniques with frequency analysis to understand the learned algorithmic patterns. Following @nanda2023, we analyze both the attention patterns and the learned representations through several lenses:
 
