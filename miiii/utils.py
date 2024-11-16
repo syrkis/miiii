@@ -79,18 +79,18 @@ class State:
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Run model with specified hyperparameters.")
+    parser.add_argument("--p", type=int, help="Prime number for data configuration")
     parser.add_argument("--latent_dim", type=int, help="Latent dimension size")
     parser.add_argument("--depth", type=int, help="Depth of the model")
     parser.add_argument("--heads", type=int, help="Number of attention heads")
     parser.add_argument("--epochs", type=int, help="Number of training epochs")
-    parser.add_argument("--lr", type=float, help="Learning rate")
-    parser.add_argument("--l2", type=float, help="L2 regularization")
-    parser.add_argument("--dropout", type=float, help="Dropout rate")
     parser.add_argument("--train_frac", type=float, help="Fraction of data used for training")
-    parser.add_argument("--alpha", type=float, help="Alpha value for optimization")
+    parser.add_argument("--l2", type=float, help="L2 regularization")
+    parser.add_argument("--lr", type=float, help="Learning rate")
+    parser.add_argument("--dropout", type=float, help="Dropout rate")
     parser.add_argument("--lamb", type=float, help="Lambda value for regularization")
-    parser.add_argument("--gamma", type=float, help="Gamma value for optimization")
-    parser.add_argument("--p", type=int, help="Prime number for data configuration")
+    # parser.add_argument("--gamma", type=float, help="Gamma value for optimization")
+    # parser.add_argument("--alpha", type=float, help="Alpha value for optimization")
 
     return parser.parse_args()
 
@@ -98,14 +98,14 @@ def parse_args():
 @dataclass
 class Conf:
     p: int = 113
-    alpha: float = 0.98
+    # alpha: float = 0.98
     lamb: float = 2
-    gamma: float = 2
+    # gamma: float = 2
     latent_dim: int = 128
     depth: int = 1
     heads: int = 4
     epochs: int = 10000
-    lr: float = 1e-3
+    lr: float = 3e-4  # i just usually do this.
     l2: float = 1.0
     dropout: float = 0.5
     train_frac: float = 0.5

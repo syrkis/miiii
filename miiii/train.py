@@ -19,6 +19,7 @@ from miiii.utils import Activation, Conf, Metrics, Params, Split, State
 
 ADAM_BETA1 = 0.9   # @nanda2023
 ADAM_BETA2 = 0.98  # @nanda2023
+ALPHA = 0.98
 
 
 # %% Functions
@@ -29,7 +30,7 @@ def update_fn(opt, ds: Dataset, task: Task, cfg: Conf):
 
     def update(state, key):
         loss, losses, output, grads = grad(state.params, key)
-        grads, emas = filter_fn(grads, state.emas, cfg.alpha, cfg.lamb)  # grokfast values
+        grads, emas = filter_fn(grads, state.emas, cfg.lamb)  # grokfast values
         updates, opt_state = opt.update(grads, state.opt_state, state.params)
         params = optax.apply_updates(state.params, updates)
         state = State(params=params, emas=emas, opt_state=opt_state)  # type: ignore
@@ -44,7 +45,7 @@ def grad_fn(ds: Dataset, task: Task, cfg: Conf, apply, loss_fn, mask):
     def grad(params: Params, rng) -> Tuple[Array, Array, Activation, Array]:
         def loss_and_logits(params: Params) -> Tuple[jnp.ndarray, Tuple[Array, Activation]]:
             acts: Activation = apply(rng, params, ds.x_train)
-            losses = loss_fn(acts.logits, ds.y_train, 1 - ds.y_train.mean(0), cfg.gamma, mask) / task.weight
+            losses = loss_fn(acts.logits, ds.y_train, 1 - ds.y_train.mean(0), 2, mask) / task.weight
             return losses.mean(), (losses, acts)
 
         (loss, (losses, acts)), grads = value_and_grad(loss_and_logits, has_aux=True)(params)
@@ -54,8 +55,8 @@ def grad_fn(ds: Dataset, task: Task, cfg: Conf, apply, loss_fn, mask):
 
 
 @jit
-def filter_fn(grads, emas, alpha: float, lamb: float):
-    emas = tree.map(lambda grad, ema: ema * alpha + grad * (1 - alpha), grads, emas)
+def filter_fn(grads, emas, lamb: float):
+    emas = tree.map(lambda grad, ema: ema * ALPHA + grad * (1 - ALPHA), grads, emas)
     grads = tree.map(lambda grad, ema: grad + lamb * ema, grads, emas)
     return grads, emas
 
@@ -112,7 +113,7 @@ def evaluate_fn(ds: Dataset, task: Task, cfg: Conf, apply):
     @jit
     def evaluate(params, train_loss, train_logits):
         valid_output = apply(params, ds.x_valid)
-        valid_loss = task.loss_fn(valid_output.logits, ds.y_valid, 1 - ds.y_train.mean(0), cfg.gamma, task.mask) / task.weight
+        valid_loss = task.loss_fn(valid_output.logits, ds.y_valid, 1 - ds.y_train.mean(0), 2, task.mask) / task.weight
 
         valid_metrics = aux_fn(valid_output.logits, ds.y_valid, valid_loss)
         train_metrics = aux_fn(train_logits, ds.y_train, train_loss)
