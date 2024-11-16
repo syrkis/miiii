@@ -22,6 +22,9 @@ plt.rcParams["font.family"] = "Monospace"
 # set math text to new computer modern
 plt.rcParams["mathtext.fontset"] = "cm"
 
+# figs dir is in ../paper/figs relative to THIS file
+FIGS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../paper/figs")
+
 
 # %% functions
 def plot_run(metrics, ds: mi.tasks.Dataset, cfg: mi.utils.Conf, activations=None):
@@ -63,7 +66,7 @@ def polar_plot(ps: Sequence[Sequence] | Sequence | np.ndarray, f_name: Sequence[
     for p in ps:
         ax.plot(p, p, "o", markersize=2, color="black")
     plt.tight_layout()
-    plt.savefig(f"paper/figs/{f_name}.svg") if f_name else plt.show()
+    plt.savefig(f"{FIGS_DIR}/{f_name}.svg") if f_name else plt.show()
     if ax_was_none:
         plt.close()
 
@@ -77,7 +80,7 @@ def small_multiples(fnames, seqs, f_name, n_rows=2, n_cols=2):
         polar_plot(seqs, fname, ax=ax)
     # tight
     plt.tight_layout()
-    plt.savefig(f"paper/figs/{f_name}.svg") if f_name else plt.show()  # test
+    plt.savefig(f"{FIGS_DIR}/{f_name}.svg") if f_name else plt.show()  # test
 
 
 ########################################################################################

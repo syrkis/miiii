@@ -26,7 +26,7 @@
 
 
 #focus-slide[
-  "This disgusting pile of matrices is actually a poorly written, beautiful algorithm." — Neel Nanda#footnote[Not verbatim, but the gist of it.]
+  "This disgusting pile of matrices is actually just an astoundingly poorlu written, elegant and consice algorithm" — Neel Nanda#footnote[Not verbatim, but the gist of it]
 ]
 
 
@@ -47,8 +47,8 @@
   #figure(
     stack(
       dir: ttb,
-      image("figs/ds_miiii_113_x.svg", width: 100%),
-      image("figs/ds_11_y.svg", width: 100%),
+      image("figs/ds_miiii_11_x.svg", width: 100%),
+      image("figs/y_11_plot.svg", width: 100%),
     ),
     caption: [Representation of $X$ (top) and $Y$ (bottom) for $p=11$],
   )
@@ -71,6 +71,12 @@
 
 = MIIIII
 
+#focus-slide[
+  #figure(
+    image("figs/ffwd_37_4.svg"),
+    caption: [Top left $37 times 37$ slice of first four $W_("out")$ neurons],
+  )
+]
 
 
 #set align(top)

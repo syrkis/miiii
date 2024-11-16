@@ -104,8 +104,8 @@ class Conf:
     latent_dim: int = 128
     depth: int = 1
     heads: int = 4
-    epochs: int = 10000
-    lr: float = 3e-4  # i just usually do this.
+    epochs: int = 20000
+    lr: float = 1e-4  # i just usually do this.
     l2: float = 1.0
     dropout: float = 0.5
     train_frac: float = 0.5
@@ -300,3 +300,10 @@ def construct_cfg_from_hash(hash: str) -> Conf:
         dropout=hparams.get("dropout", 0.5),  # type: ignore
         train_frac=hparams.get("train_frac", 0.5),  # type: ignore
     )
+
+
+def fourier_basis(p):  # TODO This is a bit wrong
+    freqs = jnp.arange(1, p // 2 + 1)[:, None]
+    phase = 2 * jnp.pi * freqs * jnp.arange(p) / p
+    F = jnp.concatenate([jnp.sin(phase), jnp.cos(phase)])
+    return F / jnp.linalg.norm(F, axis=1, keepdims=True)

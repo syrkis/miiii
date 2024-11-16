@@ -111,9 +111,9 @@ A number $x$ being a multiple of another $t$ means that $x mod t$ is zero. We ar
 
 The tasks vary in difficulty quite tangably. The expected cross entropy for $n$ classed problem is $ln(n)$. For the first four factors we have
 
-$
-  expected loss = ln(2), ln(3), ln(5), ln(7)
-$
+// $
+//   expected loss = ln(2), ln(3), ln(5), ln(7)
+// $
 
 which allins perfectly with what we see in the training curves.
 
@@ -142,7 +142,7 @@ Much of the data worked with here is inherently high dimensional. For trianing, 
 Each input $x in X$ represents a number in base $p$ using two digits, $(a,b)$, where the represented number is $a + b$. For example, with $p=11$, the input space consists of all pairs $(a,b)$ where $a,b < 11$, representing numbers up to $11^2-1 = 120$. @miiii_x_11 visualizes this input space, with each cell showing the pair $(a,b)$.
 
 #figure(
-  image("figs/ds_miiii_11_x.svg", width: 110%),
+  image("figs/x_11_plot.svg", width: 110%),
   caption: [Representation of $X$, showing all pairs of $(x_0, x_1)$ for $p=11$. Top left shows (base 11) representation of 0, and bottom right representation of 120],
 )<miiii_x_11>
 
@@ -151,7 +151,7 @@ Each input $x in X$ represents a number in base $p$ using two digits, $(a,b)$, w
 For each input $x$, we construct a binary vector $y in Y$ indicating which prime factors less than $p$ divide the number represented by $x$. For $p=11$, we test for divisibility by the primes 2, 3, 5, and 7, resulting in a binary vector of length 4. @miiii_y_11 visualizes these binary classifications, with each subplot showing divisibility by a specific prime, as well as $Y$ from the modular addition task.
 
 #figure(
-  image("figs/ds_11_y.svg", width: 120%),
+  image("figs/y_11_plot.svg", width: 120%),
   caption: [Representation of our $Y$ for $p = 11$. 2, 3, 5 and 7 and the four primes (and therefore tasks) less than 11, and $Y$ for the modular addition task.],
 )<miiii_y_11>
 
@@ -221,7 +221,7 @@ $<grad>
 
 where $e_t$ is the exponential moving average of gradients with decay rate $alpha=0.98$, and $lambda=2$ controls the influence of the slow-varying component.
 
-Training is done with all samples at each step (full batch) for 100,000 epochs. The model is evaluated on the validation set after each epoch, and the F1 score of the tasks in $cal(T)$ on the validation data during training is shown in @valid_f1_hinton.
+// Training is done with all samples at each step (full batch) for 100,000 epochs. The model is evaluated on the validation set after each epoch, and the F1 score of the tasks in $cal(T)$ on the validation data during training is shown in @valid_f1_hinton.
 
 In accordance with the mechanistic interpretability literature, extreme regularization is used with a dropout rate of 0.5, and weight decay of 1.0 (that's right!).
 
@@ -391,17 +391,17 @@ We see in that we are indeed overfitting in spite of the heavy regularization, a
 It is also clear that the sub-tasks in $cal(T)_2$ increase in difficulty
 with the $p$ is being tested for. This makes intuitive sense, as it is easier to see if a number is a multiple of 2 than if it is a multiple of 17. There are also more multiples of 2 than 17, though the use of $alpha$ in the focal loss should account for this.
 
-#figure(
-  image("figs/runs/" + run + "/train_f1_hinton.svg"),
-  caption: [The f1 score of $cal(T)$ on the train data during training.],
-)<train_f1_hinton>
+// #figure(
+//   image("figs/runs/" + run + "/train_f1_hinton.svg"),
+//   caption: [The f1 score of $cal(T)$ on the train data during training.],
+// )<train_f1_hinton>
 
-#figure(
-  image("figs/runs/" + run + "/valid_f1_hinton.svg"),
-  caption: [The f1 score of $cal(T)$ on the validation data during training.],
-)<valid_f1_hinton>
+// #figure(
+//   image("figs/runs/" + run + "/valid_f1_hinton.svg"),
+//   caption: [The f1 score of $cal(T)$ on the validation data during training.],
+// )<valid_f1_hinton>
 
-The f1 score of the tasks in $cal(T)$ on the train data during training is shown in @train_f1_hinton, and the f1 score of the tasks in $cal(T)$ on the validation data during training is shown in @valid_f1_hinton.
+// The f1 score of the tasks in $cal(T)$ on the train data during training is shown in @train_f1_hinton, and the f1 score of the tasks in $cal(T)$ on the validation data during training is shown in @valid_f1_hinton.
 
 
 
