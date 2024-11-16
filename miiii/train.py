@@ -17,15 +17,15 @@ from miiii.tasks import Dataset, Task
 from miiii.utils import Activation, Conf, Metrics, Params, Split, State
 
 
-ADAM_BETA1 = 0.9
-ADAM_BETA2 = 0.98
+ADAM_BETA1 = 0.9   # @nanda2023
+ADAM_BETA2 = 0.98  # @nanda2023
 
 
 # %% Functions
 def update_fn(opt, ds: Dataset, task: Task, cfg: Conf):
     train_apply = apply_fn(cfg, ds, task, eval=False)
     valid_apply = partial(apply_fn(cfg, ds, task, eval=True), random.PRNGKey(0))
-    grad = grad_fn(ds, cfg, train_apply, task.loss_fn, task.mask)
+    grad = grad_fn(ds, task, cfg, train_apply, task.loss_fn, task.mask)
 
     def update(state, key):
         loss, losses, output, grads = grad(state.params, key)
@@ -38,12 +38,13 @@ def update_fn(opt, ds: Dataset, task: Task, cfg: Conf):
     return update, train_apply, valid_apply
 
 
-def grad_fn(ds: Dataset, cfg: Conf, apply, loss_fn, mask):
+def grad_fn(ds: Dataset, task: Task, cfg: Conf, apply, loss_fn, mask):
+
     @jit
     def grad(params: Params, rng) -> Tuple[Array, Array, Activation, Array]:
         def loss_and_logits(params: Params) -> Tuple[jnp.ndarray, Tuple[Array, Activation]]:
             acts: Activation = apply(rng, params, ds.x_train)
-            losses = loss_fn(acts.logits, ds.y_train, 1 - ds.y_train.mean(0), cfg.gamma, mask)
+            losses = loss_fn(acts.logits, ds.y_train, 1 - ds.y_train.mean(0), cfg.gamma, mask) / task.weight
             return losses.mean(), (losses, acts)
 
         (loss, (losses, acts)), grads = value_and_grad(loss_and_logits, has_aux=True)(params)
@@ -97,20 +98,21 @@ def train(rng, cfg: Conf, ds: Dataset, task: Task, scope=False) -> Tuple[State, 
 
 # Evaluate
 def evaluate_fn(ds: Dataset, task: Task, cfg: Conf, apply):
-    f1_score = vmap(f1_score_fn, in_axes=(1, 1)) if task.span == "factors" else f1_score_fn
+    # f1_score = vmap(f1_score_fn, in_axes=(1, 1)) if task.span == "factors" else f1_score_fn
     accuracy = vmap(accuracy_fn, in_axes=(1, 1)) if task.span == "factors" else accuracy_fn
 
     pred_fn = (lambda x: x.argmax(-1)) if task.type == "remainder" else lambda x: (nn.sigmoid(x) > 0.5).astype(jnp.int8)
 
     def aux_fn(logits, y, loss):
         pred = pred_fn(logits)
-        f1, acc = f1_score(pred, y), accuracy(pred, y)
-        return Split(loss=loss, f1=f1, acc=acc)
+        # f1, acc = f1_score(pred, y), accuracy(pred, y)
+        acc = accuracy(pred, y)
+        return Split(loss=loss, acc=acc)
 
     @jit
     def evaluate(params, train_loss, train_logits):
         valid_output = apply(params, ds.x_valid)
-        valid_loss = task.loss_fn(valid_output.logits, ds.y_valid, 1 - ds.y_train.mean(0), cfg.gamma, task.mask)
+        valid_loss = task.loss_fn(valid_output.logits, ds.y_valid, 1 - ds.y_train.mean(0), cfg.gamma, task.mask) / task.weight
 
         valid_metrics = aux_fn(valid_output.logits, ds.y_valid, valid_loss)
         train_metrics = aux_fn(train_logits, ds.y_train, train_loss)

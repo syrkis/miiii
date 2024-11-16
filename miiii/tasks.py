@@ -32,6 +32,7 @@ class Task:
     span: str  # 'prime, 'factors'
     loss_fn: Callable
     mask: Array | None = None
+    weight: Array | int = 1
 
 
 def task_fn(key: Array, cfg: Conf, task_type, task_span) -> Tuple[Dataset, Task]:
@@ -65,7 +66,8 @@ def miiii_fn(key, cfg, task_type, task_span):
     mask = mask if task_type == "remainder" else jnp.array(1)
     loss = loss_fn(task_type, task_span, mask)
     # mask = jnp.zeros((*y_train.shape, primes.max())).at[:, mask].set(1).astype(jnp.bool)
-    task = Task(loss_fn=loss, type=task_type, span=task_span, mask=mask)  # loss_mask=loss_mask)
+    weight = jnp.log(mask.sum(-1)) #  correct for number of classes in task. This is an good informational theoritical enhancement. Make it optional?
+    task = Task(loss_fn=loss, type=task_type, span=task_span, mask=mask, weight=weight)  # loss_mask=loss_mask)
     return Dataset(x_train=x_train, y_train=y_train, x_valid=x_valid, y_valid=y_valid, idxs=idxs), task
 
 

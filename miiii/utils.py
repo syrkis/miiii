@@ -31,7 +31,7 @@ class Activation:
 @dataclass
 class Split:
     loss: Array
-    f1: Array
+    # f1: Array
     acc: Array
 
 
@@ -108,7 +108,7 @@ class Conf:
     lr: float = 1e-3
     l2: float = 1.0
     dropout: float = 0.5
-    train_frac: float = 0.3
+    train_frac: float = 0.5
 
 
 def create_cfg(**kwargs) -> Conf:
@@ -137,7 +137,7 @@ def digit_fn(n, base):
 def metrics_to_dict(metrics):
     return {
         "loss": {"train": np.array(metrics.train.loss), "valid": np.array(metrics.valid.loss)},
-        "f1": {"train": np.array(metrics.train.f1), "valid": np.array(metrics.valid.f1)},
+        # "f1": {"train": np.array(metrics.train.f1), "valid": np.array(metrics.valid.f1)},
         "acc": {"train": np.array(metrics.train.acc), "valid": np.array(metrics.valid.acc)},
     }
 
@@ -146,7 +146,7 @@ def log_split(run, cfg, metrics, epoch, factor, task_idx, split, task_type, task
     fn = partial(log_metric, cfg, metrics, epoch, task_idx, split, task_type, task_span)
     factor = -1 if factor == "prime" else int(factor)
     run.track(
-        {"acc": fn("acc"), "f1": fn("f1"), "loss": fn("loss")},
+        {"acc": fn("acc"), "loss": fn("loss")},
         context={"split": split, "factor": factor, "task_type": task_type, "task_span": task_span},
         step=epoch,
     )
