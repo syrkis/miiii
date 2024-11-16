@@ -154,7 +154,7 @@ def log_split(run, cfg, metrics, epoch, factor, task_idx, split, task_type, task
 
 def log_metric(cfg, metrics, epoch, factor_idx, split, task_type, task_span, metric_name):
     metrics_value = metrics[metric_name][split]
-    return metrics_value[epoch, factor_idx] if task_span == "batch" else metrics_value[epoch]
+    return metrics_value[epoch, factor_idx] if task_span == "factors" else metrics_value[epoch]
 
 
 def cfg_to_dirname(cfg: Conf) -> str:
@@ -219,7 +219,7 @@ def log_fn(rundata, cfg):
 
         log_steps = 1000
         for epoch in tqdm(range(0, cfg.epochs, max(1, cfg.epochs // log_steps))):
-            for factor_idx, factor in enumerate(factors if task.span == "batch" else range(1)):
+            for factor_idx, factor in enumerate(factors if task.span == "factors" else range(1)):
                 log_split(run, cfg, metrics_dict, epoch, factor, factor_idx, "train", task.type, task.span)
                 log_split(run, cfg, metrics_dict, epoch, factor, factor_idx, "valid", task.type, task.span)
 

@@ -105,8 +105,17 @@ Our methodology closely follows #cite(<nanda2023>, form: "prose"), with key modi
 
 == Tasks
 
+
 In natural language, the task can be described as "is $x$ a multiple of $t$?". For example, is $x=12$ a multiple of $t=3$? Is $x=53$ a multiple of $t=7$?
 A number $x$ being a multiple of another $t$ means that $x mod t$ is zero. We are thus still in the domain of modular arithmetic.
+
+The tasks vary in difficulty quite tangably. The expected cross entropy for $n$ classed problem is $ln(n)$. For the first four factors we have
+
+$
+  expected loss = ln(2), ln(3), ln(5), ln(7)
+$
+
+which allins perfectly with what we see in the training curves.
 
 #table(
   columns: (1fr, 1fr, 1fr),

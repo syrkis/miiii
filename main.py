@@ -19,8 +19,8 @@ def train_task_fn(rng, cfg, task_type, task_span):
 
 
 rng = random.PRNGKey(0)
-# tasks = list(product(["divisible", "remainder"], ["atomic", "batch"]))
-tasks = [("remainder", "batch"), ("remainder", "atomic")]
+# tasks = list(product(["divisible", "remainder"], ["prime", "factors"]))
+tasks = [("remainder", "factors"), ("remainder", "prime")]
 cfg = mi.utils.create_cfg()
 train_task = partial(train_task_fn, rng, cfg)
 runs = list(map(lambda args: train_task(*args), tasks))

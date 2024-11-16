@@ -11,6 +11,7 @@ from chex import dataclass
 from jax import Array, random, vmap
 from oeis import oeis
 from typing import Tuple
+from functools import partial
 
 from miiii.utils import Conf
 
@@ -28,15 +29,16 @@ class Dataset:
 @dataclass
 class Task:
     type: str  # 'remainder', 'divisible'
-    span: str  # 'atomic, 'batch'
+    span: str  # 'prime, 'factors'
     loss_fn: Callable
+    mask: Array | None = None
 
 
 def task_fn(key: Array, cfg: Conf, task_type, task_span) -> Tuple[Dataset, Task]:
     match task_span:
-        case "atomic":
+        case "prime":
             return nanda_fn(key, cfg, task_type, task_span)
-        case "batch":
+        case "factors":
             return miiii_fn(key, cfg, task_type, task_span)
         case _:
             raise ValueError(f"task_span {task_span} not supported")
@@ -58,35 +60,41 @@ def miiii_fn(key, cfg, task_type, task_span):
     x, y = x[idxs], y[idxs]
     x_train, y_train = x[: int(cfg.train_frac * cfg.p**2)], y[: int(cfg.train_frac * cfg.p**2)]
     x_valid, y_valid = x[int(cfg.train_frac * cfg.p**2) :], y[int(cfg.train_frac * cfg.p**2) :]
-    loss = loss_fn(task_type, task_span)
-    task = Task(loss_fn=loss, type=task_type, span=task_span)
+    primes = jnp.array(oeis["A000040"][1 : y_train.shape[1] + 1])
+    mask = jnp.tile(jnp.arange(primes.max()), primes.size).reshape((primes.size, -1)) < primes[:, None]
+    mask = mask if task_type == "remainder" else jnp.array(1)
+    loss = loss_fn(task_type, task_span, mask)
+    # mask = jnp.zeros((*y_train.shape, primes.max())).at[:, mask].set(1).astype(jnp.bool)
+    task = Task(loss_fn=loss, type=task_type, span=task_span, mask=mask)  # loss_mask=loss_mask)
     return Dataset(x_train=x_train, y_train=y_train, x_valid=x_valid, y_valid=y_valid, idxs=idxs), task
 
 
-def loss_fn(task_type, task_span):
+def loss_fn(task_type, task_span, mask):
     match task_type, task_span:
-        case "divisible", "atomic":  # focal_losos
+        case "divisible", "prime":  # focal_losos
             return focal_loss_fn
-        case "remainder", "atomic":  # cross_entropy
+        case "remainder", "prime":  # cross_entropy
             return cross_entropy_fn
-        case "divisible", "batch":  # vmap focall loss
-            return vmap(focal_loss_fn, in_axes=(1, 1, 0, None))
-        case "remainder", "batch":  # vmap cross entropy
-            return vmap(cross_entropy_fn, in_axes=(1, 1, None, None))
+        case "divisible", "factors":  # vmap focall loss
+            return vmap(focal_loss_fn, in_axes=(1, 1, 0, None, None))
+        case "remainder", "factors":  # vmap cross entropy
+            return vmap(cross_entropy_fn, in_axes=(1, 1, None, None, 0))
         case _:
             raise ValueError("Invalid task type or span")
 
 
 # Train
-def focal_loss_fn(logits, y, alpha, gamma):
+def focal_loss_fn(logits, y, alpha, gamma, mask):
     logits = logits.astype(jnp.float64)  # enable with some jax bullshit to avoid slingshot
     # consider squaring alpha, and increasing gamma?
-    return optax.sigmoid_focal_loss(logits, y, alpha, gamma).astype(jnp.float32).mean()  # mean across samples
+    return optax.sigmoid_focal_loss(logits, y, alpha, gamma).mean()  # mean across samples
 
 
-def cross_entropy_fn(logits, y, *_):
+def cross_entropy_fn(logits, y, alpha, gamma, mask):
     logits = logits.astype(jnp.float64)  # enable with some jax bullshit to avoid slingshot
-    return optax.softmax_cross_entropy_with_integer_labels(logits, y).astype(jnp.float32).mean()
+    # print(mask.shape, logits.shape, y.shape)
+    # exit()
+    return optax.softmax_cross_entropy_with_integer_labels(logits, y, where=mask).mean()
 
 
 # MULTI FALSE
@@ -105,6 +113,6 @@ def nanda_fn(key, cfg: Conf, task_type: str, task_span: str) -> Tuple[Dataset, T
     y_train, y_valid = y[: int(len(y) * cfg.train_frac)], y[int(len(y) * cfg.train_frac) :]
     if task_type == "divisible":
         y_train, y_valid = (y_train == 0).astype(jnp.int8), (y_valid == 0).astype(jnp.int8)
-    loss = loss_fn(task_type, task_span)
-    task = Task(loss_fn=loss, type=task_type, span=task_span)
+    loss = loss_fn(task_type, task_span, mask=jnp.array(1))
+    task = Task(loss_fn=loss, type=task_type, span=task_span, mask=jnp.array(1))
     return Dataset(x_train=x_train, x_valid=x_valid, y_train=y_train, y_valid=y_valid, idxs=idxs), task

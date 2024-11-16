@@ -20,19 +20,10 @@ from typing import Tuple
 initializer = nn.initializers.he_normal()
 
 
-def mask_fn(cfg, ds: Dataset, task: Task):
-    match task.type, task.span:
-        case "remainder", "batch":
-            primes = jnp.array(A000040[1 : ds.y_train.shape[1] + 1])
-            return jnp.tile(jnp.arange(primes.max()), primes.size).reshape((primes.size, -1)) < primes[:, None]
-        case _:
-            return 1
-
 
 # %% Forward
 def apply_fn(cfg: Conf, ds: Dataset, task: Task, eval):
     dropout = 0.0 if eval else cfg.dropout
-    mask = mask_fn(cfg, ds, task)
     step = partial(block_fn, dropout=dropout)
 
     @jit
@@ -41,7 +32,7 @@ def apply_fn(cfg: Conf, ds: Dataset, task: Task, eval):
         embeds = embed_fn(params.embeds, x)
         keys = random.split(rng, cfg.depth * 2).reshape(cfg.depth, 2, 2)
         z, acts = lax.scan(step, embeds, (keys, params.attn, params.ffwd))
-        acts.logits = ((z[-1] @ params.unbeds) * mask).squeeze()
+        acts.logits = ((z[-1] @ params.unbeds) * task.mask).squeeze()
         return acts
 
     return apply
@@ -121,13 +112,13 @@ def task_size(cfg: Conf, task: Task):
     primes = jnp.array(A000040[1 : cfg.p])
     primes = primes[primes < cfg.p]
     match task.type, task.span:
-        case "divisible", "atomic":
+        case "divisible", "prime":
             return cfg.latent_dim, 1
-        case "remainder", "atomic":
+        case "remainder", "prime":
             return cfg.latent_dim, cfg.p
-        case "divisible", "batch":
+        case "divisible", "factors":
             return cfg.latent_dim, primes.shape[0]
-        case "remainder", "batch":
+        case "remainder", "factors":
             return primes.shape[0], cfg.latent_dim, primes.max()
         case _:
             raise ValueError("Invalid task type or span")
