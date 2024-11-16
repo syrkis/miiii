@@ -8,7 +8,7 @@ from typing import Callable
 import jax.numpy as jnp
 import optax
 from chex import dataclass
-from jax import Array, random, vmap
+from jax import Array, random, vmap, jit
 from oeis import oeis
 from typing import Tuple
 from functools import partial
@@ -66,8 +66,10 @@ def miiii_fn(key, cfg, task_type, task_span):
     mask = mask if task_type == "remainder" else jnp.array(1)
     loss = loss_fn(task_type, task_span, mask)
     # mask = jnp.zeros((*y_train.shape, primes.max())).at[:, mask].set(1).astype(jnp.bool)
-    weight = jnp.log(mask.sum(-1)) #  correct for number of classes in task. This is an good informational theoritical enhancement. Make it optional?
-    task = Task(loss_fn=loss, type=task_type, span=task_span, mask=mask, weight=weight)  # loss_mask=loss_mask)
+    weight = jnp.log(
+        mask.sum(-1)
+    )  #  correct for number of classes in task. This is an good informational theoritical enhancement. Make it optional?
+    task = Task(loss_fn=jit(loss), type=task_type, span=task_span, mask=mask, weight=weight)  # loss_mask=loss_mask)
     return Dataset(x_train=x_train, y_train=y_train, x_valid=x_valid, y_valid=y_valid, idxs=idxs), task
 
 
@@ -116,5 +118,5 @@ def nanda_fn(key, cfg: Conf, task_type: str, task_span: str) -> Tuple[Dataset, T
     if task_type == "divisible":
         y_train, y_valid = (y_train == 0).astype(jnp.int8), (y_valid == 0).astype(jnp.int8)
     loss = loss_fn(task_type, task_span, mask=jnp.array(1))
-    task = Task(loss_fn=loss, type=task_type, span=task_span, mask=jnp.array(1))
+    task = Task(loss_fn=jit(loss), type=task_type, span=task_span, mask=jnp.array(1))
     return Dataset(x_train=x_train, x_valid=x_valid, y_train=y_train, y_valid=y_valid, idxs=idxs), task
