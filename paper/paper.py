@@ -18,5 +18,9 @@ import jax.numpy as jnp
 from jax import random
 
 # %% Constants
+hash = "54d54b4076f64413b153d87f"
+(state, metrics, cfg), _ = mi.utils.get_metrics_and_params(hash)  # get a run
+
 
 # %% Pass
+metrics.train.loss.shape

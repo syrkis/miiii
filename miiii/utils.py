@@ -192,9 +192,12 @@ def cfg_to_dirname(cfg: Conf) -> str:
 
     return "_".join(name_parts)
 
+
 def log_fn(rundata, cfg):
     # hash cfg
-    run = Run(experiment="miiii", system_tracking_interval=None, capture_terminal_logs=False)    #, repo="aim://localhost:53800")
+    run = Run(
+        experiment="miiii", system_tracking_interval=None, capture_terminal_logs=False
+    )  # , repo="aim://localhost:53800")
     run.set_artifacts_uri("s3://syrkis/")
     grand_parent = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     run_hash_dir = os.path.join(grand_parent, "data/artifacts", run.hash)
@@ -208,9 +211,17 @@ def log_fn(rundata, cfg):
         with open(f"{run_hash_dir}/acts_{task.type}_{task.span}.pkl", "wb") as f:
             pickle.dump(acts, f)
 
-        run.log_artifact(f"{run_hash_dir}/metrics_{task.type}_{task.span}.pkl", name="metrics.pkl", block=True)
-        run.log_artifact(f"{run_hash_dir}/state_{task.type}_{task.span}.pkl", name="state.pkl", block=True)
-        run.log_artifact(f"{run_hash_dir}/acts_{task.type}_{task.span}.pkl", name="acts.pkl", block=True)
+        run.log_artifact(
+            f"{run_hash_dir}/metrics_{task.type}_{task.span}.pkl",
+            name=f"metrics_{task.type}_{task.span}.pkl",
+            block=True,
+        )
+        run.log_artifact(
+            f"{run_hash_dir}/state_{task.type}_{task.span}.pkl", name=f"state_{task.type}_{task.span}.pkl", block=True
+        )
+        run.log_artifact(
+            f"{run_hash_dir}/acts_{task.type}_{task.span}.pkl", name=f"acts_{task.type}_{task.span}.pkl", block=True
+        )
 
         run["hparams"] = cfg.__dict__
 
@@ -234,23 +245,28 @@ def get_metrics_and_params(hash):
     os.makedirs(hash_run_dir, exist_ok=True)
     repo = Repo("aim://localhost:53800")  # make sure this is running
     run = repo.get_run(hash)
-    outs = {"state": None, "metrics": None, "acts": None}
 
-    for thing in outs.keys():
-        file_path = os.path.join(hash_run_dir, f"{thing}.pkl")
+    outs_list = []
+    for task_type, task_span in [("remainder", "factors"), ("remainder", "prime")]:
+        outs = {"state": None, "metrics": None, "acts": None}
+        for thing in outs.keys():
+            file_path = os.path.join(hash_run_dir, f"{thing}_{task_type}_{task_span}.pkl")
 
-        # Check if the file already exists before downloading
-        if not os.path.exists(file_path):
-            run.artifacts[f"{thing}.pkl"].download(hash_run_dir)  # type: ignore
+            # Check if the file already exists before downloading
+            if not os.path.exists(file_path):
+                run.artifacts[f"{thing}_{task_type}_{task_span}.pkl"].download(hash_run_dir)  # type: ignore
 
-        # Load the file content
-        with open(file_path, "rb") as f:
-            outs[thing] = pickle.load(f)
+            # Load the file content
+            with open(file_path, "rb") as f:
+                outs[thing] = pickle.load(f)
 
-    state: State = outs["state"]  # type: ignore
-    metrics: Metrics = outs["metrics"]  # type: ignore
-    acts: Activation = outs["acts"]  # type: ignore
-    return state, (metrics, acts)
+        state: State = outs["state"]  # type: ignore
+        metrics: Metrics = outs["metrics"]  # type: ignore
+        # acts: Activation = outs["acts"]  # type: ignore
+        cfg = construct_cfg_from_hash(hash)
+        outs_list.append((state, metrics, cfg))
+
+    return outs_list[0], outs_list[1]
 
 
 def construct_cfg_from_hash(hash: str) -> Conf:
@@ -266,15 +282,15 @@ def construct_cfg_from_hash(hash: str) -> Conf:
 
     # Retrieve hyperparameters stored in the run
     hparams = run["hparams"]
-    dataset = run["dataset"]
+    # dataset = run["dataset"]
 
     # Create and return a Conf instance using the retrieved parameters from the run
     return Conf(
-        project=dataset.get("project", "miiii"),  # type: ignore
-        p=run["dataset"].get("prime", 113),  # assuming it stores the prime as well  # type: ignore
-        alpha=hparams.get("alpha", 0.98),  # type: ignore
+        # project=dataset.get("project", "miiii"),  # type: ignore
+        # p=run["dataset"].get("prime", 113),  # assuming it stores the prime as well  # type: ignore
+        # alpha=hparams.get("alpha", 0.98),  # type: ignore
+        # gamma=hparams.get("gamma", 2),  # type: ignore
         lamb=hparams.get("lamb", 2),  # type: ignore
-        gamma=hparams.get("gamma", 2),  # type: ignore
         latent_dim=hparams.get("latent_dim", 128),  # type: ignore
         depth=hparams.get("depth", 1),  # type: ignore
         heads=hparams.get("heads", 4),  # type: ignore
