@@ -44,7 +44,7 @@ def main():
 
     # Run optuna
     objective = partial(objective_fn, base_config=config, search_space=search_space, rng=rng)
-    study.optimize(objective, n_trials=10)
+    study.optimize(objective, n_trials=20)
 
     # Print results
     print("Best trial:")
