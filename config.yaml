@@ -1,8 +1,9 @@
 # config.yaml
 # Base configuration
 p: 113
-epochs: 100_000 # this is very high, but that task is larger, and convergence looks slow
-train_frac: 0.3
+epochs: 32_7683 # this is very high, but that task is larger, and convergence looks slow
+train_frac: 0.5
+depth: 1
 
 # Search space
 search_space:
@@ -11,6 +12,6 @@ search_space:
   l2: [0.1, 1.0]
   dropout: [0.1, 0.2, 0.5]
   heads: [4, 8]
-  depth: [1, 2]
   lr: [0.0003, 0.001]
+  train_frac: [0.3, 0.5]
   # epochs: [25000, 50000]

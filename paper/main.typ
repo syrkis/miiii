@@ -334,6 +334,14 @@ Furthermore, a one-hot vector is used to mask tasks to shield the model from a p
 = Results
 
 
+== Training
+
+== Embeddings
+
+== Attention
+
+== Feed-forward
+
 #figure(
   stack(
     dir: ttb,
