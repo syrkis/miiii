@@ -31,15 +31,6 @@ def objective_fn(trial, base_config, search_space, rng):
     return evaluate_config(config, rng)
 
 
-# tasks = [("remainder", "factors"), ("remainder", "prime")]
-# cfg = mi.utils.create_cfg()
-# train_task = partial(train_task_fn, rng, cfg)
-# runs = list(map(lambda args: train_task(*args), tasks))
-# args = mi.utils.parse_args()
-# mi.utils.log_fn(runs, cfg)
-#
-
-
 def main():
     # Load config
     with open("config.yaml", "r") as f:
@@ -53,3 +44,14 @@ def main():
     # Run optuna
     objective = partial(objective_fn, base_config=config, search_space=search_space, rng=rng)
     study.optimize(objective, n_trials=10)
+
+    # Print results
+    print("Best trial:")
+    print(f"  Value: {study.best_trial.value}")
+    print("  Params: ")
+    for key, value in study.best_trial.params.items():
+        print(f"    {key}: {value}")
+
+
+if __name__ == "__main__":
+    main()

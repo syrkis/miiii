@@ -1,21 +1,15 @@
 # config.yaml
 # Base configuration
 p: 113
-lamb: 2
-latent_dim: 128
-depth: 1
-heads: 4
-epochs: 20000
-lr: 1e-3
-l2: 1.0
-dropout: 0.5
-train_frac: 0.5
+epochs: 50_000
+train_frac: 0.3
 
 # Search space
 search_space:
   latent_dim: [128, 256]
-  train_frac: [0.3, 0.5]
-  lamb: [0.0, 0.5, 2]
+  lamb: [0.0, 0.5, 2.0]
   l2: [0.1, 1.0]
+  dropout: [0.1, 0.2, 0.5]
   heads: [4, 8]
   depth: [1, 2]
+  lr: [0.0003, 0.001]
