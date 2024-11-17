@@ -1,5 +1,4 @@
-# conf.yaml
-
+# config.yaml
 # Base configuration
 p: 113
 lamb: 2
@@ -14,7 +13,9 @@ train_frac: 0.5
 
 # Search space
 search_space:
+  latent_dim: [128, 256]
   train_frac: [0.3, 0.5]
-  lamb: [0, 0.5, 2]
+  lamb: [0.0, 0.5, 2]
   l2: [0.1, 1.0]
   heads: [4, 8]
+  depth: [1, 2]
