@@ -66,13 +66,13 @@ mi.plots.small_multiples(fnames=["n", "t", "n"], seqs=[_7_23, _11s, ps], f_name=
 
 
 # %% Constants
-hash = "33214cc96bff4aa1a0f8d532"
+hash = "09258397d70d4b82b1e4ef5e"
 slice = 37
-(state, metrics, cfg), _ = mi.utils.get_metrics_and_params(hash)  # get a run
+state, metrics, cfg = mi.utils.get_metrics_and_params(hash)  # get a run
 rng = random.PRNGKey(0)
 ds, task = mi.tasks.task_fn(rng, cfg, "remainder", "factors")
-x = jnp.concat((ds.x.train, ds.x.eval), axis=0)[ds.idxs.argsort()]
-y = jnp.concat((ds.y.train, ds.y.eval), axis=0)[ds.idxs.argsort()]
+x = jnp.concat((ds.x.train, ds.x.eval, ds.x.test), axis=0)[ds.idxs.argsort()]
+y = jnp.concat((ds.y.train, ds.y.eval, ds.y.test), axis=0)[ds.idxs.argsort()]
 
 
 # %% ATTENTION WEIGHTS
@@ -118,4 +118,4 @@ esch.plot(
 
 
 # %% Training curves
-esch.plot(metrics.train.acc[:: cfg.epochs // 100].T)
+esch.plot(metrics.valid.acc[:: cfg.epochs // 100].T)

@@ -25,8 +25,9 @@ def objective_fn(trial, base_config, search_space, rng):
     config = base_config.copy()
 
     for param, values in search_space.items():
-        trial_suggest_fn = trial.suggest_float if isinstance(values[0], float) else trial.suggest_int
-        config[param] = trial_suggest_fn(param, min(values), max(values))
+        # trial_suggest_fn = trial.suggest_float if isinstance(values[0], float) else trial.suggest_int
+        # config[param] = trial_suggest_fn(param, min(values), max(values))
+        config[param] = trial.suggest_categorical(param, values)
 
     return evaluate_config(config, rng)
 

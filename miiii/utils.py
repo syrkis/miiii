@@ -245,7 +245,7 @@ def get_metrics_and_params(hash):
     run = repo.get_run(hash)
 
     outs_list = []
-    for task_type, task_span in [("remainder", "factors"), ("remainder", "prime")]:
+    for task_type, task_span in [("remainder", "factors")]:
         outs = {"state": None, "metrics": None, "acts": None}
         for thing in outs.keys():
             file_path = os.path.join(hash_run_dir, f"{thing}_{task_type}_{task_span}.pkl")
@@ -264,7 +264,7 @@ def get_metrics_and_params(hash):
         cfg = construct_cfg_from_hash(hash)
         outs_list.append((state, metrics, cfg))
 
-    return outs_list[0], outs_list[1]
+    return outs_list[0]  # , outs_list[1]
 
 
 def construct_cfg_from_hash(hash: str) -> Conf:
