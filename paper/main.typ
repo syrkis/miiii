@@ -1,9 +1,9 @@
 #import "@preview/unequivocal-ams:0.1.2": ams-article, theorem, proof
 #import "@preview/equate:0.2.1": equate // <- for numbering equations
 
-#let run = "2024-09-19_20-12-55"
+#let hash = "d58e064a6ba74afc89ef5779"
 #show: equate.with(breakable: true, sub-numbering: true)
-#set math.equation(numbering: "(1.1)")
+#set math.equation(numbering: "(1.1)", supplement: "Eq.")
 
 #show: ams-article.with(
   title: [Mechanistic Interpretability and Implementability of Irreducible Integer Identifiers],
@@ -332,6 +332,26 @@ The frequency of a positive sample in task $i$ is used as the weight for the foc
 Furthermore, a one-hot vector is used to mask tasks to shield the model from a particular signal during training.
 
 = Results
+
+
+#figure(
+  stack(
+    dir: ttb,
+    image("figs/train_acc.svg", width: 100%),
+    image("figs/valid_acc.svg", width: 100%),
+  ),
+  caption: [Training and validation accuracy],
+)<generalization_levels_>
+
+
+We see that the positonal embeddings are orthogonal. The token embeddings of $x_0$ and $x_1$ are offset, allowing for the cosine and sine tabel to be learned for both.
+NOTE: they might not be orthogonal, but rather pointing in opposite directions (we only have two vectors, so orthogonality is not needed.
+
+#figure(
+  image("figs/pos_emb.svg", width: 100%),
+  caption: [Positional embeddings for the first $37$ for a model trained on @nanda (top) and @miiii (bottom). The low information contained in the postional encoding of @nanda is to be exxpected as the task is comotative, while @miiii is not—$(x_0 + x_1) mod p = (x_1 + x_0) mod p$ but $((x_0 p^0 + x_1 p^1) mod p) != ((x_1 p^1 + x_0 p^0) mod p)$..],
+)<generalization_levels_>
+
 
 #figure(
   image("figs/miiii_f1_tasks_113_20000.svg", width: 100%),

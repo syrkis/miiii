@@ -238,14 +238,14 @@ def log_fn(state, metrics, acts, cfg, ds, task):
     run.close()
 
 
-def get_metrics_and_params(hash):
+def get_metrics_and_params(hash, task_span="factors"):
     hash_run_dir = os.path.join(os.getcwd(), "data/artifacts", hash)
     os.makedirs(hash_run_dir, exist_ok=True)
     repo = Repo("aim://localhost:53800")  # make sure this is running
     run = repo.get_run(hash)
 
     outs_list = []
-    for task_type, task_span in [("remainder", "factors")]:
+    for task_type, task_span in [("remainder", task_span)]:
         outs = {"state": None, "metrics": None, "acts": None}
         for thing in outs.keys():
             file_path = os.path.join(hash_run_dir, f"{thing}_{task_type}_{task_span}.pkl")
