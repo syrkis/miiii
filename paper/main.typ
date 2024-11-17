@@ -103,6 +103,11 @@ The task is referred to as $cal(T)$, with a subscript indicating the task number
 
 Our methodology closely follows #cite(<nanda2023>, form: "prose"), with key modifications to address prime factorization rather than modular addition. For a given prime $p$, we construct a dataset $[X|Y]$ where $X$ is the Cartesian product of digits less than $p$, representing all numbers of the form $x_0 dot p^0 + x_1 dot p^1$ where $x_0, x_1 < p$ (all two-digit base $p$ numbers). $Y$ is a binary vector indicating which primes $t < p$ are factors of the represented number. A transformer model is trained to predict $Y$ from $X$, with various hyper parameter configurations explored to study the emergence of generalization across different factorization tasks.
 
+
+$
+  cos((2 pi k n) / m ) = 1, forall k in {0, 1, ..., m-1}
+$<mul_cos_algorithm>
+
 == Tasks
 
 
