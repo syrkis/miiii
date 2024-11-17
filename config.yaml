@@ -1,7 +1,7 @@
 # config.yaml
 # Base configuration
 p: 113
-epochs: 32_7683 # this is very high, but that task is larger, and convergence looks slow
+epochs: 32_768 # this is very high, but that task is larger, and convergence looks slow
 train_frac: 0.5
 depth: 1
 
