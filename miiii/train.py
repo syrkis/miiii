@@ -8,7 +8,7 @@ from typing import Tuple
 import jax.numpy as jnp
 import optax
 from chex import Array
-from jax import jit, lax, nn, random, tree, value_and_grad, vmap, debug
+from jax import jit, lax, nn, random, tree, value_and_grad, vmap
 from jax_tqdm import scan_tqdm
 from functools import partial
 
@@ -17,7 +17,7 @@ from miiii.tasks import Dataset, Task
 from miiii.utils import Activation, Conf, Metrics, Params, Split, State
 
 
-ADAM_BETA1 = 0.9   # @nanda2023
+ADAM_BETA1 = 0.9  # @nanda2023
 ADAM_BETA2 = 0.98  # @nanda2023
 ALPHA = 0.98
 
@@ -40,12 +40,11 @@ def update_fn(opt, ds: Dataset, task: Task, cfg: Conf):
 
 
 def grad_fn(ds: Dataset, task: Task, cfg: Conf, apply, loss_fn, mask):
-
     @jit
     def grad(params: Params, rng) -> Tuple[Array, Array, Activation, Array]:
         def loss_and_logits(params: Params) -> Tuple[jnp.ndarray, Tuple[Array, Activation]]:
-            acts: Activation = apply(rng, params, ds.x_train)
-            losses = loss_fn(acts.logits, ds.y_train, 1 - ds.y_train.mean(0), 2, mask) / task.weight
+            acts: Activation = apply(rng, params, ds.x.train)
+            losses = loss_fn(acts.logits, ds.y.train, 1 - ds.y.train.mean(0), 2, mask) / task.weight
             return losses.mean(), (losses, acts)
 
         (loss, (losses, acts)), grads = value_and_grad(loss_and_logits, has_aux=True)(params)
@@ -112,11 +111,11 @@ def evaluate_fn(ds: Dataset, task: Task, cfg: Conf, apply):
 
     @jit
     def evaluate(params, train_loss, train_logits):
-        valid_output = apply(params, ds.x_valid)
-        valid_loss = task.loss_fn(valid_output.logits, ds.y_valid, 1 - ds.y_train.mean(0), 2, task.mask) / task.weight
+        valid_output = apply(params, ds.x.eval)
+        valid_loss = task.loss_fn(valid_output.logits, ds.y.eval, 1 - ds.y.train.mean(0), 2, task.mask) / task.weight
 
-        valid_metrics = aux_fn(valid_output.logits, ds.y_valid, valid_loss)
-        train_metrics = aux_fn(train_logits, ds.y_train, train_loss)
+        valid_metrics = aux_fn(valid_output.logits, ds.y.eval, valid_loss)
+        train_metrics = aux_fn(train_logits, ds.y.train, train_loss)
 
         metrics = Metrics(train=train_metrics, valid=valid_metrics)
         # return metrics, valid_output

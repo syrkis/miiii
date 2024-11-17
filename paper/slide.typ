@@ -39,7 +39,36 @@
   - ... and reverse engineered.
 ][
   $
-    (x_0 + x_1) mod p = y, quad forall x_0, x_1 < p #<modular_addition>
+    (x_0 + x_1) mod p &= y, quad forall x_0, x_1 < p #<modular_addition>\
+  $
+]
+
+
+
+
+#slide[
+  - A next step: new task? multi task?
+  - Approximately $n / ln(n)$ primes less than n
+  - A number $n$ not a multiple of any prime less than $sqrt(n)$ is prime
+  - Test remainder on primes $p'<p$ (@new_task) for all two digit base-$p$ numbers.
+][
+  $
+    (x_0 p^0 + x_1 p^1) mod p' = y, quad forall p' < p #<new_task>\
+  $
+]
+
+#focus-slide[
+  $
+    [
+      X|Y
+    ] &= mat(
+      augment: #(vline: 2),
+      delim:"[",
+      0, 0, 0, dots.h, 103;
+      0, 1, 1, dots.h, 103;
+      dots.v, dots.v, dots.v, dots.down, dots.v;
+      112, 112, 111, dots.h, 103;
+  )#<nanda_matrix>
   $
 ]
 
@@ -52,17 +81,6 @@
     ),
     caption: [Representation of $X$ (top) and $Y$ (bottom) for $p=11$],
   )
-]
-
-#slide[
-  - A next step: new task? multi task?
-  - Approximately $n / ln(n)$ primes less than n
-  - A number $n$ not a multiple of any prime less than $sqrt(n)$ is prime
-  - Test remainder on primes $f<p$ (@new_task) for all two digit base-$p$ numbers.
-][
-  $
-    (x_0 p^0 + x_1 p^1) mod f = y #<new_task>\
-  $
 ]
 
 = Mechanistic Interpretability

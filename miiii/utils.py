@@ -105,7 +105,7 @@ class Conf:
     depth: int = 1
     heads: int = 4
     epochs: int = 20000
-    lr: float = 1e-4  # i just usually do this.
+    lr: float = 3e-4  # i just usually do this.
     l2: float = 1.0
     dropout: float = 0.5
     train_frac: float = 0.5

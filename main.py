@@ -8,7 +8,12 @@ import miiii as mi
 # import esch
 from jax import random
 from functools import partial
-from itertools import product
+from omegaconf import OmegaConf
+
+
+# %% Constants
+CONFIG_FILE = "config.yaml"
+omega_conf = OmegaConf.load(CONFIG_FILE)
 
 
 # %% Training
@@ -19,10 +24,10 @@ def train_task_fn(rng, cfg, task_type, task_span):
 
 
 rng = random.PRNGKey(0)
-# tasks = list(product(["divisible", "remainder"], ["prime", "factors"]))
 tasks = [("remainder", "factors"), ("remainder", "prime")]
 cfg = mi.utils.create_cfg()
 train_task = partial(train_task_fn, rng, cfg)
 runs = list(map(lambda args: train_task(*args), tasks))
 args = mi.utils.parse_args()
-mi.utils.log_fn(runs, cfg)
+# mi.utils.log_fn(runs, cfg)
+#

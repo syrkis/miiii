@@ -28,8 +28,8 @@ from oeis import oeis
 cfg = mi.utils.Conf(p=11)
 rng = random.PRNGKey(0)
 ds, task = mi.tasks.task_fn(rng, cfg, "remainder", "factors")
-x = jnp.concat((ds.x_train, ds.x_valid), axis=0)[ds.idxs.argsort()]
-y = jnp.concat((ds.y_train, ds.y_valid), axis=0)[ds.idxs.argsort()]
+x = jnp.concat((ds.x.train, ds.x.eval, ds.x.test), axis=0)[ds.idxs.argsort()]
+y = jnp.concat((ds.y.train, ds.y.eval, ds.y.test), axis=0)[ds.idxs.argsort()]
 left = esch.EdgeConfig(ticks=[(i, str(i)) for i in range(cfg.p)], show_on="first")
 bottom = esch.EdgeConfig(label=[str(i) for i in range(cfg.p)], show_on="all")
 edge = esch.EdgeConfigs(left=left, bottom=bottom)
@@ -38,7 +38,7 @@ esch.plot(rearrange(x[:, :2], "(x1 x0) seq ->  x0 x1 seq ", x0=cfg.p, x1=cfg.p),
 # %% Y plots
 nanda_cfg = mi.utils.Conf(p=11)
 nanda_ds, _ = mi.tasks.task_fn(random.PRNGKey(0), nanda_cfg, "remainder", "prime")
-nanda_y = jnp.concat((nanda_ds.y_train, nanda_ds.y_valid), axis=0)[nanda_ds.idxs.argsort()].reshape(
+nanda_y = jnp.concat((nanda_ds.y.train, nanda_ds.y.eval, nanda_ds.y.test), axis=0)[nanda_ds.idxs.argsort()].reshape(
     (nanda_cfg.p, nanda_cfg.p)
 )
 primes = jnp.array(oeis["A000040"][1 : y.shape[1] + 1])
@@ -71,8 +71,8 @@ slice = 37
 (state, metrics, cfg), _ = mi.utils.get_metrics_and_params(hash)  # get a run
 rng = random.PRNGKey(0)
 ds, task = mi.tasks.task_fn(rng, cfg, "remainder", "factors")
-x = jnp.concat((ds.x_train, ds.x_valid), axis=0)[ds.idxs.argsort()]
-y = jnp.concat((ds.y_train, ds.y_valid), axis=0)[ds.idxs.argsort()]
+x = jnp.concat((ds.x.train, ds.x.eval), axis=0)[ds.idxs.argsort()]
+y = jnp.concat((ds.y.train, ds.y.eval), axis=0)[ds.idxs.argsort()]
 
 
 # %% ATTENTION WEIGHTS
