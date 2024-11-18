@@ -4,15 +4,9 @@
 
 
 # %% Imports
-from copy import deepcopy
-
 import esch
 import jax.numpy as jnp
-import matplotlib.pyplot as plt
-from einops import rearrange
 from jax import random
-from oeis import oeis
-from functools import partial
 
 import miiii as mi
 
@@ -38,15 +32,29 @@ pos_emb = jnp.stack((f_pos_emb, p_pos_emb), axis=0)
 label = f"First {slice} dimensions of position embeddings for the factors (top) and prime (bottom) tasks"
 left = esch.EdgeConfig(label=["𝑓-task", "𝑝-task"], show_on="all")
 edge = esch.EdgeConfigs(left=left)
-esch.plot(pos_emb, edge=edge)
+esch.plot(pos_emb, edge=edge, path="paper/figs/pos_emb.svg")
 
 f_pos_emb_mat = f_pos_emb @ f_pos_emb.T
 f_pos_emb_mat = f_pos_emb_mat / f_pos_emb_mat.sum()
-esch.plot(f_pos_emb_mat)
+esch.plot(f_pos_emb_mat, path="paper/figs/f_pos_emb_cov.svg")
 
 p_pos_emb_mat = p_pos_emb @ p_pos_emb.T
 p_pos_emb_mat = p_pos_emb_mat / p_pos_emb_mat.sum()
-esch.plot(p_pos_emb_mat)
+esch.plot(p_pos_emb_mat, path="paper/figs/p_pos_emb_cov.svg")
+
+
+# normalized cosine similairt of p_pos emb
+v0 = p_pos_emb[0]
+v1 = p_pos_emb[1]
+cos_sim = jnp.dot(v0, v1) / (jnp.linalg.norm(v0) * jnp.linalg.norm(v1))
+
+
+# normalized cosine similairt of f_pos emb
+v0 = f_pos_emb[0]
+v1 = f_pos_emb[1]
+cos_sim = jnp.dot(v0, v1) / (jnp.linalg.norm(v0) * jnp.linalg.norm(v1))
+
+
 # %% Token embedding exploratoray analysis
 f_tok_emb = f_state.params.embeds.tok_emb[: f_cfg.p]
 f_U, f_S, f_V = jnp.linalg.svd(f_tok_emb)
@@ -64,14 +72,28 @@ top = esch.EdgeConfig(ticks=[(f_S_50.item(), "0.5"), (f_S_90.item(), "0.9")], sh
 left = esch.EdgeConfig(label=["𝑓-task", "𝑝-task"], show_on="all")
 bottom = esch.EdgeConfig(ticks=[(p_S_50.item(), "0.5"), (p_S_90.item(), "0.9")], show_on="last")
 edge = esch.EdgeConfigs(top=top, bottom=bottom, left=left)
-esch.plot(S, edge=edge)
+esch.plot(S, edge=edge, path="paper/figs/S.svg")
 
 
-esch.plot(f_U[:, : f_S_50.item()].T)
-esch.plot(p_U[:, : p_S_50.item()].T)
+esch.plot(f_U[:, : f_S_50.item()].T, path="paper/figs/f_U.svg")
+esch.plot(p_U[:, : p_S_50.item()].T, path="paper/figs/p_U.svg")
 # %% plots
 mi.plots.plot_run(f_metrics, f_ds, f_cfg, f_task, f_hash)
 
+
+# %% Embeddings fourier analsysis
+def fft_fn(x):
+    f = jnp.fft.fft2(x)
+    return f
+
+
+f_f = fft_fn(f_state.params.embeds.tok_emb[:-1])
+esch.plot(jnp.linalg.norm(f_f, axis=1)[None, :], path="paper/figs/f_f_norm.svg")
+esch.plot(f_f, path="paper/figs/f_f.svg")
+
+p_f = fft_fn(p_state.params.embeds.tok_emb[:-1])
+esch.plot(jnp.linalg.norm(p_f, axis=1)[None, :], path="paper/figs/p_f_norm.svg")
+esch.plot(p_f, path="paper/figs/p_f.svg")
 
 # %%
 # getattr(getattr(metrics, "train"), "loss")

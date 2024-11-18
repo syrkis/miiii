@@ -75,7 +75,7 @@ y = jnp.concat((ds.y.train, ds.y.eval, ds.y.test), axis=0)[ds.idxs.argsort()]
 apply = mi.model.apply_fn(cfg, ds, task, eval=True)
 acts = apply(rng, state.params, x)
 esch.plot(
-    rearrange(acts.wei.squeeze(), "(x0 x1) heads from to ->  heads x0 x1 from to", x0=cfg.p, x1=cfg.p)[:, :, :, -1, 0][
+    rearrange(acts.wei.squeeze(), "(x0 x1) heads from to ->  heads x0 x1 from to", x0=cfg.p, x1=cfg.p)[:, :, :, -1, 1][
         :, :slice, :slice
     ],
     path=f"noah.svg",
@@ -118,7 +118,7 @@ esch.plot(
 
 # %% Training curves
 left = esch.EdgeConfig(label="Task", show_on="first")
-right = esch.EdgeConfig(ticks=[(i, str(prime.item())) for i, prime in enumerate(task.primes)], show_on="first")
+right = esch.EdgeConfig(ticks=[(i, str(prime.item())) for i, prime in enumerate(task.primes)], show_on="first")  # type: ignore
 top = esch.EdgeConfig(ticks=[(0, "1"), (100, f"{cfg.epochs:g}")], show_on="first", label="Time")
 edge = esch.EdgeConfigs(right=right, top=top, left=left)
 esch.plot(metrics.train.acc[: cfg.epochs // 2 : cfg.epochs // 100 // 2].T, edge=edge, path="figs/train_acc.svg")

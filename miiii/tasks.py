@@ -11,7 +11,6 @@ from chex import dataclass
 from jax import Array, random, vmap, jit
 from oeis import oeis
 from typing import Tuple
-from functools import partial
 
 from miiii.utils import Conf
 
@@ -112,8 +111,6 @@ def focal_loss_fn(logits, y, alpha, gamma, mask):
 
 def cross_entropy_fn(logits, y, alpha, gamma, mask):
     logits = logits.astype(jnp.float64)  # enable with some jax bullshit to avoid slingshot
-    # print(mask.shape, logits.shape, y.shape)
-    # exit()
     return optax.softmax_cross_entropy_with_integer_labels(logits, y, where=mask).mean()
 
 
