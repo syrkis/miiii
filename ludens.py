@@ -5,7 +5,6 @@
 
 # %% Imports
 from copy import deepcopy
-import sys
 
 import esch
 import jax.numpy as jnp
@@ -17,13 +16,70 @@ from functools import partial
 
 import miiii as mi
 
+# %% constants
+rng = random.PRNGKey(0)
+slice = 37
 
-# %% Functions
-def fourier_basis(p):  # TODO This is a bit wrong
-    freqs = jnp.arange(1, p // 2 + 1)[:, None]
-    phase = 2 * jnp.pi * freqs * jnp.arange(p) / p
-    F = jnp.concatenate([jnp.sin(phase), jnp.cos(phase)])
-    return F / jnp.linalg.norm(F, axis=1, keepdims=True)
+# %% F task load
+f_hash = "7ddd799ee00349b9b94acd5d"
+f_state, f_metrics, f_cfg = mi.utils.get_metrics_and_params(f_hash)
+f_ds, f_task = mi.tasks.task_fn(rng, f_cfg, "remainder", "factors")
+
+# %% p task
+p_hash = "0c848c1444264cbfa1a4de6e"
+p_state, p_metrics, p_cfg = mi.utils.get_metrics_and_params(p_hash, task_span="prime")
+p_ds, p_task = mi.tasks.task_fn(rng, p_cfg, "remainder", "prime")
+
+
+# %% Positional embeddings analysis
+f_pos_emb = f_state.params.embeds.pos_emb[:2][:, :slice]
+p_pos_emb = p_state.params.embeds.pos_emb[:2][:, :slice]
+pos_emb = jnp.stack((f_pos_emb, p_pos_emb), axis=0)
+label = f"First {slice} dimensions of position embeddings for the factors (top) and prime (bottom) tasks"
+left = esch.EdgeConfig(label=["𝑓-task", "𝑝-task"], show_on="all")
+edge = esch.EdgeConfigs(left=left)
+esch.plot(pos_emb, edge=edge)
+
+f_pos_emb_mat = f_pos_emb @ f_pos_emb.T
+f_pos_emb_mat = f_pos_emb_mat / f_pos_emb_mat.sum()
+esch.plot(f_pos_emb_mat)
+
+p_pos_emb_mat = p_pos_emb @ p_pos_emb.T
+p_pos_emb_mat = p_pos_emb_mat / p_pos_emb_mat.sum()
+esch.plot(p_pos_emb_mat)
+# %% Token embedding exploratoray analysis
+f_tok_emb = f_state.params.embeds.tok_emb[: f_cfg.p]
+f_U, f_S, f_V = jnp.linalg.svd(f_tok_emb)
+p_tok_emb = p_state.params.embeds.tok_emb[: p_cfg.p]
+p_U, p_S, p_V = jnp.linalg.svd(p_tok_emb)
+
+# random like
+f_S_50 = jnp.where((f_S / f_S.sum()).cumsum() < 0.5)[0].max()
+p_S_50 = jnp.where((p_S / p_S.sum()).cumsum() < 0.5)[0].max()
+f_S_90 = jnp.where((f_S / f_S.sum()).cumsum() < 0.9)[0].max()
+p_S_90 = jnp.where((p_S / p_S.sum()).cumsum() < 0.9)[0].max()
+S = jnp.stack((f_S / f_S.sum(), p_S / p_S.sum()), axis=0).reshape((2, 1, -1))[:, :, :83]
+
+top = esch.EdgeConfig(ticks=[(f_S_50.item(), "0.5"), (f_S_90.item(), "0.9")], show_on="first")
+left = esch.EdgeConfig(label=["𝑓-task", "𝑝-task"], show_on="all")
+bottom = esch.EdgeConfig(ticks=[(p_S_50.item(), "0.5"), (p_S_90.item(), "0.9")], show_on="last")
+edge = esch.EdgeConfigs(top=top, bottom=bottom, left=left)
+esch.plot(S, edge=edge)
+
+
+esch.plot(f_U[:, : f_S_50.item()].T)
+esch.plot(p_U[:, : p_S_50.item()].T)
+# %% plots
+mi.plots.plot_run(f_metrics, f_ds, f_cfg, f_task, f_hash)
+
+
+# %%
+# getattr(getattr(metrics, "train"), "loss")
+"""
+
+# %% Constants
+factors_hash = "713e658dbfca4ab98c6e53ed"
+prime_hash = "713e658dbfca4ab98c6e53ed"
 
 
 def plot_training(metrics, acts, y, cfg):
@@ -196,3 +252,5 @@ def report_fn(hash, slice):
 hash = "09258397d70d4b82b1e4ef5e"
 slice = 23
 report_fn(hash, slice)
+
+"""

@@ -4,6 +4,8 @@
 
 
 # %% imports
+import miiii as mi
+import esch
 import datetime
 import os
 from typing import Sequence
@@ -13,13 +15,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 from jax import Array
 
-import miiii as mi
 
 # %% Constants and configurations
-fg = "black"
-bg = "white"
 plt.rcParams["font.family"] = "Monospace"
-# set math text to new computer modern
 plt.rcParams["mathtext.fontset"] = "cm"
 
 # figs dir is in ../paper/figs relative to THIS file
@@ -27,25 +25,60 @@ FIGS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../paper/fi
 
 
 # %% functions
-def plot_run(metrics, ds: mi.tasks.Dataset, cfg: mi.utils.Conf, activations=None):
-    # make run folder in figs/runs folder
-    metrics = mi.utils.metrics_to_dict(metrics)
-    # print(metrics["train"]["loss"].shape)
-    # exit()
-    time_stamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-    path = f"paper/figs/runs/{time_stamp}"  # _{name_run(cfg)}"
-    os.makedirs(path, exist_ok=True)
-    os.makedirs(f"{path}/", exist_ok=True)
-
-    # curve plots of all metrics
-    for split in ["train", "valid"]:
-        for metric in metrics[split]:
-            curve_plot(metrics[split][metric], metric, path, split)
-            plt.close()
+def log_axis_array(arr):
+    # array is (time, task)
+    # out put will be (task, 100)
+    # we get to 100 by doing [:: cfg.epochs // 100]
+    # The x-axis should be log-scaled in time
+    arr = arr.T  # make it (task, time)
+    # step_size = arr.shape[1] // 100
+    # create log-spaced indices
+    log_indices = np.logspace(0, np.log10(arr.shape[1]), 100, dtype=int) - 1
+    log_indices = np.clip(log_indices, 0, arr.shape[1] - 1)
+    arr = arr[:, log_indices]
+    return arr
 
 
-########################################################################################
-# %% Hinton plots
+def plot_run(metrics, ds: mi.tasks.Dataset, cfg: mi.utils.Conf, task: mi.tasks.Task, hash, activations=None):
+    os.makedirs(os.path.join(FIGS_DIR, hash), exist_ok=True)
+
+    # training and final plots
+    splits = ["train", "valid"]
+    _metrics = ["loss", "acc"]
+    for s in splits:
+        for m in _metrics:
+            plot_training(getattr(getattr(metrics, s), m), s, m, cfg, task, hash)
+            # plot_final(getattr(getattr(metrics, s), m), s, m, cfg, task, hash)
+
+    # plot exploratory plots
+    # attention weights. SVD. etc.
+
+
+def plot_training(metric, split, name, cfg, task, hash):
+    path = os.path.join(FIGS_DIR, hash, f"{name}_{split}_training.svg")
+    # data = metric[:: cfg.epochs // 100].T
+    data = log_axis_array(metric)[:, 10:]
+    left = esch.EdgeConfig(label="Task", show_on="first")
+    ticks = [(i, str(prime.item())) for i, prime in enumerate(task.primes) if i % 2 == 0]
+    right = esch.EdgeConfig(ticks=ticks, show_on="all")  # type: ignore
+    top = esch.EdgeConfig(ticks=[(0, "1"), (100, f"{cfg.epochs:g}")], show_on="first", label="Time (log)")
+    name = f"{split.capitalize()} Accuracy" if name == "acc" else f"{split.capitalize()} Cross Entropy"
+    bottom = esch.EdgeConfig(label=name.capitalize(), show_on="all")
+    edge = esch.EdgeConfigs(right=right, top=top, left=left, bottom=bottom)
+    esch.plot(data, path=path, edge=edge)
+
+
+def plot_final(metric, split, name, cfg, task, hash):
+    path = os.path.join(FIGS_DIR, hash, f"{name}_{split}_final.svg")
+    data = metric[-1][None, :]
+    ticks = [(i, str(prime.item())) for i, prime in enumerate(task.primes) if i % 2 == 0]
+    bottom = esch.EdgeConfig(ticks=ticks, show_on="first")  # type: ignore
+    edge = esch.EdgeConfigs(bottom=bottom)
+    esch.plot(data, path=path, edge=edge)
+
+
+def plot_svd(w, name, cfg):
+    U, S, V = jnp.linalg.svd(w)
 
 
 ########################################################################################
@@ -93,7 +126,7 @@ def curve_plot(data, metric, path, split):
         if i == len(data) - 1:
             curve = np.convolve(curve, np.ones(10) / 10, mode="valid")
             new_len = len(curve)
-            ax.plot(curve, c=fg, lw=2, ls="--" if i > 0 else "-")
+            ax.plot(curve, c="black", lw=2, ls="--" if i > 0 else "-")
         else:
             continue
     # ax.set_xscale("log")  # make x-axis log
@@ -110,19 +143,19 @@ def init_curve_plot():
     # title is block with large first letter
     # title = conf["block"][0].upper() + conf["block"][1:] + " " + info["title"]
     fig, ax = plt.subplots(figsize=(12, 6))
-    fig.patch.set_facecolor(bg)
+    fig.patch.set_facecolor("white")
     # make fg white
-    ax.tick_params(axis="x", colors=fg)
-    ax.tick_params(axis="y", colors=fg)
-    ax.set_facecolor(bg)
+    ax.tick_params(axis="x", colors="black")
+    ax.tick_params(axis="y", colors="black")
+    ax.set_facecolor("white")
     ax.grid(False)
     # ax.set_title(title, color=fg)
     # ax.set_xlabel(info["xlabel"], color=fg)
     # ax.set_ylabel(info["ylabel"], color=fg)
     # font color of legend should also be fg
-    ax.xaxis.label.set_color(fg)
-    ax.yaxis.label.set_color(fg)
-    [spine.set_edgecolor(fg) for spine in ax.spines.values()]
+    ax.xaxis.label.set_color("black")
+    ax.yaxis.label.set_color("black")
+    [spine.set_edgecolor("black") for spine in ax.spines.values()]
     # ax y range from 0 to what it is
     return fig, ax
 
