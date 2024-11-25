@@ -83,7 +83,7 @@ def plot_training(metric, split, name, cfg, task, hash):
     left = esch.EdgeConfig(label="Task", show_on="first")
     ticks = [(i, str(prime.item())) for i, prime in enumerate(task.primes) if i % 2 == 0]
     right = esch.EdgeConfig(ticks=ticks, show_on="all")  # type: ignore
-    top = esch.EdgeConfig(ticks=[(0, "1"), (100, f"{cfg.epochs:g}")], show_on="first", label="Time (log)")
+    top = esch.EdgeConfig(ticks=[(0, "1"), (90 - 1, f"{cfg.epochs:g}")], show_on="first", label="Time (log)")
     name = f"{split.capitalize()} Accuracy" if name == "acc" else f"{split.capitalize()} Cross Entropy"
     bottom = esch.EdgeConfig(label=name.capitalize(), show_on="all")
     edge = esch.EdgeConfigs(right=right, top=top, left=left, bottom=bottom)

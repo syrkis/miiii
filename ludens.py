@@ -78,7 +78,7 @@ r_m, r_f, r_s = mi.plots.fourier_analysis(mi.model.initializer(rng, f_state.para
 def fourier_plots(m, f, s, name):
     esch.plot(m, path=f"paper/figs/fourier_{name}_m.svg")
     ticks_bottom = [(i.item(), f"cos {i//2}") for i in jnp.where(s)[0] if i % 2 == 1]
-    ticks_top = [(0, "const")] + [(i.item(), f"sin {i//2}") for i in jnp.where(s)[0] if i % 2 == 0]
+    ticks_top = [(0, "constant")] + [(i.item(), f"sin {i//2}") for i in jnp.where(s)[0] if i % 2 == 0]
     top = esch.EdgeConfig(ticks=ticks_top, show_on="all")  # type: ignore
     bottom = esch.EdgeConfig(ticks=ticks_bottom, show_on="all")
     edge = esch.EdgeConfigs(top=top, bottom=bottom)
@@ -88,7 +88,7 @@ def fourier_plots(m, f, s, name):
         esch.plot(f[None, :], path=f"paper/figs/fourier_{name}_f.svg")
 
 
-fourier_plots(p_m[p_m.shape[0] // 2 :], p_f, p_s, "p")
+fourier_plots(p_m, p_f, p_s, "p")
 fourier_plots(f_m, f_f, f_s, "f")
 fourier_plots(r_m, r_f, r_s, "r")
 
@@ -109,3 +109,20 @@ edge = esch.EdgeConfigs(top=top, left=left)
 esch.plot(heads[0], edge=edge, path="paper/figs/plot_intro.svg")
 
 # %%
+# print([round(acc, 2) for acc in f_metrics.valid.acc[-1].round(2).tolist()])
+
+
+esch.plot(p_state.params.embeds.tok_emb, path="paper/figs/tok_emb_prime.svg")
+esch.plot(p_state.params.embeds.pos_emb, path="paper/figs/pos_emb_prime.svg")
+# %%
+esch.plot(p_state.params.attn.v.squeeze(), path="paper/figs/attn_v_prime.svg")
+esch.plot(p_state.params.attn.k.squeeze(), path="paper/figs/attn_k_prime.svg")
+esch.plot(p_state.params.attn.q.squeeze(), path="paper/figs/attn_q_prime.svg")
+
+
+# %%
+esch.plot(p_state.params.ffwd.w_in.squeeze().T, path="paper/figs/ffwd_w_in_prime.svg")
+esch.plot(p_state.params.ffwd.w_out.squeeze(), path="paper/figs/ffwd_w_out_prime.svg")
+
+# %%
+esch.plot(p_state.params.unbeds, path="paper/figs/unbeds_prime.svg")

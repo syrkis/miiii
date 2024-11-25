@@ -1,9 +1,10 @@
 #import "@preview/unequivocal-ams:0.1.2": ams-article, theorem, proof
 #import "@preview/equate:0.2.1": equate // <- for numbering equations
+#import "@preview/unify:0.6.1": num // <- for making numbers look nice
 
 
-#let f_hash = "7ddd799ee00349b9b94acd5d"
-#let p_hash = "7ddd799ee00349b9b94acd5d"
+#let f_hash = "4a98603ba79c4ed2895f9670"
+#let p_hash = "0c848c1444264cbfa1a4de6e"
 #show: equate.with(breakable: true, sub-numbering: true)
 #set math.equation(numbering: "(1.1)", supplement: "Eq.")
 #set raw(align: center)
@@ -27,7 +28,7 @@
     ),
   ),
   abstract: [
-    This paper investigates the emergence and mechanistic nature of algorithmic learning in transformer models through the lens of modular arithmetic and prime factorization. Building upon recent work in mechanistic interpretability, a transformer model is trained to predict remainders when dividing base-p numbers by prime factors. For numbers represented as $x_0 p^0 + x_1 p^1$ (where $x_0,x_1 < p$), the model must learn distinct strategies for each prime factor, with task difficulty scaling naturally with the size of the factor. Setting $p=113$ yields 29 parallel tasks and 12,769 samples, allowing for the study of how the model develops different computational strategies for tasks of varying complexity. Analysis of learned representations and attention patterns reveals distinct periodicities in the model's internal representations, suggesting the emergence of trigonometric basis functions similar to those found in simpler modular arithmetic tasks. This work contributes to our understanding of how neural networks discover and implement mathematical algorithms, particularly in settings with multiple related tasks of varying complexity. As a second contribution, this paper reproduces #cite(<lee2024a>, form:"prose")'s finding that amplifying slow moving gradients, can significantly speed up generalization.
+    This paper investigates the emergence and mechanistic nature of algorithmic learning in transformer models through the lens of modular arithmetic and prime factorization. Building upon recent work in mechanistic interpretability, a transformer model is trained to predict remainders when dividing base-p numbers by prime factors. For numbers represented as $x_0 p^0 + x_1 p^1$ (where $x_0,x_1 < p$), the model must learn distinct strategies for each prime factor, with task difficulty scaling naturally with the size of the factor. Setting $p=113$ yields 29 parallel tasks and #num(12769) samples, allowing for the study of how the model develops different computational strategies for tasks of varying complexity. Analysis of learned representations and attention patterns reveals distinct periodicities in the model's internal representations, suggesting the emergence of trigonometric basis functions similar to those found in simpler modular arithmetic tasks. This work contributes to our understanding of how neural networks discover and implement mathematical algorithms, particularly in settings with multiple related tasks of varying complexity. As a second contribution, this paper reproduces #cite(<lee2024a>, form:"prose")'s finding that amplifying slow moving gradients, can significantly speed up generalization.
     #footnote[https://github.com/syrkis/miiii].
   ],
 )
@@ -44,7 +45,7 @@
 
 = Introduction
 
-Recent years have seen deep learning (DL) models achieve remarkable proficiency in complex computational tasks, including protein structure prediction @jumper2021, strategic reasoning @dinan2022, and natural language generation—areas previously thought to be the exclusive domain of human intelligence. Traditional (symbolic) programming allows functions like $f(x, y) = cos(a dot x) + sin(b dot y)$ to be implemented with clear typographical isomorphism—meaning the code's structure directly mirrors the mathematical notation. For example, in Haskell: `f x y = cos(a * x) + sin(b * y)`. In contrast, DL models are inherently subsymbolic, meaning that the models' atomic constituents (32-bit floating-point numbers centered around 0) are meaningless when viewed directly. For reference, @subsymbolic shows a DL-based implementation of $f$.
+Recent years have seen deep learning (DL) models achieve remarkable proficiency in complex computational tasks, including protein structure prediction @jumper2021, strategic reasoning @dinan2022, and natural language generation—areas previously thought to be the exclusive domain of human intelligence. Traditional (symbolic) programming allows functions like $f(x, y) = cos(a dot x) + sin(b dot y)$ to be implemented with clear typographical isomorphism—meaning the code's structure directly mirrors the mathematical notation. For example, in Haskell: `f x y = cos(a * x) + sin(b * y)`. In contrast, DL models are inherently subsymbolic, meaning that the models' atomic constituents (32-bit floating-point numbers centered around 0) are meaningless when viewed directly. For reference, @subsymbolic shows a DL-based implementation of $f$#footnote[Note that in the rest of the paper $f$ refers to a prime number less than $p$.].
 
 Indeed, the increasing prevalence of DL can be understood as a transition from symbolic to subsymbolic algorithms: the gradual subsuming of computational tasks. Precursors to modern DL methods learned how to weigh human-designed features @shannon1950, with later works learning to create features from data to then weigh @tesauro1993, @silver2017—in combination with tree search strategies, in the case of games @browne2012. Recent DL work has even eliminated tree search, mapping directly from observation space to action space @ruoss2024. Pure DL methods are thus increasingly prevalent, but almost equally inscrutable, with recent works still attempting to define what interpretability even means in the DL context @lipton2018. Given the breadth @cybenko1989 of tasks that DL models can be (and are) trained to solve—along with their subsymbolic nature—it is, however, hardly a surprise that their interpretation remains difficult.
 
@@ -96,7 +97,7 @@ Conceptually, #cite(<lee2024a>, form:"prose") argues that in the case of gradien
 
 MI is a relatively new field, and the methods are still being developed.
 #cite(<lipton2018>, form: "prose") discusses various definitions of interpretability, including mechanistic interpretability (though they don't call it that) in which the mechanisms of the model are reverse engineered. This is on the opposite scale of forms of interpretability such as feature importance, which is a measure of how much a feature contributes to the model's prediction (i.e. the presence of red might correlated highly with an image classified as containing a rose).
-The model trained by #cite(<nanda2023>, form:"prose") to solve $cal(T)_("nanda")$ is reverse engineered using using a variety of qualitative approaches like visualizing the activations over the entire $12 769$ (113 ^2) dataset, and performing singular value decomposition on the token embeddings matrix.
+The model trained by #cite(<nanda2023>, form:"prose") to solve $cal(T)_("nanda")$ is reverse engineered using using a variety of qualitative approaches like visualizing the activations over the entire #num(12769) ($113^2$) dataset, and performing singular value decomposition on the token embeddings matrix.
 It is discovered that the generalized circuit uses a discrete Fourier transform (rotation in the complex plane) to solve the problem. Specifically, the embedding layer learns a lookup tale for the cosine and sine values of the input, while the feed word layer of the transformer block learns to combine these values though multiplication, addition and trigonometric identities. Note that $cal(T)_("nanda")$ is commutative meaning that @commutative holds.
 
 $
@@ -126,8 +127,6 @@ Can the learning process be expedited? How does the presence of multiple tasks a
 What specific algorithm has been learned by a given system?
 How can it exist as an archive and an algorithm simultaneously?
 Addressing these questions is essential for advancing the theoretical understanding of deep learning and enhancing its practical applications.
-
-
 
 
 == Multi-task Learning in DL
@@ -214,7 +213,7 @@ To provide insight into the periodic structure of these remainders (and motivate
 #figure(
   image("figs/polar.svg"),
   caption: [
-    Periodic patterns in polar coordinates $(n, n)$ for numbers less than $12 769$. Left: numbers with remainder 0 mod 7 or 23 (see the two spirals). Middle: numbers with remainder 0 mod 11. Right: prime numbers.
+    Periodic patterns in polar coordinates $(n, n)$ for numbers less than #num(12769). Left: numbers with remainder 0 mod 7 or 23 (see the two spirals). Middle: numbers with remainder 0 mod 11. Right: prime numbers.
   ],
 )<nats>
 
@@ -293,16 +292,16 @@ $<grad>
 
 where $e_t$ is the exponential moving average of gradients with decay rate $alpha=0.98$, and $lambda=2$ controls the influence of the slow-varying component.
 
-Training uses full batch gradient descent with the entire dataset of $p^2$ samples ($12 769$ when $p=113$). The model is evaluated on a held-out validation set after each epoch, tracking per-task accuracy and loss. As the setup used in $cal(T)_"nanda"$, training was done on thirty percent of the total dataset, with the remaining used for validation (1000 samples) and testing (remaining). Further as $cal(T)_"miiii"$ involves the learning of 29 (when $p=113$) tasks rather then 1, and due to each tasks non-comotativity, a larger hidden dimension of 256 was added to the hyper parameter search space, as well as the potential for 8 heads ($cal(T)_"nanda"$ was solved with a hidden dimensions of 128, and 4 heads). The number of transformer blocks were kept at 1 as this ensures consistency with $cal(T)_"nanda"$ (and as full generalizaion was possible, as we shall see in the results).
+Training uses full batch gradient descent with the entire dataset of $p^2$ samples (#num(12769) when $p=113$). The model is evaluated on a held-out validation set after each epoch, tracking per-task accuracy and loss. As the setup used in $cal(T)_"nanda"$, training was done on thirty percent of the total dataset, with the remaining used for validation (1000 samples) and testing (remaining). Further as $cal(T)_"miiii"$ involves the learning of 29 (when $p=113$) tasks rather then 1, and due to each tasks non-comotativity, a larger hidden dimension of 256 was added to the hyper parameter search space, as well as the potential for 8 heads ($cal(T)_"nanda"$ was solved with a hidden dimensions of 128, and 4 heads). The number of transformer blocks were kept at 1 as this ensures consistency with $cal(T)_"nanda"$ (and as full generalizaion was possible, as we shall see in the results).
 
 
 == Visualization
 
-Much of the data worked with here is inherently high dimensional. For training, for example, we have $n$ steps, two splits (train/valid) about $p/ln(p)$ tasks, and two metrics (accuracy, and loss). This, along with the inherent opaqueness of deep learning models, motivated the developed custom visualization library, `esch`#footnote[https://github.com/syrkis/esch] to visualize attention weights, intermediate representations, training metrics, and more. The most important plot type for the reader to keep in mind is seen in @plot_type. As there are only $12 769$ samples when $p=113$, all samples can be fed at once to the model. Inspecting a specific activation thus yields a $1 times 12796$ vector $v$, which can be reshapes at a $113 times 113$ matrix, with the two axis varying $x_0$ and $x_1$ from 0 to 112, respectively. The top left corner than shows the given value for the sample $(0 dot p^0 + 0 dot p^1)$, and so on.
+Much of the data worked with here is inherently high dimensional. For training, for example, we have $n$ steps, two splits (train/valid) about $p/ln(p)$ tasks, and two metrics (accuracy, and loss). This, along with the inherent opaqueness of deep learning models, motivated the developed custom visualization library, `esch`#footnote[https://github.com/syrkis/esch] to visualize attention weights, intermediate representations, training metrics, and more. The most important plot type for the reader to keep in mind is seen in @plot_type. As there are only #num(12769) samples when $p=113$, all samples can be fed at once to the model. Inspecting a specific activation thus yields a $1 times$ #num(12796) vector $v$, which can be reshapes at a $113 times 113$ matrix, with the two axis varying $x_0$ and $x_1$ from 0 to 112, respectively. The top left corner than shows the given value for the sample $(0 dot p^0 + 0 dot p^1)$, and so on.
 
 #figure(
-  image("figs/plot_intro.svg", width: 120%),
-  caption: [Top left $37 times 37$ slice of the attention pattern from $hat(y)$ to $x_0$ in the first attention head of all $(x_0, x_1)$ pairs, for a model trained on $cal(T)_"nanda"$.],
+  image("figs/plot_intro.svg", width: 110%),
+  caption: [Top left $37 times 37$ slice of the attention pattern from $hat(y)$ to $x_0$ in the first attention head of all $(x_0, x_1)$ pairs, for a model trained on $cal(T)_"nanda"$. Note that each squre of the plot represents a unique sample, and are thus entirely independt from one another. The periodicity is thus a function of the model learning an order of the natural numbers in question.],
 )<plot_type>
 
 
@@ -317,7 +316,10 @@ Our interpretability approach combines visualization techniques with frequency a
 Using `esch`, the custom visualization library, to visualize attention weights and intermediate representations. The library allows for the visualization of attention patterns across different layers, as well as the visualization of intermediate representations at each layer. These visualizations provide insights into the learned patterns and help identify potential areas of improvement.
 
 *Fourier Analysis*
-To quantify periodic patterns in both attention weights and intermediate representations, we decompose them into their constituent frequencies using the discrete Fourier transform:
+As periodicity is established by #cite(<nanda2023>, form: "prose") to be a fundamental feature of the model trained on $cal(T)_"nanda"$, the fast Fourier transform (FFT) algorithm is used to detect which frequencies are in play.
+Note that any square image, can be described as a sum of 2d sine and cosine waves varying in frequency from 1 to the size of the image divided by 2 (plus a constant).
+This is a fundamental tool used in signal processing. The theory is briefly outlined in @fft for reference.
+// To quantify periodic patterns in both attention weights and intermediate representations, we decompose them into their constituent frequencies using the discrete Fourier transform:
 
 $
   X_k = sum_(n=0)^(N-1) x_n e^(-2pi i k n / N)
@@ -407,7 +409,7 @@ Furthermore, a one-hot vector is used to mask tasks to shield the model from a p
 
 = Results
 
-The best performing model was trained with the hyper-parameters in @hyper_param_search_result. As seen in figures @trainig_acc, the model grokked on all 29 tasks, achieving perfect accuracy. Note that tasks 2, 3, 5 and 7 occur in succession (with 5 and 7 swapped), while rest happen, more or less simultaneously, after the initial 4. This could indicate that a more geneal solution has been found, differing in a parameterized way from one another.
+The best performing model was trained with the hyper-parameters in @hyper_param_search_result. As seen in figures @trainig_acc and @trainig_loss, the model grokked on all 29 tasks, achieving perfect accuracy on all 29 tasks on the validation and test sets. Note that tasks 2, 3, 5 and 7 generealizes in succession of one another, while rest happen, more or less simultaneously, after the initial four. This could indicate that a more geneal solution has been found, allowing for a sort of phase transition for the remaining tasks, by reusing circuitry developed through the first four.
 
 #figure(
   table(
@@ -431,10 +433,19 @@ The best performing model was trained with the hyper-parameters in @hyper_param_
 #figure(
   stack(
     dir: ttb,
+    image("figs/" + f_hash + "/loss_train_training.svg"),
+    image("figs/" + f_hash + "/loss_valid_training.svg"),
+  ),
+  caption: [Representation of training and validation loss ($x$-axis is in log scale).],
+)<trainig_loss>
+
+#figure(
+  stack(
+    dir: ttb,
     image("figs/" + f_hash + "/acc_train_training.svg"),
     image("figs/" + f_hash + "/acc_valid_training.svg"),
   ),
-  caption: [Representation of training and validation accuracy ($x$-axis is in log scale).],
+  caption: [Representation of training and validation acc ($x$-axis is in log scale).],
 )<trainig_acc>
 
 
@@ -614,9 +625,73 @@ there is indeed an assiting effect to having multiple tasks in the development o
 
 #appendix[
   #heading(level: 1, "Appendix", numbering: none)
+
+
+
+  = Fast Fourier Transform<fft>
+
+  The inner product between two vectors $bold(v) "and" bold(u)$ of length $n$ can be written as per @inner_product.
+
+  $
+    sum_i^n bold(v)[i] bold(u)[i]
+  $<inner_product>
+
+  We can extend the meaning of inner products to functions $f "and" g$ over the interval $[a;b]$ with @inner_product_function.
+
+  $
+    integral_a^b f(x)g(x) d x
+  $<inner_product_function>
+
+  It is a fact that any continuous, differentiable function $f(x)$, can be written as a sum of cosine and sine terms plus a constant as per:
+
+  $
+    f(x) =A_0 / 2 + sum_(k=1)^(infinity) (A_k cos(k x) + B_k sin(k x))
+  $
+
+  Where $A_k$ and $B_k$ are the normalized innner products $angle.l f(x), cos(k x) angle.r$ and $angle.l f(x), sin(k x) angle.r$ respectively
+  #footnote[Note the pointy brackets denote inner product]. These are explicitly written out in @AB_k.
+
+  $
+    A_k = 1 / pi integral_(-pi)^pi f(x) cos(k x) d k, quad
+    B_k = 1 / pi integral_(-pi)^pi f(x) sin(k x) d k
+  $<AB_k>
+
+  This can be similarly extended for that grid, which is the basis for the two-dimensional FFT.
+
+  #pagebreak()
+
   = Subsymbolic implementation of $f(x, y)$<subsymbolic>
 
+  Compute $f(x)$ for ${(a,b) in NN^2 : 0 <= a,b < 113}$, by adding the two rows of $W_E_"pos"$ in @embeds to a one-hot encoded $a$ and $b$, and then multiplying by $W_E_"tok"$. Then multiply by $W_k, W_q$ and $W_v$ indepently in perform the operation described in @attn, and then add to the output of the embedding operations. Send that through the a feed-forward network with the weights in @ffwd_fun, and voila. The reader is asked to confirm visually that the weight in the figures indeed compute $f(x, y) = cos (a x) + sin (b x)$ when applied in the order described above.
+
   #figure(
-    image("figs/4a98603ba79c4ed2895f9670/acc_train_training.svg"),
+    stack(
+      dir: ttb,
+      image("figs/tok_emb_prime.svg", width: 80%),
+      image("figs/pos_emb_prime.svg", width: 80%),
+    ),
+    caption: [$W_E_"tok"$ and $W_E_"pos"$],
+  )<embeds>
+  #figure(
+    stack(
+      dir: ltr,
+      spacing: 0pt,
+      image("figs/attn_v_prime.svg", width: 40%),
+      image("figs/attn_k_prime.svg", width: 40%),
+      image("figs/attn_q_prime.svg", width: 40%),
+    ),
+    caption: [$W_k$, $W_q$ and $W_v$],
   )
+  #figure(
+    stack(
+      dir: ltr,
+      spacing: 0pt,
+      image("figs/ffwd_w_in_prime.svg", height: 90%),
+      image("figs/ffwd_w_out_prime.svg", height: 90%),
+    ),
+    caption: [$W_"in"$ and $W_"out"^T$],
+  )<ffwd_fun>
+  // #figure(
+  //   image("figs/unbeds_prime.svg"),
+  // )<unbeds>
 ]
