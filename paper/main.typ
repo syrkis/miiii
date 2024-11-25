@@ -189,7 +189,7 @@ A model deep learning model, $cal(M)$, consits of a set of model weights $cal(W)
 
 == Tasks
 
-Stated plainly: the task predicts the remainder when dividing a two-digit base-$p$ number by each prime factor less than $p$.
+Stated plainly: the task predicts the remainder when dividing a two-digit base-$p$ number by each prime factor $f$ less than $p$. The set of prime factors we construct tasks for is thus $F = {f in PP : f < p}$
 For $p=113$, this yields 29 parallel tasks, one for each prime less than $p$. Each task predicts a remainder in the range $[0, f-1]$. This means smaller primes like 2 and 3 require binary and ternary classification respectively, while the largest prime less than $p$, 109, requires predictions across 109 classes. The tasks thus naturally vary in difficulty: predicting $mod 2$ requires distinguishing odd from even numbers (which in binary amounts to looking at the last bit), while predicting $mod 109$ involves making a selection between many relatively similar classes. From an information-theoretical perspective, the expected cross entropy for an $n$-classed problem is $ln(n)$, which has implications for the construction of the loss function, further discussed in @training.
 
 
@@ -219,8 +219,6 @@ To provide insight into the periodic structure of these remainders (and motivate
     Periodic patterns in polar coordinates $(n, n)$ for numbers less than $12 769$. Left: numbers with remainder 0 mod 7 or 23 (see the two spirals). Middle: numbers with remainder 0 mod 11. Right: prime numbers.
   ],
 )<nats>
-
-
 
 == Model
 
@@ -252,15 +250,6 @@ $
   mat(delim:"[", quad x_0 quad x_1 quad \_ quad)
 $
 
-
-
-
-
-
-
-
-
-
 == Training<training>
 
 Hyper-parameter optimization was conducted using Optuna @akiba2019, searching over @hyper_param_search_space.
@@ -279,9 +268,9 @@ Hyper-parameter optimization was conducted using Optuna @akiba2019, searching ov
       "heads",
     ),
 
-    $1 / 2, 1 / 5, 1 / 10$,
-    $1 / 2, 2$,
-    $1 / 10, 1 / 2, 1$,
+    $0, 1 / 2, 1 / 5, 1 / 10$,
+    $0, 1 / 2, 2$,
+    $0, 1 / 10, 1 / 2, 1$,
     $128, 256$,
     "3e-4, 1e-4",
     "4, 8",
@@ -289,17 +278,16 @@ Hyper-parameter optimization was conducted using Optuna @akiba2019, searching ov
   caption: "Hyperparameter search space for training.",
 )<hyper_param_search_space>
 
-The model is trained using AdamW @loshchilov2019 with $beta_1=0.9$, $beta_2=0.98$ following @nanda2023. To handle the varying number of classes across tasks (from 2 classes for mod 2 to 109 classes for mod 109), a weighted cross entropy loss is employed:
+The model is trained using AdamW @loshchilov2019 with $beta_1=0.9$, $beta_2=0.98$ following @nanda2023. To handle the varying number of classes across tasks (from 2 classes for mod 2 to 109 classes for mod 109), a modified (weighted) mean cross-entropy (@mce) loss is created, correcting for the difference in expected loss within each task. Note that $EE[L_("MCE")] = ln(1/k)$, where $k$ is the number of classes within the task in question. Correcting for this, the loss function becomes as shown in @mmce.
 
 
 $
-  L_("ce") = sum_(t in T)1 / ln(t) 1 / p^2 sum_(i=0)^(N) sum_(j=0)^(t)ln(p_t)
+  L_(cal(T)_"miiii") &= - &&sum_(f in F) L_"MCE"_f / (-ln(f)) \
+  &= - &&sum_(f in F) (sum_(i=1)^n sum_(j=1)^(f) y_(k_f i j) ln(hat(y)_(k_f i j)) ) / (- n ln(f)) \
+  &= &&sum_(f in F)sum_(i=1)^n sum_(j=1)^(f) (y_(k_f i j)ln(hat(y)_(k_f i j)) ) / (n ln(f)) #<mmce>
 $
 
-
-where $alpha_i = 1/ln(f_i)$ accounts for the varying difficulty across tasks with different prime factors $f_i$.
-
-To accelerate generalization, gradient filtering as per #cite(<lee2024a>, form: "prose") is replicated:
+To accelerate generalization, gradient filtering as per #cite(<lee2024a>, form: "prose") is implemented and replicated.
 
 $
   g_t = nabla_theta L + lambda(alpha e_(t-1) + (1-alpha)g_(t-1))
@@ -307,7 +295,7 @@ $<grad>
 
 where $e_t$ is the exponential moving average of gradients with decay rate $alpha=0.98$, and $lambda=2$ controls the influence of the slow-varying component.
 
-Training uses full batch gradient descent with the entire dataset of $p^2$ samples. The model is evaluated on a held-out validation set after each epoch, tracking per-task accuracy and loss.
+Training uses full batch gradient descent with the entire dataset of $p^2$ samples ($12 769$ when $p=113$). The model is evaluated on a held-out validation set after each epoch, tracking per-task accuracy and loss. As the setup used in $cal(T)_"nanda"$, training was done on thirty percent of the total dataset, with the remaining used for validation (1000 samples) and testing (remaining). Further as $cal(T)_"miiii"$ involves the learning of 29 (when $p=113$) tasks rather then 1, and due to each tasks non-comotativity, a larger hidden dimension of 256 was added to the hyper parameter search space, as well as the potential for 8 heads ($cal(T)_"nanda"$ was solved with a hidden dimensions of 128, and 4 heads). The number of transformer blocks were kept at 1 as this ensures consistency with $cal(T)_"nanda"$ (and as full generalizaion was possible, as we shall see in the results).
 
 
 == Visualization
@@ -417,12 +405,9 @@ For each of the $sqrt(n) + 1$ tasks, the focal loss @lin2018 () and f1 score are
 The frequency of a positive sample in task $i$ is used as the weight for the focal loss during training.
 Furthermore, a one-hot vector is used to mask tasks to shield the model from a particular signal during training.
 
-
-
-
 = Results
 
-The best performing model was trained with the hyper-parameters in @hyper_param_search. As seen in figures @trainig_acc, the model grokked on all 29 tasks, achieving perfect accuracy. Note that tasks 2, 3, 5 and 7 occur in succession (with 5 and 7 swapped), while rest happen, more or less simultaneously, after the initial 4. This could indicate that a more geneal solution has been found, differing in a parameterized way from one another.
+The best performing model was trained with the hyper-parameters in @hyper_param_search_result. As seen in figures @trainig_acc, the model grokked on all 29 tasks, achieving perfect accuracy. Note that tasks 2, 3, 5 and 7 occur in succession (with 5 and 7 swapped), while rest happen, more or less simultaneously, after the initial 4. This could indicate that a more geneal solution has been found, differing in a parameterized way from one another.
 
 #figure(
   table(
@@ -440,7 +425,7 @@ The best performing model was trained with the hyper-parameters in @hyper_param_
     "0.2", "2", "1.0", "256", $3 times 10^(-4)$, "4",
   ),
   caption: [Hyper parameter search for the model.],
-)<hyper_param_search>
+)<hyper_param_search_result>
 
 
 #figure(
@@ -483,28 +468,6 @@ The best performing model was trained with the hyper-parameters in @hyper_param_
   caption: [Most significant singular vectors of $U$ for $cal(T)_("nanda")$],
 )<p_U>
 
-Projecting the positional embeddings onto a Fourier basis, however, shows that the periodicity is indeed preserved.
-
-#figure(
-  stack(
-    dir: ttb,
-    image("figs/fourier_f_m.svg"),
-    image("figs/fourier_f_f.svg"),
-  ),
-  caption: [$W_(E_(cal(T)_("miiii")))$ in Fourier space (norm below)],
-)<f_f>
-
-As is apparent in @f_f and @p_f a lot more frequencies are in play when training for $cal(T)_("miiii")$ than $cal(T)_("nanda")$. This is to be expected if the network too implements the cosine-sine look table @nanda2023, as each task is prime related, and thus there is no common steps hit when rotating around the unit circle in the complex plane. Comparing @f_f and @r_f we see that the frequencies, though cluttered, are far from random.
-
-#figure(
-  stack(
-    dir: ttb,
-    image("figs/fourier_r_m.svg"),
-    image("figs/fourier_r_f.svg"),
-  ),
-  caption: [Untrained token embeddings @he2015 in Fourier space (norm below)],
-)<r_f>
-
 
 #figure(
   stack(
@@ -512,8 +475,25 @@ As is apparent in @f_f and @p_f a lot more frequencies are in play when training
     image("figs/fourier_p_m.svg"),
     image("figs/fourier_p_f.svg"),
   ),
-  caption: [Token embeddings ($W_E_(cal(T)_("nanda"))$) in Fourier space (norm below)],
+  caption: [$W_E_t_(cal(T)_("nanda"))$ in Fourier space with row norm below],
 )<p_f>
+
+Projecting the positional embeddings onto a Fourier basis, however, shows that the periodicity is indeed preserved.
+
+#figure(
+  stack(
+    dir: ttb,
+    image("figs/fourier_f_m.svg"),
+    image("figs/fourier_f_f.svg"),
+    image("figs/fourier_r_m.svg"),
+    image("figs/fourier_r_f.svg"),
+  ),
+  caption: [$W_(E_t_(cal(T)_"miiii"))$ (top) and random @he2015 matrix of same shape (bottom) in Fourier space with row norm below each.],
+)<f_f>
+
+As is apparent in @f_f and @p_f a lot more frequencies are in play when training for $cal(T)_("miiii")$ than $cal(T)_("nanda")$. This is to be expected if the network too implements the cosine-sine look table @nanda2023, as each task is prime related, and thus there is no common steps hit when rotating around the unit circle in the complex plane. Comparing @f_f we see that the frequencies, though cluttered, are far from random.
+
+
 
 
 The fact of periodicity in @f_f despite the presence of multiple tasks with unique rotational steps around the circle, the non commutative nature of the task, is further @nanda2023 indication that trigonometric tables are a reliably used representation of the architecture.
@@ -611,6 +591,10 @@ with the $p$ is being tested for. This makes intuitive sense, as it is easier to
 
 // The f1 score of the tasks in $cal(T)$ on the train data during training is shown in @train_f1_hinton, and the f1 score of the tasks in $cal(T)$ on the validation data during training is shown in @valid_f1_hinton.
 //
+= Analysis and Discussion
+
+
+
 = Further work
 
 The mysteries of primes and deep learning are both plentiful, and there are many fundamental questions to be answered in mixing the two. How does training a model on $p$ affect it performance on a $q > p$. How does predicting divisibility directly, compare to predicting remainders (both have been explored in this setup). In this spirit, the code associated with this paper is available as a pypi package, and can be installed with `pip install miiii`.
@@ -632,6 +616,4 @@ there is indeed an assiting effect to having multiple tasks in the development o
   #figure(
     image("figs/4a98603ba79c4ed2895f9670/acc_train_training.svg"),
   )
-
-
 ]
