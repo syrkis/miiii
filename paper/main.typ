@@ -5,7 +5,7 @@
 #let f_hash = "7ddd799ee00349b9b94acd5d"
 #let p_hash = "7ddd799ee00349b9b94acd5d"
 #show: equate.with(breakable: true, sub-numbering: true)
-#set math.equation(numbering: "(1.1)") //supplement: "Eq.")
+#set math.equation(numbering: "(1.1)", supplement: "Eq.")
 #set raw(align: center)
 
 #show: ams-article.with(
@@ -173,8 +173,6 @@ Importantly, deep learning architectures can function both as archives—overfit
 
 = Methods
 
-
-
 However, how exactly a given model implements an algorithm is a non-trivial question—as we shell see, even modular addition is implemented in an obscure way @nanda2023.
 This investigation probes the fundamental algorithmic structures internalized by a transformer model trained on a set of basic prime number-related modular arithmetic tasks, with slight variations in complexity. This approach provides insights into how and why specific algorithmic patterns emerge from seemingly straightforward learning processes.
 
@@ -300,7 +298,13 @@ Training uses full batch gradient descent with the entire dataset of $p^2$ sampl
 
 == Visualization
 
-Much of the data worked with here is inherently high dimensional. For training, for example, we have $n$ steps, two splits (train/valid) about $p/ln(p)$ tasks, and two metrics (accuracy, and loss). This, along with the inherent opaqueness of deep learning models, motivated the developed custom visualization library, `esch`#footnote[https://github.com/syrkis/esch] to visualize attention weights, intermediate representations, training metrics, and more.
+Much of the data worked with here is inherently high dimensional. For training, for example, we have $n$ steps, two splits (train/valid) about $p/ln(p)$ tasks, and two metrics (accuracy, and loss). This, along with the inherent opaqueness of deep learning models, motivated the developed custom visualization library, `esch`#footnote[https://github.com/syrkis/esch] to visualize attention weights, intermediate representations, training metrics, and more. The most important plot type for the reader to keep in mind is seen in @plot_type. As there are only $12 769$ samples when $p=113$, all samples can be fed at once to the model. Inspecting a specific activation thus yields a $1 times 12796$ vector $v$, which can be reshapes at a $113 times 113$ matrix, with the two axis varying $x_0$ and $x_1$ from 0 to 112, respectively. The top left corner than shows the given value for the sample $(0 dot p^0 + 0 dot p^1)$, and so on.
+
+#figure(
+  image("figs/plot_intro.svg", width: 120%),
+  caption: [Top left $37 times 37$ slice of the attention pattern from $hat(y)$ to $x_0$ in the first attention head of all $(x_0, x_1)$ pairs, for a model trained on $cal(T)_"nanda"$.],
+)<plot_type>
+
 
 == Mechanistic Interpretability
 
@@ -332,7 +336,7 @@ Note that that in figures with periodicity only a top left most $37 times 37$ sl
 
 == Evaluation
 
-In @atten_weight we see a vertical periodic pattern, which is expected, as the model is trained to predict the prime factorization of the number $x_0 * 113 + x_1$.
+In @plot_type we see a vertical periodic pattern, which is expected, as the model is trained to predict the prime factorization of the number $x_0 * 113 + x_1$.
 
 
 
@@ -361,10 +365,6 @@ might merit and increase in the number of layers, heads, and hidden size,
 which I am currently investigating (update for Anders).
 
 
-#figure(
-  image("figs/attention_one.svg"),
-  caption: [Attention from $\_$ to $x_0$ in the first attention head for all $(x_0, x_1)$-pairs.],
-)<atten_weight>
 
 #figure(
   image("figs/attention_layer_0.svg"),
@@ -437,10 +437,11 @@ The best performing model was trained with the hyper-parameters in @hyper_param_
   caption: [Representation of training and validation accuracy ($x$-axis is in log scale).],
 )<trainig_acc>
 
+
 == Positional embeddings
 
 
-@pos_emb shows the positional embeddings of the $a$-task to be virtually identical (cosine similarity of 0.95), which is to be expected due to the tasks commutativity. Interestingly, the cosine similarity of the $b$-task is -0.64. Neither, completely opposite, nor orthogonal, as expected. However, it is clear that the two positional embeddings translate the tokens in different directions.
+@pos_emb shows the positional embeddings of the $cal(T)_"nanda"$ to be virtually identical (cosine similarity of 0.95), which is to be expected due to the tasks commutativity (a given value at $x_0$ or $x_1$ contributes the same to the task). The same measure for a model trained on $cal(T)_"miiii"$ is -0.64, translating the embeddings differently for the two positions. This is to be expected as by the task's non-comutativity $x_0 dot p ^ 0 != x_0 dot p^1$. Inspecting the positional embeddings confirms the obvious: position matters.
 
 #figure(
   image("figs/pos_emb.svg"),
@@ -451,7 +452,7 @@ The best performing model was trained with the hyper-parameters in @hyper_param_
 == Token embeddings
 
 
-@s shows us that the singular values of the the token embeddings learned for task $b$ to be much more diffuse than those for task $a$. As stated, the embedding layer i task $a$ represents a look table for the sine and cosine values of the tokens—hance the periodicity of the most significant singular vectors.
+@s shows us that the singular values of the the token embeddings learned for task $b$ to be much more diffuse than those for task $a$. As stated, the embedding layer of the $cal(T)_"nanda"$ trained models represents a look table for the sine and cosine values of the tokens—hance the periodicity of the most significant singular vectors @p_U. Visual inspection of the top most vectors of @f_U indeed shows periodicity, but a much large fraction of the vectors is reuired to capture the same amount of variance @s.
 
 #figure(
   image("figs/S.svg"),
@@ -459,14 +460,18 @@ The best performing model was trained with the hyper-parameters in @hyper_param_
 )<s>
 
 #figure(
+  image("figs/p_U.svg"),
+  caption: [Most significant singular vectors of $U$ for $cal(T)_("nanda")$],
+)<p_U>
+
+#figure(
   image("figs/f_U.svg"),
   caption: [Most significant singular vectors of $U$ for $cal(T)_("miiii")$],
 )<f_U>
 
-#figure(
-  image("figs/p_U.svg"),
-  caption: [Most significant singular vectors of $U$ for $cal(T)_("nanda")$],
-)<p_U>
+
+
+To further understand the underlying structure of the token embeddings, the fast Fourier transform (FFT) algorithm is used. @p_f shows the five particularly active frequencies for the $cal(T)_"nanda"$-model. For the $cal(T)_"miiii"$-model we see a much broader spectrum of frequencies are active, though comparind to a randomly initialized baseline, the periodicity remains apperent. This is to be expected if the network too implements the cosine-sine look table @nanda2023, as each task relates to a partifular prime $f$—no point is hit twice when rotating through $CC$ with $f$ steps for very $f in F$.
 
 
 #figure(
@@ -491,12 +496,12 @@ Projecting the positional embeddings onto a Fourier basis, however, shows that t
   caption: [$W_(E_t_(cal(T)_"miiii"))$ (top) and random @he2015 matrix of same shape (bottom) in Fourier space with row norm below each.],
 )<f_f>
 
-As is apparent in @f_f and @p_f a lot more frequencies are in play when training for $cal(T)_("miiii")$ than $cal(T)_("nanda")$. This is to be expected if the network too implements the cosine-sine look table @nanda2023, as each task is prime related, and thus there is no common steps hit when rotating around the unit circle in the complex plane. Comparing @f_f we see that the frequencies, though cluttered, are far from random.
+As is apparent in @f_f and @p_f a lot more frequencies are in play when training for $cal(T)_("miiii")$ than $cal(T)_("nanda")$.
 
 
 
 
-The fact of periodicity in @f_f despite the presence of multiple tasks with unique rotational steps around the circle, the non commutative nature of the task, is further @nanda2023 indication that trigonometric tables are a reliably used representation of the architecture.
+// The fact of periodicity in @f_f despite the presence of multiple tasks with unique rotational steps around the circle, the non commutative nature of the task, is further @nanda2023 indication that trigonometric tables are a reliably used representation of the architecture.
 
 //#figure(
 //stack(
@@ -527,11 +532,10 @@ Unlike that @nanda_task task, our attention heads focus on one digit or the othe
 We see that the positional embeddings are orthogonal. The token embeddings of $x_0$ and $x_1$ are offset, allowing for the cosine and sine table to be learned for both.
 NOTE: they might not be orthogonal, but rather pointing in opposite directions (we only have two vectors, so orthogonality is not needed.
 
-#figure(
-  image("figs/pos_emb.svg", width: 100%),
-  caption: [Positional embeddings for the first $37$ for a model trained on @nanda_task (top) and @miiii_task (bottom). The low information contained in the positional encoding of @nanda_task is to be expected as the task is commutative, while @miiii_task is not—$(x_0 + x_1) mod p = (x_1 + x_0) mod p$ but $((x_0 p^0 + x_1 p^1) mod p) != ((x_1 p^1 + x_0 p^0) mod p)$..],
-)<generalization_levels_>
-
+// #figure(
+//   image("figs/pos_emb.svg", width: 100%),
+//   caption: [Positional embeddings for the first $37$ for a model trained on @nanda_task (top) and @miiii_task (bottom). The low information contained in the positional encoding of @nanda_task is to be expected as the task is commutative, while @miiii_task is not—$(x_0 + x_1) mod p = (x_1 + x_0) mod p$ but $((x_0 p^0 + x_1 p^1) mod p) != ((x_1 p^1 + x_0 p^0) mod p)$..],
+// )<generalization_levels_>
 
 - sin/cos lookup tables in embedding layer.
 - does pos not matter for this task? No, cos it is not commutative. (a + b) mod p = (b + a) mod p -> Nanda. But (a p^1 + b p^0) mod p != (b p^1 + a p^0) mod p.
@@ -548,27 +552,26 @@ NOTE: they might not be orthogonal, but rather pointing in opposite directions (
 )
 
 
-#figure(
-  stack(
-    dir: ttb,
-    spacing: 1em,
-    image("figs/miiii_113_U_top_10.svg", width: 110%),
-    image("figs/miiii_113_S_top_37.svg", width: 100%),
-  ),
-  caption: [We see that the 10 most significant vectors of $U$ are periodic!],
-)
+// #figure(
+//   stack(
+//     dir: ttb,
+//     spacing: 1em,
+//     image("figs/miiii_113_U_top_10.svg", width: 110%),
+//     image("figs/miiii_113_S_top_37.svg", width: 100%),
+//   ),
+//   caption: [We see that the 10 most significant vectors of $U$ are periodic!],
+// )
 
 
-#figure(
-  image("figs/miiii_113_F_W_E.svg"),
-  caption: [Active frequencies in Fourier space of Embedding],
-)
+// #figure(
+//   image("figs/miiii_113_F_W_E.svg"),
+//   caption: [Active frequencies in Fourier space of Embedding],
+// )
 
-
-#figure(
-  image("figs/miiii_113_F_neuron_0.svg"),
-  caption: [Neuron 0 for sample 1 in Fourier space.],
-)
+// #figure(
+// image("figs/miiii_113_F_neuron_0.svg"),
+// caption: [Neuron 0 for sample 1 in Fourier space.],
+// )
 
 
 

@@ -7,6 +7,8 @@
 import esch
 import jax.numpy as jnp
 from jax import random
+from functools import partial
+from einops import rearrange
 
 import miiii as mi
 
@@ -18,19 +20,25 @@ slice = 37
 f_hash = "4a98603ba79c4ed2895f9670"
 f_state, f_metrics, f_cfg = mi.utils.get_metrics_and_params(f_hash)
 f_ds, f_task = mi.tasks.task_fn(rng, f_cfg, "remainder", "factors")
+f_apply = partial(mi.model.apply_fn(f_cfg, f_ds, f_task, False), random.PRNGKey(0))
+f_x = jnp.concat((f_ds.x.train, f_ds.x.eval, f_ds.x.test))[f_ds.idxs.argsort()]
+f_acts = f_apply(f_state.params, f_x)
 
 # %% p task
 p_hash = "0c848c1444264cbfa1a4de6e"
 p_state, p_metrics, p_cfg = mi.utils.get_metrics_and_params(p_hash, task_span="prime")
 p_ds, p_task = mi.tasks.task_fn(rng, p_cfg, "remainder", "prime")
+p_apply = partial(mi.model.apply_fn(p_cfg, p_ds, p_task, False), random.PRNGKey(0))
+p_x = jnp.concat((p_ds.x.train, p_ds.x.eval, p_ds.x.test))[p_ds.idxs.argsort()]
+p_acts = p_apply(p_state.params, p_x)
 
 
 # %% Positional embeddings analysis
 f_pos_emb = f_state.params.embeds.pos_emb[:2][:, :slice]
 p_pos_emb = p_state.params.embeds.pos_emb[:2][:, :slice]
-pos_emb = jnp.stack((f_pos_emb, p_pos_emb), axis=0)
+pos_emb = jnp.stack((p_pos_emb, f_pos_emb), axis=0)
 label = f"First {slice} dimensions of position embeddings for the factors (top) and prime (bottom) tasks"
-left = esch.EdgeConfig(label=["𝑓-task", "𝑝-task"], show_on="all")
+left = esch.EdgeConfig(label=["nanda", "miiii"], show_on="all")
 edge = esch.EdgeConfigs(left=left)
 esch.plot(pos_emb, edge=edge, path="paper/figs/pos_emb.svg")
 
@@ -45,10 +53,10 @@ f_S_50 = jnp.where((f_S / f_S.sum()).cumsum() < 0.5)[0].max()
 p_S_50 = jnp.where((p_S / p_S.sum()).cumsum() < 0.5)[0].max()
 f_S_90 = jnp.where((f_S / f_S.sum()).cumsum() < 0.9)[0].max()
 p_S_90 = jnp.where((p_S / p_S.sum()).cumsum() < 0.9)[0].max()
-S = jnp.stack((f_S / f_S.sum(), p_S / p_S.sum()), axis=0).reshape((2, 1, -1))[:, :, :83]
+S = jnp.stack((p_S / p_S.sum(), f_S / f_S.sum()), axis=0).reshape((2, 1, -1))[:, :, :83]
 
 top = esch.EdgeConfig(ticks=[(f_S_50.item(), "0.5"), (f_S_90.item(), "0.9")], show_on="first")
-left = esch.EdgeConfig(label=["𝑓-task", "𝑝-task"], show_on="all")
+left = esch.EdgeConfig(label=["nanda", "miiii"], show_on="all")
 bottom = esch.EdgeConfig(ticks=[(p_S_50.item(), "0.5"), (p_S_90.item(), "0.9")], show_on="last")
 edge = esch.EdgeConfigs(top=top, bottom=bottom, left=left)
 esch.plot(S, edge=edge, path="paper/figs/S.svg")
@@ -61,21 +69,43 @@ mi.plots.plot_run(f_metrics, f_ds, f_cfg, f_task, f_hash)
 
 
 # %% Embeddings fourier analsysis
-# for e in (
-# p_state.params.embeds.tok_emb[:-1],
-# f_state.params.embeds.tok_emb[:-1],
-# mi.model.initializer(rng, f_state.params.embeds.tok_emb[:-1].shape),
-# ):
 p_m, p_f, p_s = mi.plots.fourier_analysis(p_state.params.embeds.tok_emb[:-1])
 f_m, f_f, f_s = mi.plots.fourier_analysis(f_state.params.embeds.tok_emb[:-1])
 r_m, r_f, r_s = mi.plots.fourier_analysis(mi.model.initializer(rng, f_state.params.embeds.tok_emb[:-1].shape))
 
-esch.plot(p_m[p_m.shape[0] // 2 :], path="paper/figs/fourier_p_m.svg")
-esch.plot(p_f[None, :], path="paper/figs/fourier_p_f.svg")
-esch.plot(f_m, path="paper/figs/fourier_f_m.svg")
-esch.plot(f_f[None, :], path="paper/figs/fourier_f_f.svg")
-esch.plot(r_m, path="paper/figs/fourier_r_m.svg")
-esch.plot(r_f[None, :], path="paper/figs/fourier_r_f.svg")
 
+# %%
+def fourier_plots(m, f, s, name):
+    esch.plot(m, path=f"paper/figs/fourier_{name}_m.svg")
+    ticks_bottom = [(i.item(), f"cos {i//2}") for i in jnp.where(s)[0] if i % 2 == 1]
+    ticks_top = [(0, "const")] + [(i.item(), f"sin {i//2}") for i in jnp.where(s)[0] if i % 2 == 0]
+    top = esch.EdgeConfig(ticks=ticks_top, show_on="all")  # type: ignore
+    bottom = esch.EdgeConfig(ticks=ticks_bottom, show_on="all")
+    edge = esch.EdgeConfigs(top=top, bottom=bottom)
+    if name != "r":
+        esch.plot(f[None, :], path=f"paper/figs/fourier_{name}_f.svg", edge=edge)
+    else:
+        esch.plot(f[None, :], path=f"paper/figs/fourier_{name}_f.svg")
+
+
+fourier_plots(p_m[p_m.shape[0] // 2 :], p_f, p_s, "p")
+fourier_plots(f_m, f_f, f_s, "f")
+fourier_plots(r_m, r_f, r_s, "r")
+
+
+# %%
+heads = rearrange(p_acts.wei, "(a b) l h x0 x1 -> h a b l x0 x1", a=p_cfg.p, b=p_cfg.p).squeeze()[
+    :, :slice, :slice, -1, 0
+]
+esch.plot(heads[0])
+# p_acts.wei.shape
+
+
+# %%
+neurons = rearrange(f_acts.ffwd, "(x0 x1) l p n -> n x0 x1 l p", x0=p_cfg.p, x1=p_cfg.p).squeeze()[..., -1]
+top = esch.EdgeConfig(ticks=[(0, "0"), (36, "36")], show_on="all", label="𝑥₀")
+left = esch.EdgeConfig(ticks=[(0, "0"), (36, "36")], show_on="all", label="𝑥₁")
+edge = esch.EdgeConfigs(top=top, left=left)
+esch.plot(heads[0], edge=edge, path="paper/figs/plot_intro.svg")
 
 # %%
