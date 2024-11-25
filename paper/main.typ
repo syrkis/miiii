@@ -1,43 +1,150 @@
 #import "@preview/unequivocal-ams:0.1.2": ams-article, theorem, proof
 #import "@preview/equate:0.2.1": equate // <- for numbering equations
 
+
 #let f_hash = "7ddd799ee00349b9b94acd5d"
 #let p_hash = "7ddd799ee00349b9b94acd5d"
 #show: equate.with(breakable: true, sub-numbering: true)
 #set math.equation(numbering: "(1.1)", supplement: "Eq.")
+#set raw(align: center)
 
 #show: ams-article.with(
-  title: [Mechanistic Interpretability and Implementability of Irreducible Integer Identifiers],
+  title: [Mechanistic Interpretability of Irreducible Integer Identifiers],
   authors: (
     (
       name: "Noah Syrkis",
       // department: [Department of Computer Science],
-      organization: [University of Copenhagen],
-      location: [Copenhagen, Denmark],
-      url: "syrkis.com",
+      // organization: [University of Copenhagen],
+      // location: [Copenhagen, Denmark],
+      // url: "syrkis.com",
     ),
     (
       name: "Anders Søgaard",
       // department: [Department of Computer Science],
-      organization: [University of Copenhagen],
-      location: [Copenhagen, Denmark],
-      url: "anderssoegaard.github.io/",
+      // organization: [University of Copenhagen],
+      // location: [Copenhagen, Denmark],
+      // url: "anderssoegaard.github.io/",
     ),
   ),
   abstract: [
-    This paper investigates the emergence and mechanistic nature of algorithmic learning in transformer models through the lens of modular arithmetic and prime factorization. Building upon recent work in mechanistic interpretability, a transformer model is trained to predict remainders when dividing base-p numbers by prime factors. For numbers represented as $x_0 p^0 + x_1 p^1$ (where $x_0,x_1 < p$), the model must learn distinct strategies for each prime factor, with task difficulty scaling naturally with the size of the factor. Setting $p=113$ yields 29 parallel tasks and 12,769 samples, allowing for the study of how the model develops different computational strategies for tasks of varying complexity. Analysis of learned representations and attention patterns reveals distinct periodicities in the model's internal representations, suggesting the emergence of trigonometric basis functions similar to those found in simpler modular arithmetic tasks. This work contributes to our understanding of how neural networks discover and implement mathematical algorithms, particularly in settings with multiple related tasks of varying complexity.
+    This paper investigates the emergence and mechanistic nature of algorithmic learning in transformer models through the lens of modular arithmetic and prime factorization. Building upon recent work in mechanistic interpretability, a transformer model is trained to predict remainders when dividing base-p numbers by prime factors. For numbers represented as $x_0 p^0 + x_1 p^1$ (where $x_0,x_1 < p$), the model must learn distinct strategies for each prime factor, with task difficulty scaling naturally with the size of the factor. Setting $p=113$ yields 29 parallel tasks and 12,769 samples, allowing for the study of how the model develops different computational strategies for tasks of varying complexity. Analysis of learned representations and attention patterns reveals distinct periodicities in the model's internal representations, suggesting the emergence of trigonometric basis functions similar to those found in simpler modular arithmetic tasks. This work contributes to our understanding of how neural networks discover and implement mathematical algorithms, particularly in settings with multiple related tasks of varying complexity. As a second contribution, this paper reproduces #cite(<lee2024a>, form:"prose")'s finding that amplifying slow moving gradients, can significantly speed up generalization.
     #footnote[https://github.com/syrkis/miiii].
   ],
-  bibliography: bibliography("zotero.bib"),
 )
+
+
+#let appendix(body) = {
+  set heading(numbering: "A", supplement: [Appendix])
+  counter(heading).update(0)
+  body
+}
+// #set page(margin: (x: 5em, y: 5cm))
 
 // body ///////////////////////////////////////////////////////////////////////
 
+
 = Introduction
 
-Recent years have seen deep learning models demonstrate remarkable proficiency in solving complex computational tasks. These models exhibit parallels to information-theoretic concepts, particularly in lossy data compression. For instance, the weights of GPT-2 are about a tenth of the size of its training data, akin to compression ratios. Importantly, deep learning architectures can function both as archives—overfitting to training data—and as generalized algorithms @power2022.
+Recent years have seen deep learning (DL) models achieve remarkable proficiency in complex computational tasks,
+including protein structure prediction @jumper2021, strategic reasoning @dinan2022,
+and natural language generation—areas previously thought to be the exclusive domain of human intelligence.
+In contrast to traditional (symbolic) programming in which functions like $f(x, y) = cos(a dot x) + sin(b dot y)$ can be implemented with clear typographical isomorphism—meaning the code's structure directly mirrors the mathematical notation. This is evident in the case of Haskell: `f x y = cos(a * x) + sin(b * y)`. DL models, however, are inherently subsymbolic (@subsymbolic shows an equivalent DL based implementation of $f$).
 
-A system capable of transitioning from archive to algorithm presents intriguing questions: Why doesn't it skip the archiving step and directly learn algorithms? What types of algorithms does it learn, and how reliably? Can the learning process be expedited? How does the presence of multiple tasks affect the learning process? What specific algorithm has been learned by a given system? Can it exist as an archive and an algorithm simultaneously? Addressing these questions is essential for advancing the theoretical understanding of deep learning and enhancing its practical applications.
+Indeed, the development of DL can be understood as a transition from symbolic to subsymbolic algorithms: the gradual subsuming of computational tasks, with precursors to modern methods learning how to weigh human-designed features @shannon1950, and later works learning to create features from data to then weigh @tesauro1993, @silver2017 (in combination with search tree strategies, in the case of games). Recent DL work has even gotten rid of search trees, mapping directly from a game state to an action @ruoss2024. These methods are thus increasingly prevalent, and almost equally inscrutable, with recent works still attempting to define what interpretability even means in this context @lipton2018. Given the breadth @cybenko1989 of tasks that DL models can be trained to solve—along with their subsymbolic nature—it is, however, hardly a surprise that their interpretation remains difficult.
+
+Mathematically, DL refers to a set of methods that combine linear maps (matrix multiplications) with non-linearities (activation functions).
+Formally, all the potential numerical values of a given model's weights $W$ can be thought of as a hypothesis space $cal(H)$. Often $cal(H)$ is thus determined by human decisions (number of layers, kinds of layers, sizes of layers, etc). $cal(H)$ is then navigated using some optimization heuristic, such as gradient descent, in hope of finding a $W$ that "performs well" (i.e. successfully minimizes some loss $cal(L)$) on whatever training data we have. This vast hypothesis space, while enabling impressive performance, makes it challenging to understand how any particular solution actually works.
+
+The ways in which a given model can minimize $cal(L)$ can be placed on a continuum: on one side we have overfitting (remembering the training data, or functioning as an archive akin to lossy and even lossless compression) and on the other we have generalizing (learning the rules that govern the relationship between input and output, or functioning as algorithm).
+
+When describing a mechanistic explanation for a given DL model, generalization is a necessary (though insufficient) condition. Generalization ensures that there _is_ an algorithm present to be uncovered (necessary), while it is possible for that algorithm to be so obscurely implemented that reverse engineering for all intents and purposes is impossible. Various tricks, known as "regularization" exists to incentivize the emergence of the algorithmic, rather than the archiving behavior @ba2016, @krizhevsky2017, @krogh1991. As will be covered in @related_works the mechanistic interpretability (MI) literature has, despite its nascent state, already established some conventions and successes. Circuits solving basic algorithm tasks have been successfully reverse engineered, and aspects of this workflow have been automated @conmy2023. However, as of yet, no MI work has explored the effect of multitask learning.
+
+The present paper builds on the work of #cite(<nanda2023>, form:"prose"), which trains a transformer @vaswani2017 model to perform modular addition as seen in @nanda_task.
+
+$
+  (x_0 + x_1) mod p, quad forall x_0, x_1 < p, quad p = 113
+$<nanda_task>
+
+This is referred to as $cal(T)_("nanda")$. The task of this paper, focusing on predicting remainders mod all primes less than $p$, where $x$ is interpreted as $x_0 p^0 + x_1 p^1$, formally shown in @miiii_task, is referred to as $cal(T)_("miiii")$.
+
+$
+  (
+    x_0 p^0 + x_1 p^1
+  ) mod f, quad forall x_0, x_1 < p, quad forall f < p, quad p = 113
+$<miiii_task>
+
+$cal(T)_("miiii")$ thus differentiates itself from $cal(T)_("nanda")$ in two significant ways: It is non-commutative, and it is multitask. These differences present unique challenges for mechanistic interpretation, as the model must learn to handle both the order-dependent nature of the inputs and develop shared representations across multiple modular arithmetic tasks.
+
+
+= Related works<related_works>
+
+
+Therefor the mechanistis interpretability literature tends to focus on simple algorithmic tasks, for which we ourselves can write a clear, concice algorithms, as well using the ReLU acitvation function (which for mathematical reasons favors a privlidged bases, i.e. orthogonality) @nanda2023, @conmy2023.
+
+The loss functions perhaps most frequently used are cross-entropy and mean squared error, both of which has been shown to favor memorization rather than generalizaition @jeon2022.
+
+
+
+
+Conceptually, #cite(<lee2024a>, form:"prose") argues that in the case of gradient decent, the ordred sequence of gradient updates can be viewed as consisting of two components: _1)_ a fast varying overfitting component, and _2)_ a slow varying generalizing components. The general algorithm exaplining the realtionship between input and outout is the same for all samples, whereas the weights that allow a given model to function is archive are unique for all samples. Though not proven, this intuition bears out in that generealiazation is sped up fifty fold in some cases.
+
+Recent work shows that in practice, this continuum is gradually traversed @nanda2023.
+
+
+
+Whereas the first machine learning methods of the 1950s can be summarized as "machines learning how to weigh human crafted features" @shannon1950, already the 1980s saw the feature crafting swallowed up by the machine learning @tesauro1993.
+
+
+However, inscrutability remains a pervasive issue in DL models, often overshadowing their task proficiency. Defining what it means for a model to be interpretable, rather than inscrutable, is still an ongoing challenge @lipton2018. Interpretability indeed refers to severals distinct qualities:
+
+
+
+Inscruitability is
+Theory, however, is far behind practice when it comes to DL. Is DL best understood from and information theoretic @yu2021, a geometric @bronstein2021, or a category theretic @gavranovic2024 perspective.
+The success of DL has, however, not brought much theoretical understanding.
+
+---
+
+In the archival mode, models exhibit overfitting by memorizing specific patterns in the training data, thereby failing to generalize to unseen data. Conversely, in the algorithmic mode, models abstract underlying principles from the training data, enabling them to generalize effectively to new, unseen data. This paper investigates the transition between these modes, demonstrating that a model can simultaneously exhibit both archival and algorithmic behaviors, particularly when trained on multiple tasks. From an information-theoretical perspective, this duality can be understood through the lens of model capacity and the trade-off between bias and variance. We build on the foundational work of Nanda @nanda2023 and Lee @lee2024a, who have shown that generalizing circuits begin to form early in the training process, suggesting that the capacity for generalization is inherent even in the initial stages of model training.
+
+
+
+
+Nanda and Lee @nanda2023, @lee2024a have shown that the formation of generalizing circuits begins early in the training process. This early formation suggests that even at the initial stages of training, DLMs start developing the capacity to generalize, which later evolves as training progresses. Understanding this transition and the coexistence of both modes is crucial for advancing our theoretical understanding of DLMs and improving their practical applications.
+
+
+Multi-task learning extends the capabilities of DLMs by training them on multiple OFTEN related tasks simultaneously. This approach not only improves generalization across tasks but also helps in discovering shared representations and biases that are beneficial for all tasks in the environment. Baxter @baxter2011 highlights the importance of finding a suitable bias that can generalize well across multiple tasks, thereby enhancing the overall learning process.
+
+
+Understanding the internal mechanisms of DLMs remains a significant challenge. Traditional loss functions like cross-entropy and mean squared error often fail to generalize well to out-of-distribution data @yu2021. To address this, modern architectures incorporate various regularization techniques, such as layer normalization @ba2016, dropout, weight decay, and residual connections @vaswani2017. Despite these advancements, the theoretical understanding of how DLMs transition from archives to algorithms is still limited.
+
+Nanda's task provides a valuable framework for probing the internal workings of DLMs. By reverse-engineering a simple transformer model trained to solve modular arithmetic tasks, Nanda's work sheds light on how these models implement specific algorithms. Our study builds on this by introducing two key differences: our setup is non-commutative and involves multiple tasks, providing a richer environment for understanding the generalization capabilities of DLMs.
+
+To formalize our investigation, we consider a deep learning model \( \mathcal{M} \) consisting of a set of model weights \( \mathcal{W} \) and a procedure for applying these weights to a given input \( \mathcal{X} \). The set of potential values of \( \mathcal{W} \) constitutes a hypothesis space \( \mathcal{H} \), which defines the mapping between \( \mathcal{X} \) and \( \mathcal{Y} \) with respect to a loss function \( \mathcal{L} \). Optimization algorithms like gradient descent are used to find optimal values of \( \mathcal{W} \) within \( \mathcal{H} \), but the hypothesis space itself remains unchanged.
+
+---
+
+
+Recent years have seen deep learning models (DLMs) demonstrate remarkable proficiency in solving complex computational tasks, from language generation to protein structure prediction. From an information theoretical perspective, DLMs can perform both lossless and lossy compression @yu2021, enabling them to distill essential patterns from noisy data. Traditional compressors, like `gzip`, have even shown to outperform DLMs in classification tasks under certain conditions @jiang2023a.
+
+This compression capability, combined with their ability to learn generative and generalized models @kingma2022, @goodfellow2014, makes understanding their internal mechanisms particularly interesting.
+
+
+
+Traditional loss functions like cross-entropy and mean squared error,
+have been shown to not genrealize well to out of distribution data @yu2021.
+Indeed, additional regularization techniques are a hallmark of many modern architectures,
+the most extreme example of which is perhaps the original transformer @vaswani2017—layernorm @ba2016,
+dropout, weight decay, residual connections, are all integral components of the original architecture,
+though recent years have seen simplifications yielding similar performance @he2023.
+Importantly, deep learning architectures can function both as archives—overfitting to training data—and as generalized algorithms @power2022.
+
+A system capable of transitioning from archive to algorithm presents intriguing questions:
+Why not skip the archiving step and directly learn algorithms? What types of algorithms does it learn, and how reliably?
+Can the learning process be expedited? How does the presence of multiple tasks affect the learning process?
+What specific algorithm has been learned by a given system?
+How can it exist as an archive and an algorithm simultaneously?
+Addressing these questions is essential for advancing the theoretical understanding of deep learning and enhancing its practical applications.
 
 In deep learning, however, theory often lags behind practice, limiting our ability to mechanistically explain basic models that have generalized on even relatively simple, synthetically generated tasks. Exploring the mechanics of deep learning models is perhaps more akin to studying biology or botany than traditional computer science. This paper, for example, reverse-engineers a simple transformer model trained to solve modular arithmetic tasks. The simplicity of this training can be likened to discovering an intriguing plant in a botanical garden (easy), while understanding its mechanics is akin to dissecting the plant to uncover the principles governing its growth and function (hard).
 
@@ -45,6 +152,15 @@ Prime numbers, in particular, are an interesting domain for deep learning. A fre
 
 However, how exactly a given model implements an algorithm is a non-trivial question—as we shell see, even modular addition is implemented in an obscure way @nanda2023.
 This investigation probes the fundamental algorithmic structures internalized by a transformer model trained on a set of basic prime number-related modular arithmetic tasks, with slight variations in complexity. This approach provides insights into how and why specific algorithmic patterns emerge from seemingly straightforward learning processes.
+
+My setup thus differentiates itself from Nanda's in two crucial ways:
+
+1. Mine is non-commutative.
+2. It is multi-task.
+
+A model deep learning model, $cal(M)$, consits of a set of model weights $cal(W)$ and a procedure on how to apply these to a given input $cal(X)$. Viewed in the context of the procedure, the set of potential valuesues of $cal(W)$ can be thought of as a hypothesis space $cal(H)$ on the mapping between $cal(X)$ and $cal(Y)$, with respect to a loss function $cal(L)$. Algorithms like gradient decent, are heiristics for finsing optimal / optimised values of $cal(W)$ within $cal(H)$. $H$ itself is not modified by optimization algorithms of this level (i.e. $a x+b$ yield optimal $a "and" b$ values, but we might need a $x^2$ term to describe the given phenomen.
+
+#cite(<baxter2011>, form:"prose") further extends the notion of generaliation and training to a multi-task paradigm.
 
 = Related work
 
@@ -99,6 +215,7 @@ The operation $x mod p$ falls under a cyclic group, meaning that any number $n$ 
 
 Stated plainly: the task predicts the remainder when dividing a two-digit base-$p$ number by each prime factor less than $p$.
 For $p=113$, this yields 29 parallel tasks, one for each prime less than $p$. Each task predicts a remainder in the range $[0, f-1]$. This means smaller primes like 2 and 3 require binary and ternary classification respectively, while the largest prime less than $p$, 109, requires predictions across 109 classes. The tasks thus naturally vary in difficulty: predicting $mod 2$ requires distinguishing odd from even numbers (which in binary amounts to looking at the last bit), while predicting $mod 109$ involves making a selection between many relatively similar classes. From an information-theoretical perspective, the expected cross entropy for an $n$-classed problem is $ln(n)$, which has implications for the construction of the loss function, further discussed in @training.
+
 
 == Data
 
@@ -155,8 +272,9 @@ $<output>
 where $W_("out")$ projects to $sum_(i=1)^k f_i$ dimensions for $k$ prime factors, with $f_i$ being the $i"th"$ prime less than $p$.
 
 
-
-
+$
+  mat(delim:"[", quad x_0 quad x_1 quad \_ quad)
+$
 
 
 
@@ -199,16 +317,13 @@ The model is trained using AdamW @loshchilov2019 with $beta_1=0.9$, $beta_2=0.98
 
 
 $
-  L_("ce") = -sum_(i=1)^k alpha_i times log(p_t)
+  L_("ce") = sum_(t in T)1 / ln(t) 1 / p^2 sum_(i=0)^(N) sum_(j=0)^(t)ln(p_t)
 $
 
-// $
-// L_("focal") = -alpha times (1 - p_t)^gamma times log(p_t)
-// $<focal_loss>
 
 where $alpha_i = 1/ln(f_i)$ accounts for the varying difficulty across tasks with different prime factors $f_i$.
 
-To accelerate generalization, gradient filtering @lee2024a is implemented:
+To accelerate generalization, gradient filtering as per #cite(<lee2024a>, form: "prose") is replicated:
 
 $
   g_t = nabla_theta L + lambda(alpha e_(t-1) + (1-alpha)g_(t-1))
@@ -218,9 +333,10 @@ where $e_t$ is the exponential moving average of gradients with decay rate $alph
 
 Training uses full batch gradient descent with the entire dataset of $p^2$ samples. The model is evaluated on a held-out validation set after each epoch, tracking per-task accuracy and loss.
 
+
 == Visualization
 
-Much of the data worked with here is inherently high dimensional. For training, for example, we have $n$ steps, two splits (train/valid) about $p/ln(p)$ tasks, and two metrics (accuracy, and loss). This, along with the inherent opaqueness of deep learning models, motivated the developed custom visualization library, esch#footnote[https://github.com/syrkis/esch] to visualize attention weights, intermediate representations, training metrics, and more.
+Much of the data worked with here is inherently high dimensional. For training, for example, we have $n$ steps, two splits (train/valid) about $p/ln(p)$ tasks, and two metrics (accuracy, and loss). This, along with the inherent opaqueness of deep learning models, motivated the developed custom visualization library, `esch`#footnote[https://github.com/syrkis/esch] to visualize attention weights, intermediate representations, training metrics, and more.
 
 == Mechanistic Interpretability
 
@@ -230,7 +346,7 @@ Additionally, the embeddings layers will be inspected. blah blah.
 Our interpretability approach combines visualization techniques with frequency analysis to understand the learned algorithmic patterns. Following @nanda2023, we analyze both the attention patterns and the learned representations through several lenses:
 
 *Attention Visualization*
-Using esch, the custom visualization library, to visualize attention weights and intermediate representations. The library allows for the visualization of attention patterns across different layers, as well as the visualization of intermediate representations at each layer. These visualizations provide insights into the learned patterns and help identify potential areas of improvement.
+Using `esch`, the custom visualization library, to visualize attention weights and intermediate representations. The library allows for the visualization of attention patterns across different layers, as well as the visualization of intermediate representations at each layer. These visualizations provide insights into the learned patterns and help identify potential areas of improvement.
 
 *Fourier Analysis*
 To quantify periodic patterns in both attention weights and intermediate representations, we decompose them into their constituent frequencies using the discrete Fourier transform:
@@ -283,7 +399,7 @@ which I am currently investigating (update for Anders).
 
 #figure(
   image("figs/attention_one.svg"),
-  caption: [Attention from digit $b$ to itself in the first head of the first layer for all ($a$, $b$)-pairs.],
+  caption: [Attention from $\_$ to $x_0$ in the first attention head for all $(x_0, x_1)$-pairs.],
 )<atten_weight>
 
 #figure(
@@ -396,22 +512,44 @@ Projecting the positional embeddings onto a Fourier basis, however, shows that t
 #figure(
   stack(
     dir: ttb,
-    image("figs/f_f.svg"),
-    image("figs/f_f_norm.svg"),
+    image("figs/fourier_f_m.svg"),
+    image("figs/fourier_f_f.svg"),
   ),
   caption: [$W_(E_(cal(T)_b))$ in Fourier space (norm below)],
 )<f_f>
 
-The fact of periodicity in @f_f despite the presence of multiple tasks with unique rotational steps around the circle, the non commutative nature of the task, is further @nanda2023 indication that trigonometric tables are a reliably used representation of the architecture.
+As is apparent in @f_f and @p_f a lot more frequencies are in play when training for $cal(T)_b$ than $cal(T)_a$. This is to be expected if the network too implements the cosine-sine look table @nanda2023, as each task is prime related, and thus there is no common steps hit when rotating around the unit circle in the complex plane. Comparing @f_f and @r_f we see that the frequencies, though cluttered, are far from random.
 
 #figure(
   stack(
     dir: ttb,
-    // image("figs/p_f.svg"),
-    image("figs/p_f_norm.svg"),
+    image("figs/fourier_r_m.svg"),
+    image("figs/fourier_r_f.svg"),
   ),
-  caption: [Frequencies of $W_(E_(cal(T)_a))$ in Fourier space],
+  caption: [Untrained token embeddings @he2015 in Fourier space (norm below)],
+)<r_f>
+
+
+#figure(
+  stack(
+    dir: ttb,
+    image("figs/fourier_p_m.svg"),
+    image("figs/fourier_p_f.svg"),
+  ),
+  caption: [Token embeddings ($W_E_(cal(T)_a)$) in Fourier space (norm below)],
 )<p_f>
+
+
+The fact of periodicity in @f_f despite the presence of multiple tasks with unique rotational steps around the circle, the non commutative nature of the task, is further @nanda2023 indication that trigonometric tables are a reliably used representation of the architecture.
+
+//#figure(
+//stack(
+//dir: ttb,
+// image("figs/p_f.svg"),
+//   image("figs/p_f_norm.svg"),
+//),
+// caption: [Frequencies of $W_(E_(cal(T)_a))$ in Fourier space],
+//)<p_f>
 
 == Attention patterns
 
@@ -503,8 +641,28 @@ with the $p$ is being tested for. This makes intuitive sense, as it is easier to
 // )<valid_f1_hinton>
 
 // The f1 score of the tasks in $cal(T)$ on the train data during training is shown in @train_f1_hinton, and the f1 score of the tasks in $cal(T)$ on the validation data during training is shown in @valid_f1_hinton.
+//
+= Further work
+
+The mysteries of primes and deep learning are both plentiful, and there are many fundamental questions to be answered in mixing the two. How does training a model on $p$ affect it performance on a $q > p$. How does predicting divisibility directly, compare to predicting remainders (both have been explored in this setup). In this spirit, the code associated with this paper is available as a pypi package, and can be installed with `pip install miiii`.
 
 = Conclusion
 
 The sudden learning of 25 tasks, after having generalized independently to a joint solution to the first four, indicates that.
 there is indeed an assiting effect to having multiple tasks in the development of these circuits. Masking away those four tasks delays grokking beyond the epochs feasible to train for within the experiment at hand.
+
+
+#bibliography("zotero.bib")
+
+#pagebreak()
+
+#appendix[
+  #heading(level: 1, "Appendix", numbering: none)
+  = Subsymbolic implementation of $f(x, y)$<subsymbolic>
+
+  #figure(
+    image("figs/4a98603ba79c4ed2895f9670/acc_train_training.svg"),
+  )
+
+
+]

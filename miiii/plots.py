@@ -6,12 +6,13 @@
 # %% imports
 import miiii as mi
 import esch
-import datetime
 import os
 from typing import Sequence
 
 import jax.numpy as jnp
+from jax.numpy import fft
 import matplotlib.pyplot as plt
+
 import numpy as np
 from jax import Array
 
@@ -48,10 +49,31 @@ def plot_run(metrics, ds: mi.tasks.Dataset, cfg: mi.utils.Conf, task: mi.tasks.T
     for s in splits:
         for m in _metrics:
             plot_training(getattr(getattr(metrics, s), m), s, m, cfg, task, hash)
-            # plot_final(getattr(getattr(metrics, s), m), s, m, cfg, task, hash)
 
     # plot exploratory plots
     # attention weights. SVD. etc.
+
+
+def fourier_analysis(matrix):
+    # Compute 2D FFT
+    fft_2d = fft.rfft2(matrix.T).T
+    magnitude_spectrum = jnp.abs(fft_2d)
+
+    # Get significant frequencies
+    # freq_tokens = fft.fftfreq(matrix.shape[0])
+    # freq_embeds = fft.fftfreq(matrix.shape[1])
+
+    # Center everything
+    magnitude_spectrum_centered = fft.fftshift(magnitude_spectrum)
+    # freq_tokens_centered = fft.fftshift(freq_tokens)
+    # freq_embeds_centered = fft.fftshift(freq_embeds)
+
+    # frequency activations
+    freq_activations = jnp.linalg.norm(magnitude_spectrum_centered, axis=1)
+
+    significant_freqs = freq_activations > freq_activations.mean()
+
+    return magnitude_spectrum_centered, freq_activations, significant_freqs
 
 
 def plot_training(metric, split, name, cfg, task, hash):
