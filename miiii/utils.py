@@ -124,7 +124,7 @@ def create_cfg(**kwargs) -> Conf:
             ), f"Duplicate argument: {key}"  # asset that everything in kwargs has none value in cliargs
         # merge cli_args and kwargs
         kwargs = {**cli_args.__dict__, **kwargs}
-        kwargs = {k: v for k, v in kwargs.items() if v is not None}
+        kwargs = {k: v for k, v in kwargs.items() if v is not None and k != "runs"}
         cfg = Conf(**kwargs)
         return cfg
     else:
