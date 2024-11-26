@@ -120,11 +120,6 @@ def evaluate_fn(ds: Dataset, task: Task, cfg: Conf, apply):
 def scope_fn(params, grads, ds, cfg, apply, train_acts, valid_acts):
     fn = lambda a, b: rearrange(jnp.concat((a, b))[ds.udxs].squeeze(), "(a b) ... -> a b ...", a=cfg.p, b=cfg.p)  # noqa
     acts = tree.map(fn, train_acts, valid_acts)
+    neuron_freqs = fft.rfft2(rearrange(acts.ffwd[:, :, -1], "x0 x1 d -> d x0 x1")).mean((0, 1))  # CONFUSING
     grad_norms = tree.map(lambda x: jnp.linalg.norm(x), grads)
-    logit_freqs = fft.rfft2(acts.logits)  # this is almost certainly wrong
-    neuron_freqs = fft.rfft2(acts.ffwd[:, :, -1])  # as is this. but it is close to right.
-
-    print(acts.logits.shape, logit_freqs.shape)
-    exit()
-
-    return Scope(grad_norms=grad_norms, logit_freqs=logit_freqs, neuron_freqs=neuron_freqs)
+    return Scope(grad_norms=grad_norms, neuron_freqs=neuron_freqs)

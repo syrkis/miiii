@@ -450,7 +450,7 @@ As seen in figures @trainig_acc and @trainig_loss, the model grokked on all 29 t
 == Positional embeddings
 
 
-@pos_emb shows the positional embeddings of the $cal(T)_"nanda"$ to be virtually identical (cosine similarity of 0.95), which is to be expected due to the tasks' commutativity (a given value at $x_0$ or $x_1$ contributes the same to the task). The same measure for a model trained on $cal(T)_"miiii"$ is -0.64, translating the embeddings differently for the two positions. This is to be expected, as by the task's non-commutativity, $x_0 dot p ^ 0 != x_0 dot p^1$. Inspecting the positional embeddings confirms the obvious: position matters.
+@pos_emb shows the positional embeddings of the $cal(T)_"nanda"$ to be virtually identical (Person correlation of 0.95), which is to be expected due to the tasks' commutativity (a given value at $x_0$ or $x_1$ contributes the same to the task). The same measure for a model trained on $cal(T)_"miiii"$ is -0.64, translating the embeddings differently for the two positions. This is to be expected, as by the task's non-commutativity, $x_0 dot p ^ 0 != x_0 dot p^1$. Inspecting the positional embeddings confirms the obvious: position matters.
 
 #figure(
   image("figs/pos_emb.svg"),

@@ -144,9 +144,9 @@ left = esch.EdgeConfig(label="Gradient Norm (L2)", show_on="all")
 edge = esch.EdgeConfigs(right=right, left=left, top=top)
 data = jnp.array(leafs)[:, 1000 :: f_cfg.epochs // 50]
 data = data / data.max(axis=1, keepdims=True)
-data = data / data.sum(axis=0, keepdims=True)
+# data = data / data.sum(axis=0, keepdims=True)
 data = data[[4, 5, 0, 1, 2, 3, 6, 7, 8], :]
-esch.plot(data, edge=edge, path=f"paper/figs/{f_hash}_grads_norms.svg")
+esch.plot(data, edge=edge, path=f"paper/figs/grads_norms.svg")
 # struct
 
 # %%
@@ -176,9 +176,15 @@ neuron_freq_norm = neuron_freq_norm / (f_neurs**2).sum(axis=(-1, -2), keepdims=T
 # %%
 # jnp.unique(neuron_freq_norm)
 #
-data = jnp.abs(dft @ f_neurs @ dft.T).mean(-1).T[f_cfg.p // 2 :]
+# esch.plot((dft @ f_neurs @ dft.T)[1])
+
+esch.plot(jnp.abs(fft.rfft2(f_neurs).mean((0, 1)))[None, 1:])  # THIS IS INTERSTING
+f_neurs.shape, fft.rfft2(f_neurs).shape
+# %%
+data = jnp.abs(dft @ f_neurs).mean(2)
 
 esch.plot(data)
+data.shape
 # %%
 # data = data - data.mean(axis=0)
 esch.plot(data.sum(1)[None, :])
@@ -194,4 +200,11 @@ esch.plot(frac_explainedby_top[None, :])
 
 
 # %% Progress measures
-rearrange(p_acts.logits, "(a b) c -> a b c", a=p_cfg.p, b=p_cfg.p)
+rearrange(p_acts.logits, "(a b) c -> a b c", a=p_cfg.p, b=p_cfg.p).shape
+
+# %%
+f_acts.ffwd.squeeze().shape, f_neurs.shape
+
+
+# %%
+f_cfg
