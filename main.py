@@ -16,8 +16,10 @@ def evaluate_config(config, rng) -> float:
     """Evaluate a single configuration"""
     cfg = mi.utils.create_cfg(**config)
     ds, task = mi.tasks.task_fn(rng, cfg, "remainder", "factors")  # only task i have
-    state, (metrics, acts) = mi.train.train(rng, cfg, ds, task)
-    mi.utils.log_fn(state, metrics, acts, cfg, ds, task)
+    state, (metrics, scope) = mi.train.train(rng, cfg, ds, task)
+    print(scope)
+    exit()
+    mi.utils.log_fn(state, metrics, scope, cfg, ds, task)
     return metrics.valid.loss[-10:].mean().item()  # mean over last 10 epochs
 
 

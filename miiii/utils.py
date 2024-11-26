@@ -201,7 +201,7 @@ def cfg_to_dirname(cfg: Conf) -> str:
     return "_".join(name_parts)
 
 
-def log_fn(state, metrics, acts, cfg, ds, task):
+def log_fn(state, metrics, scope, cfg, ds, task):
     # hash cfg
     run = Run(
         experiment="miiii", system_tracking_interval=None, capture_terminal_logs=False
@@ -215,8 +215,8 @@ def log_fn(state, metrics, acts, cfg, ds, task):
         pickle.dump(metrics, f)
     with open(f"{run_hash_dir}/state_{task.type}_{task.span}.pkl", "wb") as f:
         pickle.dump(state, f)
-    with open(f"{run_hash_dir}/acts_{task.type}_{task.span}.pkl", "wb") as f:
-        pickle.dump(acts, f)
+    with open(f"{run_hash_dir}/scope_{task.type}_{task.span}.pkl", "wb") as f:
+        pickle.dump(scope, f)
 
     run.log_artifact(
         f"{run_hash_dir}/metrics_{task.type}_{task.span}.pkl",
@@ -227,7 +227,7 @@ def log_fn(state, metrics, acts, cfg, ds, task):
         f"{run_hash_dir}/state_{task.type}_{task.span}.pkl", name=f"state_{task.type}_{task.span}.pkl", block=True
     )
     run.log_artifact(
-        f"{run_hash_dir}/acts_{task.type}_{task.span}.pkl", name=f"acts_{task.type}_{task.span}.pkl", block=True
+        f"{run_hash_dir}/scope_{task.type}_{task.span}.pkl", name=f"scope_{task.type}_{task.span}.pkl", block=True
     )
 
     run["hparams"] = cfg.__dict__
@@ -255,7 +255,7 @@ def get_metrics_and_params(hash, task_span="factors"):
 
     outs_list = []
     for task_type, task_span in [("remainder", task_span)]:
-        outs = {"state": None, "metrics": None, "acts": None}
+        outs = {"state": None, "metrics": None, "scope": None}
         for thing in outs.keys():
             file_path = os.path.join(hash_run_dir, f"{thing}_{task_type}_{task_span}.pkl")
 
@@ -269,9 +269,9 @@ def get_metrics_and_params(hash, task_span="factors"):
 
         state: State = outs["state"]  # type: ignore
         metrics: Metrics = outs["metrics"]  # type: ignore
-        # acts: Activation = outs["acts"]  # type: ignore
+        scope: Scope = outs["scope"]  # type: ignore
         cfg = construct_cfg_from_hash(hash)
-        outs_list.append((state, metrics, cfg))
+        outs_list.append((state, metrics, scope, cfg))
 
     return outs_list[0]  # , outs_list[1]
 

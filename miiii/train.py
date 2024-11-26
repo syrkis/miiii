@@ -97,6 +97,9 @@ def train(rng, cfg: Conf, ds: Dataset, task: Task, scope=False) -> Tuple[State, 
 
 # Evaluate
 def evaluate_fn(ds: Dataset, task: Task, cfg: Conf, apply):
+    scope_aux = lambda a, b: rearrange(jnp.concat((a, b))[ds.udxs].squeeze(), "(a b) ... -> a b ...", a=cfg.p, b=cfg.p)  # noqa
+    scope = scope_fn(ds, cfg, apply, scope_aux)
+
     @partial(vmap, in_axes=((1, 1) if task.span == "factors" else (None, None)))
     def acc_fn(y_pred, y_true):
         return (y_pred == y_true).mean()
@@ -110,16 +113,16 @@ def evaluate_fn(ds: Dataset, task: Task, cfg: Conf, apply):
         train_metrics = Split(loss=train_loss, acc=acc_fn(train_acts.logits.argmax(-1), ds.y.train))
 
         metrics = Metrics(train=train_metrics, valid=valid_metrics)
-        scope = scope_fn(params, grads, ds, cfg, apply, train_acts, valid_acts)
-
-        return metrics, scope
+        return metrics, scope(params, grads, train_acts, valid_acts)
 
     return evaluate
 
 
-def scope_fn(params, grads, ds, cfg, apply, train_acts, valid_acts):
-    fn = lambda a, b: rearrange(jnp.concat((a, b))[ds.udxs].squeeze(), "(a b) ... -> a b ...", a=cfg.p, b=cfg.p)  # noqa
-    acts = tree.map(fn, train_acts, valid_acts)
-    neuron_freqs = fft.rfft2(rearrange(acts.ffwd[:, :, -1], "x0 x1 d -> d x0 x1")).mean((0, 1))  # CONFUSING
-    grad_norms = tree.map(lambda x: jnp.linalg.norm(x), grads)
-    return Scope(grad_norms=grad_norms, neuron_freqs=neuron_freqs)
+def scope_fn(ds, cfg, apply, fn):
+    def scope(params, grads, train_acts, valid_acts):
+        acts = tree.map(fn, train_acts, valid_acts)
+        neuron_freqs = fft.rfft2(rearrange(acts.ffwd[:, :, -1], "x0 x1 d -> d x0 x1")).mean((0, 1))  # CONFUSING
+        grad_norms = tree.map(lambda x: jnp.linalg.norm(x), grads)
+        return Scope(grad_norms=grad_norms, neuron_freqs=neuron_freqs)
+
+    return scope

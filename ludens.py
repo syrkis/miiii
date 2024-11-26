@@ -19,11 +19,11 @@ rng = random.PRNGKey(0)
 slice = 37
 
 # %% F task load
-f_hash = "df04d1319d164ba28078d03f"
-f_state, f_metrics, f_cfg = mi.utils.get_metrics_and_params(f_hash)
+f_hash = "f9f87cfdfda545d4b1341958"
+f_state, f_metrics, f_scope, f_cfg = mi.utils.get_metrics_and_params(f_hash)
 f_ds, f_task = mi.tasks.task_fn(rng, f_cfg, "remainder", "factors")
 f_apply = partial(mi.model.apply_fn(f_cfg, f_ds, f_task, False), random.PRNGKey(0))
-f_x = jnp.concat((f_ds.x.train, f_ds.x.eval, f_ds.x.test))[f_ds.idxs.argsort()]
+f_x = jnp.concat((f_ds.x.train, f_ds.x.eval))[f_ds.idxs.argsort()]
 f_acts = f_apply(f_state.params, f_x)
 
 # %% p task
@@ -31,7 +31,7 @@ p_hash = "0c848c1444264cbfa1a4de6e"
 p_state, p_metrics, p_cfg = mi.utils.get_metrics_and_params(p_hash, task_span="prime")
 p_ds, p_task = mi.tasks.task_fn(rng, p_cfg, "remainder", "prime")
 p_apply = partial(mi.model.apply_fn(p_cfg, p_ds, p_task, False), random.PRNGKey(0))
-p_x = jnp.concat((p_ds.x.train, p_ds.x.eval, p_ds.x.test))[p_ds.idxs.argsort()]
+p_x = jnp.concat((p_ds.x.train, p_ds.x.eval))[p_ds.idxs.argsort()]
 p_acts = p_apply(p_state.params, p_x)
 
 
@@ -207,4 +207,4 @@ f_acts.ffwd.squeeze().shape, f_neurs.shape
 
 
 # %%
-f_cfg
+f_scope
