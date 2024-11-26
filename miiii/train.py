@@ -119,7 +119,7 @@ def evaluate_fn(ds: Dataset, task: Task, cfg: Conf, apply):
         valid_metrics = aux_fn(valid_output.logits, ds.y.eval, valid_loss)
         train_metrics = aux_fn(train_logits, ds.y.train, train_loss)
 
-        metrics = Metrics(train=train_metrics, valid=valid_metrics, grads=tree.map(lambda x: x.norm(), grads))
+        metrics = Metrics(train=train_metrics, valid=valid_metrics, grads=tree.map(lambda x: jnp.linalg.norm(x), grads))
         # return metrics, valid_output
         return tree.map(lambda x: x.astype(jnp.float16), metrics), valid_output
 
