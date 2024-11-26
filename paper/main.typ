@@ -10,7 +10,7 @@
 #set raw(align: center)
 
 #show: ams-article.with(
-  title: [Mechanistic Interpretability of Irreducible Integer#footnote[What you call prime numbers when you really want your thesis acronym to be MIIII @hofstadter2000] Identifiers],
+  title: [Mechanistic Interpretability of Irreducible Integer Identifiers],
   authors: (
     (
       name: "Noah Syrkis",
@@ -42,14 +42,13 @@
 
 // body ///////////////////////////////////////////////////////////////////////
 
-
 = Introduction
 
-Recent years have seen deep learning (DL) models achieve remarkable proficiency in complex computational tasks, including protein structure prediction @jumper2021, strategic reasoning @dinan2022, and natural language generation—areas previously thought to be the exclusive domain of human intelligence. Traditional (symbolic) programming allows functions like $f(x, y) = cos(a dot x) + sin(b dot y)$ to be implemented with clear typographical isomorphism—meaning the code's structure directly mirrors the mathematical notation. For example, in Haskell: `f x y = cos(a * x) + sin(b * y)`. In contrast, DL models are inherently sub-symbolic, meaning that the models' atomic constituents (32-bit floating-point numbers centered around 0) are meaningless when viewed directly. For reference, @subsymbolic shows a DL-based implementation of $f$#footnote[Note that in the rest of the paper, $f$ refers to a prime number less than $p$.].
+Recent years have seen deep learning (DL) models achieve remarkable proficiency in complex computational tasks, including protein structure prediction @jumper2021, strategic reasoning @dinan2022, and natural language generation@radford2018a—areas previously thought to be the exclusive domain of human intelligence. Traditional (symbolic) programming allows functions like $f(x, y) = cos(a dot x) + sin(b dot y)$ to be implemented with clear typographical isomorphism—meaning the code's structure directly mirrors the mathematical notation. For example, in Haskell: `f x y = cos(a * x) + sin(b * y)`. In contrast, DL models are inherently sub-symbolic, meaning that the models' atomic constituents (often 32-bit floating-point numbers centered around 0) are meaningless when viewed directly. For reference, @subsymbolic shows a DL-based implementation of $q$.
 
 Indeed, the increasing prevalence of DL can be understood as a transition from symbolic to sub-symbolic algorithms: the gradual subsuming of computational tasks. Precursors to modern DL methods learned how to weigh human-designed features @shannon1950, with later works learning to create features from data to then weigh @tesauro1993, @silver2017—in combination with tree search strategies, in the case of games @browne2012. Recent DL work has even eliminated tree search, mapping directly from observation space to action space @ruoss2024. Pure DL methods are thus increasingly prevalent, but almost equally inscrutable, with recent works still attempting to define what interpretability even means in the DL context @lipton2018. Given the breadth @cybenko1989 of tasks that DL models can be (and are) trained to solve—along with their sub-symbolic nature—it is, however, hardly a surprise that their interpretation remains difficult.
 
-Mathematically, DL refers to a set of methods that combine linear maps (matrix multiplications) with non-linearities (activation functions). Formally, all the potential numerical values of a given model's weights $W$ can be thought of as a hypothesis space $cal(H)$. Often, $cal(H)$ is determined by human decisions (number of layers, kinds of layers, sizes of layers, etc.). $cal(H)$ is then navigated using some optimization heuristic, such as gradient descent, in hope of finding a $W$ that "performs well" (i.e., successfully minimizes some loss $cal(L)$ computed by a differentiable function) on whatever training data we have. This vast hypothesis space, while enabling impressive performance and the solving of relatively exotic#footnote[Try manually writing a function in a language of your choice that classifies dogs and cats.] tasks, makes it challenging to understand how any particular solution actually works.
+Mathematically, DL refers to a set of methods that combine linear maps (matrix multiplications) with non-linearities (activation functions). Formally, all the potential numerical values of a given model's weights $W$ can be thought of as a hypothesis space $cal(H)$. Often, $cal(H)$ is determined by human decisions (number of layers, kinds of layers, sizes of layers, etc.). $cal(H)$ is then navigated using some optimization heuristic, such as gradient descent, in hope of finding a $W$ that "performs well" (i.e., successfully minimizes some loss $cal(L)$ computed by a differentiable function) on whatever training data we have. This vast hypothesis space, while enabling impressive performance and the solving of relatively exotic#footnote[Try manually writing a function in a language of your choice that classifies dogs and cats from images.] tasks, makes it challenging to understand how any particular solution actually works.
 
 The ways in which a given model can minimize $cal(L)$ can be placed on a continuum: on one side, we have overfitting (remembering the training data, or functioning as an archive akin to lossy and even lossless compression), and on the other, we have generalizing (learning the rules that govern the relationship between input and output, or functioning as an algorithm).
 
@@ -91,7 +90,7 @@ More generally, modular arithmetic on primes is a particularly useful task for M
 
 // Lastly, the fact that MI lags so far behind the cutting edge of DL means that the models in which interesting MI is performed are relatively simple to train. The MI workflow is thus perhaps more similar to botany than theoretical computer science. While the models (the specimens) are easy to cultivate, dissecting them to uncover the principles governing their function remains a challenging endeavor. This paper aims to contribute to this effort by exploring the mechanistic interpretability of models trained on multitask modular arithmetic.
 
-= Related works<related_works>
+= Background and related works<related_works>
 
 Mechanistic Interpretability as a field is relatively new, though the objects of its study have been seen widespread adoption in the last decade. And indeed, many reverse engineering methods from other fields, such as neuroscience or even computer forensics, have their uses here. The following sections outline these fields and their use for the task at hand.
 
@@ -201,7 +200,7 @@ A model deep learning model, $cal(M)$, consists of a set of model weights $cal(W
 
 == Tasks
 
-Stated plainly: the task predicts the remainder when dividing a two-digit base-$p$ number by each prime factor $f$ less than $p$. The set of prime factors we construct tasks for is thus $F = {f in PP : f < p}$
+Stated plainly: the task predicts the remainder when dividing a two-digit base-$p$ number by each prime factor $q$ less than $p$. The set of prime factors we construct tasks for is thus $F = {f in PP : f < p}$
 For $p=113$, this yields 29 parallel tasks, one for each prime less than $p$. Each task predicts a remainder in the range $[0, f-1]$. This means smaller primes like 2 and 3 require binary and ternary classification, respectively, while the largest prime less than $p$, 109, requires predictions across 109 classes. The tasks thus naturally vary challenged: predicting $mod 2$ requires distinguishing odd from even numbers (which in binary amounts to looking at the last bit), while predicting $mod 109$ involves making a selection between many relatively similar classes. From an information-theoretical perspective, the expected cross entropy for an $n$-class problem is $ln(n)$, which has implications for the construction of the loss function, further discussed in @training.
 
 
@@ -223,7 +222,7 @@ For each input $x$, a vector $y in Y$ contains the remainder when dividing by ea
   caption: [Output space $Y$ for $p=11$. The first four plots show remainders when dividing by 2, 3, 5, and 7 respectively. The rightmost plot shows the output space of the modular addition task for comparison.],
 )<miiii_y_11>
 
-To provide insight into the periodic structure of these remainders (and motivate thinking in rotational terms), @nats visualizes various modular patterns in polar coordinates. The periodic nature of remainders becomes apparent when plotting points $(n, n)$ in polar coordinates, where clustering indicates common remainders.
+To provide insight into the periodic structure of these remainders (and motivate thinking in rotational terms), @nats visualizes various modular patterns in polar coordinates. The periodic nature of remainders becomes apparent when plotting points $(n, n mod tau)$, where $tau = 2pi$ in polar coordinates, where clustering indicates common remainders.
 One could imagine tightening and loosening the spiral by multiplying $tau$ by a constant, to align multiples of a given number in a straight line (imagining this is encouraged).
 
 #figure(
@@ -257,7 +256,7 @@ The final representation is projected to predict remainders for each prime facto
 $
   hat(y) = z_(-1) W_("out")
 $<output>
-where $W_("out")$ projects to $sum_(i=1)^k f_i$ dimensions for $k$ prime factors, with $f_i$ being the $i"th"$ prime less than $p$.
+where $W_("out")$ projects to $sum_(i=1)^k f_i$ dimensions for $k$ prime factors, with $q_i$ being the $i"th"$ prime less than $p$.
 
 
 $
@@ -296,9 +295,9 @@ The model is trained using AdamW @loshchilov2019 with $beta_1=0.9$, $beta_2=0.98
 
 
 $
-  L_(cal(T)_"miiii") &= - &&sum_(f in F) L_"MCE"_f / (-ln(f)) \
-  &= - &&sum_(f in F) (sum_(i=1)^n sum_(j=1)^(f) y_(k_f i j) ln(hat(y)_(k_f i j)) ) / (- n ln(f)) \
-  &= &&sum_(f in F)sum_(i=1)^n sum_(j=1)^(f) (y_(k_f i j)ln(hat(y)_(k_f i j)) ) / (n ln(f)) #<mmce>
+  L_(cal(T)_"miiii") &= - &&sum_(q in Q) L_"MCE"_f / (-ln(f)) \
+  &= - &&sum_(q in Q) (sum_(i=1)^n sum_(j=1)^(f) y_(k_f i j) ln(hat(y)_(k_f i j)) ) / (- n ln(f)) \
+  &= &&sum_(q in Q)sum_(i=1)^n sum_(j=1)^(f) (y_(k_f i j)ln(hat(y)_(k_f i j)) ) / (n ln(f)) #<mmce>
 $
 
 To accelerate generalization, gradient filtering as per #cite(<lee2024a>, form: "prose") is implemented and replicated.
@@ -340,6 +339,14 @@ As periodicity is established by #cite(<nanda2023>, form: "prose") as a fundamen
 Note that any square image, can be described as a sum of 2d sine and cosine waves varying in frequency from 1 to the size of the image divided by 2 (plus a constant).
 This is a fundamental tool used in signal processing. The theory is briefly outlined in @fft for reference.
 This analysis helps identify the dominant frequencies in the model's computational patterns.
+
+The default basis of the one-hot encoded representation of the input is thus the identity matrix. This can be projected into a Fourier basis by multiplying with the discrete Fourier transform (DFT) matrix visualized in @dft.
+
+#figure(
+  image("figs/real_dft.svg"),
+  caption: [DFT matrix],
+)<dft>
+
 
 // We track how representations evolve through the network by:
 // - Visualizing activation matrices at each layer
@@ -433,6 +440,13 @@ As seen in figures @trainig_acc and @trainig_loss, the model grokked on all 29 t
 )<trainig_acc>
 
 
+
+#figure(
+  image("figs/grads_norms.svg"),
+  caption: [L2 norm of graidents through time for the different weight matricies of a model trained on $cal(T)_"miiii"$],
+)<l2_norms>
+
+
 == Positional embeddings
 
 
@@ -467,7 +481,7 @@ Recall that a matrix $upright(bold(M))$ of size $m times n$ can be decomposed to
 
 
 
-To further understand the underlying structure of the token embeddings, the fast Fourier transform (FFT) algorithm is used. @p_f shows the five particularly active frequencies for the $cal(T)_"nanda"$-model. For the $cal(T)_"miiii"$-model we see a much broader spectrum of frequencies is active, though comparing to a randomly initialized baseline, the periodicity remains apparent. This is to be expected if the network too implements the cosine-sine look table @nanda2023, as each task relates to a particular prime $f$—no point is hit twice when rotating through $CC$ with $f$ steps for very $f in F$.
+To further understand the underlying structure of the token embeddings, the fast Fourier transform (FFT) algorithm is used. @p_f shows the five particularly active frequencies for the $cal(T)_"nanda"$-model. For the $cal(T)_"miiii"$-model we see a much broader spectrum of frequencies is active, though comparing to a randomly initialized baseline, the periodicity remains apparent. This is to be expected if the network too implements the cosine-sine look table @nanda2023, as each task relates to a particular prime $q$—no point is hit twice when rotating through $CC$ with $q$ steps for very $q in Q$.
 
 
 #figure(
@@ -576,7 +590,6 @@ Unlike @nanda_task, our attention heads focus on one digit or the other. This co
 
 
 I AM RUNNING AN EXPERIMENT IN WHICH TASKS ARE MASKED AWAY TO SEE THE PERFORMANCE OF THE REMAINING TASKS. ALSO I AM MISSING PLOTS OF CIRCUIT FORMATION.
-
 
 
 = Further work

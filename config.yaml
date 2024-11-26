@@ -1,9 +1,9 @@
 # config.yaml
 # Base configuration
-p: 113
+p: 37
 depth: 1
-epochs: 65_536
-latent_dim: 256
+# epochs: 65_536
+# latent_dim: 128
 lr: 0.0003
 train_frac: 0.5
 heads: 4

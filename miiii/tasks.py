@@ -20,7 +20,7 @@ from miiii.utils import Conf
 class Split:
     train: Array
     eval: Array
-    test: Array
+    # test: Array
 
 
 @dataclass
@@ -34,6 +34,7 @@ class Dataset:
     # y_eval: Array
     # y_test: Array
     idxs: Array
+    udxs: Array
 
 
 @dataclass
@@ -72,8 +73,8 @@ def miiii_fn(key, cfg, task_type, task_span):
     x, y = x[idxs], y[idxs]
     sep = int(cfg.train_frac * cfg.p**2)
     x_train, y_train = x[:sep], y[:sep]
-    x_eval, y_eval = x[sep : sep + 1000], y[sep : sep + 1000]
-    x_test, y_test = x[sep + 1000 :], y[sep + 1000 :]
+    x_eval, y_eval = x[sep:], y[sep:]
+    # x_test, y_test = x[sep + 1000 :], y[sep + 1000 :]
     primes = jnp.array(oeis["A000040"][1 : y_train.shape[1] + 1])
     mask = jnp.tile(jnp.arange(primes.max()), primes.size).reshape((primes.size, -1)) < primes[:, None]
     mask = mask if task_type == "remainder" else jnp.array(1)
@@ -83,9 +84,9 @@ def miiii_fn(key, cfg, task_type, task_span):
         mask.sum(-1)
     )  #  correct for number of classes in task. This is an good informational theoritical enhancement. Make it optional?
     task = Task(loss_fn=jit(loss), type=task_type, span=task_span, mask=mask, weight=weight, primes=primes)
-    x = Split(train=x_train, eval=x_eval, test=x_test)
-    y = Split(train=y_train, eval=y_eval, test=y_test)
-    return Dataset(x=x, y=y, idxs=idxs), task
+    x = Split(train=x_train, eval=x_eval)
+    y = Split(train=y_train, eval=y_eval)
+    return Dataset(x=x, y=y, idxs=idxs, udxs=idxs.argsort()), task
 
 
 def loss_fn(task_type, task_span, mask):
@@ -127,12 +128,12 @@ def nanda_fn(key, cfg: Conf, task_type: str, task_span: str) -> Tuple[Dataset, T
     x = data[:, :-1]
     y = data[:, -1]
     sep = int(len(x) * cfg.train_frac)
-    x_train, x_eval, x_test = x[:sep], x[sep : sep + 1000], x[sep + 1000 :]
-    y_train, y_eval, y_test = y[:sep], y[sep : sep + 1000], y[sep + 1000 :]
+    x_train, x_eval = x[:sep], x[sep:]
+    y_train, y_eval = y[:sep], y[sep:]
     if task_type == "divisible":
         y_train, y_eval = (y_train == 0).astype(jnp.int8), (y_eval == 0).astype(jnp.int8)
     loss = loss_fn(task_type, task_span, mask=jnp.array(1))
     task = Task(loss_fn=jit(loss), type=task_type, span=task_span, mask=jnp.array(1))
-    x = Split(train=x_train, eval=x_eval, test=x_test)
-    y = Split(train=y_train, eval=y_eval, test=y_test)
-    return Dataset(x=x, y=y, idxs=idxs), task
+    x = Split(train=x_train, eval=x_eval)
+    y = Split(train=y_train, eval=y_eval)
+    return Dataset(x=x, y=y, idxs=idxs, udxs=idxs.argsort()), task

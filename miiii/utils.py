@@ -68,7 +68,14 @@ class Params:
 class Metrics:
     train: Split
     valid: Split
-    grads: Params
+    # grads: Params
+
+
+@dataclass
+class Scope:
+    grad_norms: Params
+    logit_freqs: Array
+    neuron_freqs: Array
 
 
 @dataclass

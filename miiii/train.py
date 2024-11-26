@@ -8,13 +8,15 @@ from typing import Tuple
 import jax.numpy as jnp
 import optax
 from chex import Array
-from jax import jit, lax, nn, random, tree, value_and_grad, vmap
+from jax import jit, lax, random, tree, value_and_grad, vmap
+from jax.numpy import fft
 from jax_tqdm import scan_tqdm
 from functools import partial
+from einops import rearrange
 
 from miiii.model import apply_fn, init_fn
 from miiii.tasks import Dataset, Task
-from miiii.utils import Activation, Conf, Metrics, Params, Split, State
+from miiii.utils import Activation, Conf, Metrics, Params, Split, State, Scope
 
 
 ADAM_BETA1 = 0.9  # @nanda2023
@@ -65,16 +67,13 @@ def step_fn(ds: Dataset, task: Task, cfg: Conf, opt, scope):
     update, train_apply, valid_apply = update_fn(opt, ds, task, cfg)
     evaluate = evaluate_fn(ds, task, cfg, valid_apply)
 
-    consort = lambda x, y: jnp.concat((x, y))[jnp.argsort(ds.idxs)].astype(jnp.float16)  # noqa
-    output_fn = (lambda x, y: tree.map(consort, x, y)) if scope else lambda *_: None
-
     @jit
     @scan_tqdm(cfg.epochs)
     def step(state, args):
         epoch, key = args
-        state, (loss, losses, train_out), grads = update(state, key)
-        metrics, valid_out = evaluate(state.params, grads, losses, train_out.logits)
-        return state, (metrics, output_fn(train_out, valid_out))
+        state, (loss, losses, train_acts), grads = update(state, key)
+        metrics, scope = evaluate(state.params, grads, losses, train_acts)
+        return state, (metrics, scope)  # output_fn(train_out, valid_out))
 
     return step
 
@@ -98,43 +97,34 @@ def train(rng, cfg: Conf, ds: Dataset, task: Task, scope=False) -> Tuple[State, 
 
 # Evaluate
 def evaluate_fn(ds: Dataset, task: Task, cfg: Conf, apply):
-    # f1_score = vmap(f1_score_fn, in_axes=(1, 1)) if task.span == "factors" else f1_score_fn
-    accuracy = vmap(accuracy_fn, in_axes=(1, 1)) if task.span == "factors" else accuracy_fn
-
-    # TODO: report norm of all params through training
-
-    pred_fn = (lambda x: x.argmax(-1)) if task.type == "remainder" else lambda x: (nn.sigmoid(x) > 0.5).astype(jnp.int8)
-
-    def aux_fn(logits, y, loss):
-        pred = pred_fn(logits)
-        # f1, acc = f1_score(pred, y), accuracy(pred, y)
-        acc = accuracy(pred, y)
-        return Split(loss=loss, acc=acc)
+    @partial(vmap, in_axes=((1, 1) if task.span == "factors" else (None, None)))
+    def acc_fn(y_pred, y_true):
+        return (y_pred == y_true).mean()
 
     @jit
-    def evaluate(params, grads, train_loss, train_logits):
-        valid_output = apply(params, ds.x.eval)
-        valid_loss = task.loss_fn(valid_output.logits, ds.y.eval, 1 - ds.y.train.mean(0), 2, task.mask) / task.weight
+    def evaluate(params, grads, train_loss, train_acts):
+        valid_acts = apply(params, ds.x.eval)
+        valid_loss = task.loss_fn(valid_acts.logits, ds.y.eval, 1 - ds.y.train.mean(0), 2, task.mask) / task.weight
 
-        valid_metrics = aux_fn(valid_output.logits, ds.y.eval, valid_loss)
-        train_metrics = aux_fn(train_logits, ds.y.train, train_loss)
+        valid_metrics = Split(loss=valid_loss, acc=acc_fn(valid_acts.logits.argmax(-1), ds.y.eval))
+        train_metrics = Split(loss=train_loss, acc=acc_fn(train_acts.logits.argmax(-1), ds.y.train))
 
-        metrics = Metrics(train=train_metrics, valid=valid_metrics, grads=tree.map(lambda x: jnp.linalg.norm(x), grads))
-        # return metrics, valid_output
-        return tree.map(lambda x: x.astype(jnp.float16), metrics), valid_output
+        metrics = Metrics(train=train_metrics, valid=valid_metrics)
+        scope = scope_fn(params, grads, ds, cfg, apply, train_acts, valid_acts)
+
+        return metrics, scope
 
     return evaluate
 
 
-# @jit
-def accuracy_fn(y_pred, y_true):
-    return (y_pred == y_true).mean()
+def scope_fn(params, grads, ds, cfg, apply, train_acts, valid_acts):
+    fn = lambda a, b: rearrange(jnp.concat((a, b))[ds.udxs].squeeze(), "(a b) ... -> a b ...", a=cfg.p, b=cfg.p)  # noqa
+    acts = tree.map(fn, train_acts, valid_acts)
+    grad_norms = tree.map(lambda x: jnp.linalg.norm(x), grads)
+    logit_freqs = fft.rfft2(acts.logits)  # this is almost certainly wrong
+    neuron_freqs = fft.rfft2(acts.ffwd[:, :, -1])  # as is this. but it is close to right.
 
+    print(acts.logits.shape, logit_freqs.shape)
+    exit()
 
-@jit
-def f1_score_fn(y_pred, y_true):
-    confusion = jnp.eye(2)[y_pred].T @ jnp.eye(2)[y_true]
-    tp, fp, fn = confusion[1, 1], confusion[1, 0], confusion[0, 1]
-    precision, recall = tp / (tp + fp + 1e-8), tp / (tp + fn + 1e-8)
-    f1 = 2 * (precision * recall) / (precision + recall + 1e-8)
-    return f1
+    return Scope(grad_norms=grad_norms, logit_freqs=logit_freqs, neuron_freqs=neuron_freqs)

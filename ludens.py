@@ -7,8 +7,10 @@
 import esch
 import jax.numpy as jnp
 from jax import random, tree
+from jax.numpy import fft
 from functools import partial
 from einops import rearrange
+# import matplotlib.pyplot as plt
 
 import miiii as mi
 
@@ -17,7 +19,7 @@ rng = random.PRNGKey(0)
 slice = 37
 
 # %% F task load
-f_hash = "20bb39ea103b4fb5ad254797"
+f_hash = "df04d1319d164ba28078d03f"
 f_state, f_metrics, f_cfg = mi.utils.get_metrics_and_params(f_hash)
 f_ds, f_task = mi.tasks.task_fn(rng, f_cfg, "remainder", "factors")
 f_apply = partial(mi.model.apply_fn(f_cfg, f_ds, f_task, False), random.PRNGKey(0))
@@ -92,6 +94,10 @@ fourier_plots(p_m, p_f, p_s, "p")
 fourier_plots(f_m, f_f, f_s, "f")
 fourier_plots(r_m, r_f, r_s, "r")
 
+# %%
+fourier_basis = fft.rfft2(jnp.eye(p_cfg.p))
+esch.plot((fourier_basis.T @ fourier_basis.conj()).imag)
+# fourier_basis
 
 # %%
 heads = rearrange(p_acts.wei, "(a b) l h x0 x1 -> h a b l x0 x1", a=p_cfg.p, b=p_cfg.p).squeeze()[
@@ -112,29 +118,80 @@ esch.plot(heads[0], edge=edge, path="paper/figs/plot_intro.svg")
 # print([round(acc, 2) for acc in f_metrics.valid.acc[-1].round(2).tolist()])
 
 
-esch.plot(p_state.params.embeds.tok_emb, path="paper/figs/tok_emb_prime.svg")
-esch.plot(p_state.params.embeds.pos_emb, path="paper/figs/pos_emb_prime.svg")
+# esch.plot(p_state.params.embeds.tok_emb, path="paper/figs/tok_emb_prime.svg")
+# esch.plot(p_state.params.embeds.pos_emb, path="paper/figs/pos_emb_prime.svg")
 # %%
-esch.plot(p_state.params.attn.v.squeeze(), path="paper/figs/attn_v_prime.svg")
-esch.plot(p_state.params.attn.k.squeeze(), path="paper/figs/attn_k_prime.svg")
-esch.plot(p_state.params.attn.q.squeeze(), path="paper/figs/attn_q_prime.svg")
+# esch.plot(p_state.params.attn.v.squeeze(), path="paper/figs/attn_v_prime.svg")
+# esch.plot(p_state.params.attn.k.squeeze(), path="paper/figs/attn_k_prime.svg")
+# esch.plot(p_state.params.attn.q.squeeze(), path="paper/figs/attn_q_prime.svg")
 
 
 # %%
-esch.plot(p_state.params.ffwd.w_in.squeeze().T, path="paper/figs/ffwd_w_in_prime.svg")
-esch.plot(p_state.params.ffwd.w_out.squeeze(), path="paper/figs/ffwd_w_out_prime.svg")
+# esch.plot(p_state.params.ffwd.w_in.squeeze().T, path="paper/figs/ffwd_w_in_prime.svg")
+# esch.plot(p_state.params.ffwd.w_out.squeeze(), path="paper/figs/ffwd_w_out_prime.svg")
 
 # %%
-esch.plot(p_state.params.unbeds, path="paper/figs/unbeds_prime.svg")
+# esch.plot(p_state.params.unbeds, path="paper/figs/unbeds_prime.svg")
 
 
 # %%
 #
 leafs, struct = tree.flatten(f_metrics.grads)
-ticks = [(i, w) for i, w in enumerate("k o q v pos_emb tok_emb w_in w_out unbeds".split())]
-right = esch.EdgeConfig(ticks=ticks, show_on="all")
+ticks = [(i, w) for i, w in enumerate("emb_pos emb_tok k o q v w_in w_out unbeds".split())]
+right = esch.EdgeConfig(ticks=ticks, show_on="all")  # type: ignore
 top = esch.EdgeConfig(ticks=[(0, "1"), (49, str(f_cfg.epochs))], show_on="all", label="Time (linear)")
-left = esch.EdgeConfig(label="L2 norms of Gradients", show_on="all")
+left = esch.EdgeConfig(label="Gradient Norm (L2)", show_on="all")
 edge = esch.EdgeConfigs(right=right, left=left, top=top)
-esch.plot(jnp.array(leafs)[:, :: f_cfg.epochs // 50], edge=edge)
-struct
+data = jnp.array(leafs)[:, 1000 :: f_cfg.epochs // 50]
+data = data / data.max(axis=1, keepdims=True)
+data = data / data.sum(axis=0, keepdims=True)
+data = data[[4, 5, 0, 1, 2, 3, 6, 7, 8], :]
+esch.plot(data, edge=edge, path=f"paper/figs/{f_hash}_grads_norms.svg")
+# struct
+
+# %%
+dft = jnp.fft.fft(jnp.eye(p_cfg.p))
+esch.plot(dft.real, path="paper/figs/real_dft.svg")
+# dft = dft / jnp.linalg.norm(dft, axis=1)
+esch.plot(dft @ f_state.params.embeds.tok_emb[:-1])
+
+
+# %%
+esch.plot(jnp.abs(dft[f_s.repeat(2)[1:]][::2].mean(0))[None, :])
+
+
+# %%  W_NEUR
+f_neurs = rearrange(p_acts.ffwd.squeeze()[:, -1], "(x0 x1) n -> n x0 x1", x0=f_cfg.p, x1=f_cfg.p)
+esch.plot(dft @ f_neurs[0] @ dft.T)
+
+# %% Neuron frac explained by Freq
+neuron_freq_norm = jnp.zeros((f_cfg.p // 2, p_cfg.latent_dim * 4))
+for freq in range(0, p_cfg.p // 2):
+    for x in [0, 2 * freq - 1, 2 * freq]:
+        for y in [0, 2 * freq - 1, 2 * freq]:
+            tmp = neuron_freq_norm[freq] + f_neurs[:, x, y] ** 2
+            neuron_freq_norm.at[freq].set(tmp)
+neuron_freq_norm = neuron_freq_norm / (f_neurs**2).sum(axis=(-1, -2), keepdims=True)
+
+# %%
+# jnp.unique(neuron_freq_norm)
+#
+data = jnp.abs(dft @ f_neurs @ dft.T).mean(-1).T[f_cfg.p // 2 :]
+
+esch.plot(data)
+# %%
+# data = data - data.mean(axis=0)
+esch.plot(data.sum(1)[None, :])
+
+
+# %%
+# esch.plot(data.mean(0)[None, :100].max(1).sort(descending=True))
+frac_explainedby_top = (data.sort(0)[-4:, :].sum(0) / (data.sum(0) + 1e-8)).sort()[None, :]
+esch.plot(frac_explainedby_top[None, :])
+
+
+# %% similar analysis on output logits.
+
+
+# %% Progress measures
+rearrange(p_acts.logits, "(a b) c -> a b c", a=p_cfg.p, b=p_cfg.p)
