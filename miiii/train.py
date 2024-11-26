@@ -73,7 +73,7 @@ def step_fn(ds: Dataset, task: Task, cfg: Conf, opt, scope):
     def step(state, args):
         epoch, key = args
         state, (loss, losses, train_out), grads = update(state, key)
-        metrics, valid_out = evaluate(state.params, losses, train_out.logits)
+        metrics, valid_out = evaluate(state.params, grads, losses, train_out.logits)
         return state, (metrics, output_fn(train_out, valid_out))
 
     return step
