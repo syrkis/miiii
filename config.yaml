@@ -2,17 +2,18 @@
 # Base configuration
 p: 113
 depth: 1
-epochs: 50_000
+epochs: 65_536
 latent_dim: 256
 lr: 0.0003
 train_frac: 0.5
 heads: 4
+dropout: 0.1
 
 # Search space
 search_space:
   lamb: [0.0, 0.5, 2.0]
-  l2: [0.0, 0.1, 0.5, 1.0]
-  dropout: [0.0, 0.1, 0.3]
+  l2: [0.0, 0.33, 1.0]
+  # dropout: [0.0, 0.1, 0.3]
   # heads: [4, 8]
   # train_frac: [0.3, 0.5]
   # latent_dim: [128, 256]

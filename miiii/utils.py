@@ -80,6 +80,7 @@ class State:
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Run model with specified hyperparameters.")
+    parser.add_argument("--runs", type=int, help="Number of trials to run", default=10)
     parser.add_argument("--p", type=int, help="Prime number for data configuration")
     parser.add_argument("--latent_dim", type=int, help="Latent dimension size")
     parser.add_argument("--depth", type=int, help="Depth of the model")
