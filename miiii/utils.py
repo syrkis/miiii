@@ -35,12 +35,6 @@ class Split:
     acc: Array
 
 
-@dataclass
-class Metrics:
-    train: Split
-    valid: Split
-
-
 # %% Data classes
 @dataclass
 class Feedforward:
@@ -68,6 +62,13 @@ class Params:
     ffwd: Feedforward
     attn: Attention
     unbeds: Array  # should be a linear layer ?
+
+
+@dataclass
+class Metrics:
+    train: Split
+    valid: Split
+    grads: Params
 
 
 @dataclass

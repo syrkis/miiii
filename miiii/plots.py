@@ -134,7 +134,7 @@ def small_multiples(fnames, seqs, f_name, n_rows=2, n_cols=2):
     for ax, fname, seqs in zip(axes.flat, fnames, seqs):  # type: ignore
         polar_plot(seqs, fname, ax=ax)
     # tight
-    plt.tight_layout()
+    # plt.tight_layout()
     plt.savefig(f"{FIGS_DIR}/{f_name}.svg") if f_name else plt.show()  # test
 
 

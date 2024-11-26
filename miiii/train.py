@@ -34,7 +34,7 @@ def update_fn(opt, ds: Dataset, task: Task, cfg: Conf):
         updates, opt_state = opt.update(grads, state.opt_state, state.params)
         params = optax.apply_updates(state.params, updates)
         state = State(params=params, emas=emas, opt_state=opt_state)  # type: ignore
-        return state, (loss, losses, output)
+        return state, (loss, losses, output), grads
 
     return update, train_apply, valid_apply
 
@@ -72,7 +72,7 @@ def step_fn(ds: Dataset, task: Task, cfg: Conf, opt, scope):
     @scan_tqdm(cfg.epochs)
     def step(state, args):
         epoch, key = args
-        state, (loss, losses, train_out) = update(state, key)
+        state, (loss, losses, train_out), grads = update(state, key)
         metrics, valid_out = evaluate(state.params, losses, train_out.logits)
         return state, (metrics, output_fn(train_out, valid_out))
 
@@ -101,6 +101,8 @@ def evaluate_fn(ds: Dataset, task: Task, cfg: Conf, apply):
     # f1_score = vmap(f1_score_fn, in_axes=(1, 1)) if task.span == "factors" else f1_score_fn
     accuracy = vmap(accuracy_fn, in_axes=(1, 1)) if task.span == "factors" else accuracy_fn
 
+    # TODO: report norm of all params through training
+
     pred_fn = (lambda x: x.argmax(-1)) if task.type == "remainder" else lambda x: (nn.sigmoid(x) > 0.5).astype(jnp.int8)
 
     def aux_fn(logits, y, loss):
@@ -110,14 +112,14 @@ def evaluate_fn(ds: Dataset, task: Task, cfg: Conf, apply):
         return Split(loss=loss, acc=acc)
 
     @jit
-    def evaluate(params, train_loss, train_logits):
+    def evaluate(params, grads, train_loss, train_logits):
         valid_output = apply(params, ds.x.eval)
         valid_loss = task.loss_fn(valid_output.logits, ds.y.eval, 1 - ds.y.train.mean(0), 2, task.mask) / task.weight
 
         valid_metrics = aux_fn(valid_output.logits, ds.y.eval, valid_loss)
         train_metrics = aux_fn(train_logits, ds.y.train, train_loss)
 
-        metrics = Metrics(train=train_metrics, valid=valid_metrics)
+        metrics = Metrics(train=train_metrics, valid=valid_metrics, grads=tree.map(lambda x: x.norm(), grads))
         # return metrics, valid_output
         return tree.map(lambda x: x.astype(jnp.float16), metrics), valid_output
 

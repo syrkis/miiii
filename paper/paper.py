@@ -38,7 +38,7 @@ nanda_y = jnp.concat((nanda_ds.y.train, nanda_ds.y.eval, nanda_ds.y.test), axis=
     (nanda_cfg.p, nanda_cfg.p)
 )
 primes = jnp.array(oeis["A000040"][1 : y.shape[1] + 1])
-bottom = esch.EdgeConfig(label=[f"Factor {factor} remainder" for factor in primes] + ["Prime remainder"], show_on="all")
+bottom = esch.EdgeConfig(label=[f"{factor} remainder" for factor in primes] + ["𝑝 remainder"], show_on="all")
 top = esch.EdgeConfig(ticks=[(i, str(i)) for i in range(cfg.p)], show_on="first")
 left = esch.EdgeConfig(ticks=[(i, str(i)) for i in range(cfg.p)], show_on="first")
 edge = esch.EdgeConfigs(top=top, left=left, bottom=bottom)
@@ -54,7 +54,7 @@ esch.plot(data, edge=edge, path="figs/y_11_plot.svg")
 primes = jnp.array(oeis["A000040"][1:1000])
 ps = jnp.array(primes[primes < (113**2)])
 _11s = jnp.arange(0, 113**2, 11)
-_7_23 = jnp.concat((jnp.arange(0, 113**2, 7), jnp.arange(0, 113**2, 23)))
+_7_23 = jnp.concat((jnp.arange(0, 113**2, 13), jnp.arange(0, 113**2, 23)))
 plt.style.use("default")
 mi.plots.small_multiples(fnames=["n", "t", "n"], seqs=[_7_23, _11s, ps], f_name="polar", n_rows=1, n_cols=3)
 # remove plot
@@ -78,7 +78,7 @@ esch.plot(
     rearrange(acts.wei.squeeze(), "(x0 x1) heads from to ->  heads x0 x1 from to", x0=cfg.p, x1=cfg.p)[:, :, :, -1, 1][
         :, :slice, :slice
     ],
-    path=f"noah.svg",
+    path="noah.svg",
 )
 
 # %% EMBEDDINGS

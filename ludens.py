@@ -17,7 +17,7 @@ rng = random.PRNGKey(0)
 slice = 37
 
 # %% F task load
-f_hash = "4a98603ba79c4ed2895f9670"
+f_hash = "41e20b3a4790402f8a5be458"
 f_state, f_metrics, f_cfg = mi.utils.get_metrics_and_params(f_hash)
 f_ds, f_task = mi.tasks.task_fn(rng, f_cfg, "remainder", "factors")
 f_apply = partial(mi.model.apply_fn(f_cfg, f_ds, f_task, False), random.PRNGKey(0))
