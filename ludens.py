@@ -6,7 +6,7 @@
 # %% Imports
 import esch
 import jax.numpy as jnp
-from jax import random
+from jax import random, tree
 from functools import partial
 from einops import rearrange
 
@@ -17,7 +17,7 @@ rng = random.PRNGKey(0)
 slice = 37
 
 # %% F task load
-f_hash = "41e20b3a4790402f8a5be458"
+f_hash = "20bb39ea103b4fb5ad254797"
 f_state, f_metrics, f_cfg = mi.utils.get_metrics_and_params(f_hash)
 f_ds, f_task = mi.tasks.task_fn(rng, f_cfg, "remainder", "factors")
 f_apply = partial(mi.model.apply_fn(f_cfg, f_ds, f_task, False), random.PRNGKey(0))
@@ -126,3 +126,12 @@ esch.plot(p_state.params.ffwd.w_out.squeeze(), path="paper/figs/ffwd_w_out_prime
 
 # %%
 esch.plot(p_state.params.unbeds, path="paper/figs/unbeds_prime.svg")
+
+
+# %%
+leafs, struct = tree.flatten(f_metrics.grads)
+ticks = [(i, w) for i, w in enumerate("k o q v pos_emb tok_emb w_in w_out unbeds".split())]
+right = esch.EdgeConfig(ticks=ticks, show_on="all")
+edge = esch.EdgeConfigs(right=right)
+esch.plot(jnp.array(leafs)[:, :: f_cfg.epochs // 50], edge=edge)
+struct
