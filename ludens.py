@@ -19,7 +19,7 @@ rng = random.PRNGKey(0)
 slice = 37
 
 # %% F task load
-f_hash = "f9f87cfdfda545d4b1341958"
+f_hash = "441149ef948942aca4e8c391"
 f_state, f_metrics, f_scope, f_cfg = mi.utils.get_metrics_and_params(f_hash)
 f_ds, f_task = mi.tasks.task_fn(rng, f_cfg, "remainder", "factors")
 f_apply = partial(mi.model.apply_fn(f_cfg, f_ds, f_task, False), random.PRNGKey(0))
@@ -207,4 +207,4 @@ f_acts.ffwd.squeeze().shape, f_neurs.shape
 
 
 # %%
-f_scope
+esch.plot(f_scope.neuron_freqs[:: f_cfg.epochs // 200, 1:].T)
