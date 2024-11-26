@@ -129,9 +129,12 @@ esch.plot(p_state.params.unbeds, path="paper/figs/unbeds_prime.svg")
 
 
 # %%
+#
 leafs, struct = tree.flatten(f_metrics.grads)
 ticks = [(i, w) for i, w in enumerate("k o q v pos_emb tok_emb w_in w_out unbeds".split())]
 right = esch.EdgeConfig(ticks=ticks, show_on="all")
-edge = esch.EdgeConfigs(right=right)
+top = esch.EdgeConfig(ticks=[(0, "1"), (49, str(f_cfg.epochs))], show_on="all", label="Time (linear)")
+left = esch.EdgeConfig(label="L2 norms of Gradients", show_on="all")
+edge = esch.EdgeConfigs(right=right, left=left, top=top)
 esch.plot(jnp.array(leafs)[:, :: f_cfg.epochs // 50], edge=edge)
 struct
