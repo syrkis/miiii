@@ -51,8 +51,6 @@ Recent years have seen deep learning (DL) models achieve remarkable proficiency 
 Precursors to modern DL methods learned how to weigh human-designed features @shannon1950, with later works learning to create features from data to then weigh @tesauro1993, @silver2017—in combination with tree search strategies, in the case of games @browne2012. Very recent DL work has even eliminated tree search in the case of chess, mapping directly from observation space to action space @ruoss2024. Pure DL methods are thus becoming
 ubiquitous but remain largely inscrutable, with recent works still attempting to define what interpretability even means in the DL context @lipton2018. Given the breadth @cybenko1989 of tasks that DL models can be (and are) trained to solve—along with their sub-symbolic nature—it is, however, hardly a surprise that their interpretation remains difficult.
 
-
-
 Mathematically, DL refers to a set of methods that combine linear maps (matrix multiplications) with non-linearities (activation functions). Formally, all the potential numerical values of a given model's weights $W$ can be thought of as a hypothesis space $cal(H)$. Often, $cal(H)$ is determined by human decisions (number of layers, kinds of layers, sizes of layers, etc.). $cal(H)$ is then navigated using some optimization heuristic, such as gradient descent, in hope of finding a $W$ that "performs well" (i.e., successfully minimizes some loss $cal(L)$ often computed by a differentiable function) on whatever training data is present. This vast, sub-symbolic hypothesis space, while enabling impressive performance and the solving of relatively exotic#footnote[Try manually writing a function in a language of your choice that classifies dogs and cats from images.] tasks, makes it challenging to understand how any one particular solution actually works.
 
 // #figure(
@@ -228,7 +226,7 @@ A model deep learning model, $cal(M)$, consists of a set of model weights $cal(W
 
 == Tasks
 
-Stated plainly: the task predicts the remainder when dividing a two-digit base-$p$ number by each prime factor $q$ less than $p$. The set of prime factors we construct tasks for is thus $F = {f in PP : f < p}$
+Stated plainly: the task predicts the remainder when dividing a two-digit base-$p$ number by each prime factor $q$ less than $p$. The set of prime factors we construct tasks for is thus $F = {f in PP : f < p)$
 For $p=113$, this yields 29 parallel tasks, one for each prime less than $p$. Each task predicts a remainder in the range $[0, f-1]$. This means smaller primes like 2 and 3 require binary and ternary classification, respectively, while the largest prime less than $p$, 109, requires predictions across 109 classes. The tasks thus naturally vary challenged: predicting $mod 2$ requires distinguishing odd from even numbers (which in binary amounts to looking at the last bit), while predicting $mod 109$ involves making a selection between many relatively similar classes. From an information-theoretical perspective, the expected cross entropy for an $n$-class problem is $ln(n)$, which has implications for the construction of the loss function, further discussed in @training.
 
 
@@ -411,20 +409,12 @@ The default basis of the one-hot encoded representation of the input is thus the
 // The frequency of a positive sample in task $i$ is used as the weight for the focal loss during training.
 // Furthermore, a one-hot vector is used to mask tasks to shield the model from a particular signal during training.
 
-= Results
+= Results and analysis
 
-#figure(
-  stack(
-    dir: ttb,
-    image("figs/" + f_hash + "/acc_train_training.svg"),
-    image("figs/" + f_hash + "/acc_valid_training.svg"),
-  ),
-  caption: [Representation of training and validation acc ($x$-axis is in log scale).],
-)<trainig_acc>
+== Hyperparameter Optimization
 
-The hyperparameters performing best on $cal(T)_"miiii"$ can be seen in @hyper_param_search_result.
-Notably, the model never converges when $lambda = 0$, confirming the utility of #cite(<lee2024a>, form:"prose", style:"american-anthropological-association")'s amplification of slow varying gradients, in the context of $cal(T)"miiii"$.
-Setting dropout to 0 results in performance on the validation set to diverge (overfitting) in spite of the heavy regularization used.
+The best-performing hyperparameters for training the model on $cal(T)_"miiii"$ are listed in @hyper_param_search_result. Notably, the model did not converge when $lambda = 0$, confirming the utility of the gradient amplification method proposed by #cite(<lee2024a>, form:"prose", style:"american-anthropological-association") in the context of $cal(T)_"miiii"$ (see @ugly_training_curves).
+
 
 #figure(
   table(
@@ -439,93 +429,130 @@ Setting dropout to 0 results in performance on the validation set to diverge (ov
       "heads",
     ),
 
-    "0.1", $1 / 2$, $1 / 3$, "256", $3 times 10^(-4)$, "4",
+    $1 / 10$, $1 / 2$, $1 / 3$, "256", $3 times 10^(-4)$, "4",
   ),
   caption: [Reslt of hyperparameter search over $cal(T)_"miiii"$.],
 )<hyper_param_search_result>
 
 
-As seen in figures @trainig_acc and @training_loss, the model grokked on all 29 tasks, achieving perfect accuracy on the validation and test sets. Note that tasks 2, 3, 5 and 7 generalize in succession of one another, while the remaining 25 tasks generalize around epoch #num(40000) in no particular order. This could indicate that a more general solution has been found, allowing for a sort of phase transition for the remaining tasks by reusing circuitry developed through the first four.
+== Model Performance
 
-#figure( // should we have plot of lambda = 0 instead?
+@trainig_acc show the training and validation accuracy on $cal(T)_"miiii"$ over time. The model achieved perfect accuracy on both the validation set across all 29 tasks. In short—and to use the terminology of #cite(<power2022>, form:"prose", style:"american-anthropological-association")—the model "grokked" on all tasks.
+Interestingly, tasks corresponding to moduli 2, 3, 5, and 7 generalized in succession, while the remaining 25 tasks generalized around epoch #num(40000) in no particular order. This might suggests that the model initially learned solutions for the simpler tasks and later developed a more general computational strategy that allowed it to generalize across the remaining, more complex tasks. To understand if this is a form of phase transition facilitated by the reuse of circuitry developed during the initial four tasks, more work is required.
+
+#figure(
+  stack(
+    dir: ttb,
+    image("figs/" + f_hash + "/acc_train_training.svg"),
+    image("figs/" + f_hash + "/acc_valid_training.svg"),
+  ),
+  caption: [Training (top) and validation (bottom) accuracy over time (note the log scale on the $x$-axis).],
+)<trainig_acc>
+
+As can be seen in @bad_training_acc when dropout was disabled (i.e., set to zero), the model's performance diverged on the validation set, leading to overfitting, and highlighting the importance of dropout in even with heavy regularization (multi-task, l2, etc.).
+
+#figure(
   stack(
     image("figs/41e20b3a4790402f8a5be458/acc_train_training.svg"),
     image("figs/41e20b3a4790402f8a5be458/acc_valid_training.svg"),
   ),
-  caption: [Representation of training and validation acc with dropout disabled],
+  caption: [Training and validation accuracy with dropout disabled, showing divergence due to overfitting.],
 )<bad_training_acc>
 
+
+// #figure(
+//   stack(
+//     dir: ttb,
+//     image("figs/" + f_hash + "/loss_train_training.svg"),
+//     image("figs/" + f_hash + "/loss_valid_training.svg"),
+//   ),
+//   caption: [Training (top) and validation (bottom) loss over time (note the log scale on the $x$-axis).],
+// )<training_loss>
+
+
+
+== Analysis of Neuron Activations and Frequencies
+
+To understand the internal mechanisms developed by the model, we analyzed the neuron activations after the output weight matrix $W_"out"$ for the model trained on $cal(T)_"miiii"$. Figure @miiii_neurons shows that these activations exhibit periodic patterns with respect to $(x_0, x_1)$. This periodicity aligns with the modular arithmetic nature of the tasks, mirrors #cite(<nanda2023>, form:"prose", style:"american-anthropological-association") ($cal(T)_"nanda"$).
+
 #figure(
   stack(
     dir: ttb,
-    image("omega-series-1.svg", width: 110%),
-    image("figs/omega.svg", width: 110%),
-    // image("omega-series-2.svg", width: 110%),
+    image(f_hash + "_tmp_1.svg"),
+    image(f_hash + "_astrid.svg"),
   ),
-  caption: [Representation of active frequencies (as per the FFT) of the transformer block neurons throught training (top). Variance of frequency activations, and number of frequencies above a threshold of $omega > mu + 2 sigma$ (bottom)],
+  caption: [Neuron activations after $W_"out"$ for the model trained on $cal(T)_"miiii"$ (top), with corresponding Fourier transforms below. The activations demonstrate periodicity in $(x_0, x_1)$.],
+)<miiii_neurons>
+
+For comparison, Figure @basis_neurons shows the neuron activations for a model trained on $cal(T)_"basis"$. These activations do _not_ exhibit periodicity, confirming that the observed periodic patterns in the models trained for $cal(T)_"miiii"$ and $cal(T)_"nanda"$ are indeed a result of the moduli operations inherent in the tasks.
+
+#figure(
+  stack(
+    dir: ttb,
+    image(s_hash + "_tmp_1.svg"),
+    image(s_hash + "_astrid.svg"),
+  ),
+  caption: [Neuron activations after $W_"out"$ for the model trained on $cal(T)_"basis"$ (top), with corresponding Fourier transforms below. The absence of periodicity contrasts with the activations in Figure @miiii_neurons, emphasizing the influence of the mod operator in $cal(T)_"miiii"$.],
+)<basis_neurons>
+
+The analysis of active frequencies _through training_ using the Fast Fourier Transform (FFT) is illustrated in Figure @finding. The top plot shows the different frequencies of the transformer block's MLP neurons evolving as the model learns. The bottom plot displays the variance of frequency activations and the number of frequencies exceeding a significance threshold $omega > mu + 2 sigma$ (i.e., which spots like the ones of the bottom row of @miiii_neurons are active). Initially, a handful of frequencies become dominant as the model generalizes on the first four tasks. As training progresses and the model begins to generalize on the remaining tasks, more frequencies become significant, suggesting that the model is developing more complex internal representations to handle the additional tasks.
+
+#figure(
+  stack(
+    dir: ttb,
+    image("omega-series-1.svg"),
+    image("figs/omega.svg"),
+  ),
+  caption: [Top: Evolution of active frequencies (as per the FFT) of the transformer block neurons during training. Bottom: Variance of frequency activations and the number of frequencies exceeding the threshold $omega > mu + 2 sigma$.],
 )<finding>
 
-#figure(
-  stack(
-    dir: ttb,
-    image(f_hash + "_tmp_1.svg", width: 110%),
-    image(f_hash + "_astrid.svg", width: 110%),
-  ),
-  caption: [Representation of active frequencies (as per the FFT) of the transformer block neurons throught training (top). Variance of frequency activations, and number of frequencies above a threshold of $omega > mu + 2 sigma$ (bottom)],
-),
+However, we observe that significant frequencies appear after generalization has occurred, which may suggest the presence of another phase following grokking in the context of multi-task learning. This could be indicative of circuit merging or the integration of task-specific circuits into a more general solution.
 
-#figure(
-  stack(
-    dir: ttb,
-    image(s_hash + "_tmp_1.svg", width: 110%),
-    image(s_hash + "_astrid.svg", width: 110%),
-  ),
-  caption: [Representation of active frequencies (as per the FFT) of the transformer block neurons throught training (top). Variance of frequency activations, and number of frequencies above a threshold of $omega > mu + 2 sigma$ (bottom)],
-)
-
+@l2_norms shows the L2 norms of gradients through time for the different weight matrices of the model trained on $cal(T)_"miiii"$. The gradient norms provide insights into how different parts of the model are being updated during training. Like with #cite(<nanda2023>, form:"prose", style:"american-anthropological-association"), the attention layer converges quickly, echoing their finding that it does not contribute much to solving their modular eritmetic task.
 
 #figure(
   image("figs/grads_norms.svg"),
-  caption: [L2 norm of graidents through time for the different weight matricies of a model trained on $cal(T)_"miiii"$],
+  caption: [L2 norms of gradients over time for the different weight matrices of the model trained on $cal(T)_"miiii"$.],
 )<l2_norms>
 
 
-== Positional embeddings
+== Embeddings
 
+Positional embeddings play a crucial role in transformers by encoding the position of tokens in a sequence. Figure @pos_emb compares the positional embeddings of models trained on $cal(T)_"nanda"$ and $cal(T)_"miiii"$.
 
-@pos_emb shows the positional embeddings of the $cal(T)_"nanda"$ to be virtually identical (Person correlation of 0.95), which is to be expected due to the tasks' commutativity (a given value at $x_0$ or $x_1$ contributes the same to the task). The same measure for a model trained on $cal(T)_"miiii"$ is -0.64, translating the embeddings differently for the two positions. This is to be expected, as by the task's non-commutativity, $x_0 dot p ^ 0 != x_0 dot p^1$. Inspecting the positional embeddings confirms the obvious: position matters.
+For $cal(T)_"nanda"$, which involves a commutative task, the positional embeddings are virtually identical, with a Pearson correlation of 0.95, reflecting that the position of input tokens does not significantly alter their contribution to the task. In contrast, for $cal(T)_"miiii"$, the positional embeddings have a Pearson correlation of -0.64, indicating that the embeddings for the two positions are different. This difference is expected due to the non-commutative nature of the task, where the order of $x_0$ and $x_1$ matters ($x_0 \cdot p^0 \neq x_0 \cdot p^1$). This confirms that the model appropriately encodes position information for solving the tasks.
 
 #figure(
   image("figs/pos_emb.svg"),
-  caption: [Positional embeddings for the network trained on @nanda_task (top) and @miiii_task (bottom)],
+  caption: [Positional embeddings for the network trained on $cal(T)_"nanda"$ (top) and $cal(T)_"miiii"$ (bottom).],
 )<pos_emb>
 
-
-== Token embeddings
-
+// == Token Embeddings
 
 Recall that a matrix $upright(bold(M))$ of size $m times n$ can be decomposed to its singular values $upright(bold(M)) = upright(bold(U))upright(bold(Sigma))upright(bold(V^T))$ (with the transpose being the complex conjugate when $upright(bold(M))$ is complex), where $upright(bold(U))$ is $m times m$, $upright(bold(Sigma))$ an $m times n$ rectangular diagonal matrix (whose diagonal is represented as a flat vector throughout this paper), and $upright(bold(V^T))$ a $n times n$ matrix. Intuitively, this can be thought of rotating in the input space, then scaling, and then rotating in the output space.
-@s shows us that the singular values of the the token embeddings learned for $cal(T)_"miiii"$ to be much more diffuse than those for $cal(T)_"nanda"$ (with the ticks indicating at what point 50 % and 90 % of the variance is accounted for). As stated, the embedding layer of the $cal(T)_"nanda"$ trained models represents a look table for the sine and cosine values of the tokens—hance the periodicity of the most significant singular vectors @p_U. Visual inspection of the top most vectors of @f_U indeed shows periodicity, but a much larger fraction of the vectors is required to capture the same amount of variance @s.
+
+Figure @s displays the singular values of the token embeddings learned for $cal(T)_"nanda"$ and $cal(T)_"miiii"$. The singular values for $cal(T)_"miiii"$ are more diffuse, indicating that a larger number of components are needed to capture the variance in the embeddings compared to $cal(T)_"nanda"$. This suggests that the token embeddings for $cal(T)_"miiii"$ encode more complex information, reflecting the increased complexity of the multi-task learning scenario.
 
 #figure(
   image("figs/S.svg"),
-  caption: [First 83 of 113 (truncated for clarity) singular values of $upright(bold(U))$ for $cal(T)_("nanda")$ (top) and $cal(T)_("miiii")$ (bottom)],
+  caption: [First 83 of 113 singular values (truncated for clarity) of $upright(text(U))$ for $cal(T)_"nanda"$ (top) and $cal(T)_"miiii"$ (bottom). The ticks indicate the points where 50% and 90% of the variance is accounted for.],
 )<s>
+
+Figures @p_U and @f_U present the most significant singular vectors of $upright(text(U))$ for $cal(T)_"nanda"$ and $cal(T)_"miiii"$, respectively. Visual inspection shows periodicity in the top vectors for both models, but the $cal(T)_"miiii"$ model requires more vectors to capture the same amount of variance, consistent with the diffuse singular values observed.
 
 #figure(
   image("figs/p_U.svg"),
-  caption: [Most significant singular vectors of $upright(bold(U))$ for $cal(T)_("nanda")$],
+  caption: [Most significant singular vectors of $upright(text(U))$ for $cal(T)_"nanda"$.],
 )<p_U>
 
 #figure(
   image("figs/f_U.svg"),
-  caption: [Most significant singular vectors of $upright(bold(U))$ for $cal(T)_("miiii")$],
+  caption: [Most significant singular vectors of $upright(text(U))$ for $cal(T)_"miiii"$.],
 )<f_U>
 
+To further understand the structure of the token embeddings, we applied the Fast Fourier Transform (FFT). Figure @p_f shows the Fourier spectrum of the token embeddings for the $cal(T)_"nanda"$ model. Only a few frequencies are particularly active, consistent with the model implementing a cosine-sine lookup table as described in #cite(<nanda2023>, form:"prose").
 
-
-To further understand the underlying structure of the token embeddings, the fast Fourier transform (FFT) algorithm is used. @p_f shows the five particularly active frequencies for the $cal(T)_"nanda"$-model. For the $cal(T)_"miiii"$-model we see a much broader spectrum of frequencies is active, though comparing to a randomly initialized baseline, the periodicity remains apparent. This is to be expected if the network too implements the cosine-sine look table @nanda2023, as each task relates to a particular prime $q$—no point is hit twice when rotating through $CC$ with $q$ steps for very $q in Q$.
-
+For the $cal(T)_"miiii"$ model, we observe a broader spectrum of active frequencies (Figure @f_f). This is expected due to the model having to represent periodicity corresponding to multiple primes. Comparing with a randomly initialized baseline, the periodicity remains apparent, reinforcing that these patterns result from the learned representations rather than initialization.
 
 #figure(
   stack(
@@ -533,10 +560,8 @@ To further understand the underlying structure of the token embeddings, the fast
     image("figs/fourier_p_m.svg"),
     image("figs/fourier_p_f.svg"),
   ),
-  caption: [$W_E_t_(cal(T)_("nanda"))$ in Fourier space with row norm below],
+  caption: [Fourier spectrum of the token embeddings $W_"E_t"$ for $cal(T)_"nanda"$, with row norms below.],
 )<p_f>
-
-Projecting the positional embeddings onto a Fourier basis, however, shows that the periodicity is indeed preserved.
 
 #figure(
   stack(
@@ -546,81 +571,21 @@ Projecting the positional embeddings onto a Fourier basis, however, shows that t
     image("figs/fourier_r_m.svg"),
     image("figs/fourier_r_f.svg"),
   ),
-  caption: [$W_(E_t_(cal(T)_"miiii"))$ (top) and random @he2015 matrix of same shape (bottom) in Fourier space with row norm below each.],
+  caption: [Fourier spectrum of the token embeddings $W_"E_t"$ for $cal(T)_"miiii"$ (top two plots) and a random matrix initialized as per #cite(<he2015>) of the same shape (bottom two plots), with row norms below each.],
 )<f_f>
 
-As is apparent in @f_f and @p_f a lot more frequencies are in play when training for $cal(T)_("miiii")$ than $cal(T)_("nanda")$.
+These results demonstrate that more frequencies are involved when training on $cal(T)_"miiii"$ compared to $cal(T)_"nanda"$. The increased frequency components reflect the need for the model to encode multiple periodic patterns corresponding to the various modular arithmetic tasks.
 
+== Attention Patterns
 
-
-
-// The fact of periodicity in @f_f despite the presence of multiple tasks with unique rotational steps around the circle, the non-commutative nature of the task, is further @nanda2023 indication that trigonometric tables are a reliably used representation of the architecture.
-
-//#figure(
-//stack(
-//dir: ttb,
-// image("figs/p_f.svg"),
-//   image("figs/p_f_norm.svg"),
-//),
-// caption: [Frequencies of $W_(E_(cal(T)_("nanda")))$ in Fourier space],
-//)<p_f>
-
-== Attention patterns
-
-Unlike @nanda_task, our attention heads focus on one digit or the other. This could be due to the non-commutative nature of the task.
-
-
-== Feed-forward
-
-// #figure(
-//   stack(
-//     dir: ttb,
-//     image("figs/train_acc.svg", width: 100%),
-//     image("figs/valid_acc.svg", width: 100%),
-//   ),
-//   caption: [Training and validation accuracy],
-// )<generalization_levels_>
-
-
-// We see that the positional embeddings are orthogonal. The token embeddings of $x_0$ and $x_1$ are offset, allowing for the cosine and sine table to be learned for both.
-// NOTE: They might not be orthogonal, but rather pointing in opposite directions (we only have two vectors, so orthogonality is not needed).
-
-// #figure(
-//   image("figs/pos_emb.svg", width: 100%),
-//   caption: [Positional embeddings for the first $37$ for a model trained on @nanda_task (top) and @miiii_task (bottom). The low information contained in the positional encoding of @nanda_task is to be expected as the task is commutative, while @miiii_task is not—$(x_0 + x_1) mod p = (x_1 + x_0) mod p$ but $((x_0 p^0 + x_1 p^1) mod p) != ((x_1 p^1 + x_0 p^0) mod p)$..],
-// )<generalization_levels_>
-
-// - sin/cos lookup tables in embedding layer.
-// - does pos not matter for this task? No, cos it is not commutative. (a + b) mod p = (b + a) mod p -> Nanda. But (a p^1 + b p^0) mod p != (b p^1 + a p^0) mod p.
+In contrast to the model trained on $cal(T)_"nanda"$, where attention heads may focus jointly on input tokens due to the commutative nature of the task, our attention heads for the $cal(T)_"miiii"$ model focus on one digit or the other. This behavior is likely due to the non-commutative nature of the task, where the position of each digit significantly affects the outcome. Figure @attention_heads illustrates this attention pattern.
 
 #figure(
-  image("figs/weis_miiii_113_slice_23.svg", width: 110%),
-  caption: [Attention from $hat(y)$ to $x_0$ for the four attention heads.],
-)
+  image("figs/weis_miiii_113_slice_23.svg", width: 110%),  // TODO insert nanda attention, and comment that this might be due to comutativty.
+  caption: [Attention from $hat(y)$ to $x_0$ for the four attention heads in the $cal(T)_"miiii"$ model. The attention heads tend to focus on one digit, reflecting the non-commutative nature of the task.],
+)<attention_heads>
 
-
-#figure(
-  image("figs/ffwd_miiii_113_4_neurons_slice_23.svg", width: 110%),
-  caption: [Slice of first four neurons in the feed forward network for $p=113$ trained for $cal(T)_"miiii"$. Notice the periodicity.],
-)
-
-#figure(
-  image("figs/miiii_113_F_neuron_0.svg"),
-  caption: [Neuron 0 for sample (0, 0) in Fourier space. We see that frequencies responding to the given sample are extremely sparse.],
-)
-
-// #figure(
-//   image("figs/runs/" + run + "/train_f1_hinton.svg"),
-//   caption: [The f1 score of $cal(T)$ on the train data during training.],
-// )<train_f1_hinton>
-
-// #figure(
-//   image("figs/runs/" + run + "/valid_f1_hinton.svg"),
-//   caption: [The f1 score of $cal(T)$ on the validation data during training.],
-// )<valid_f1_hinton>
-
-// The f1 score of the tasks in $cal(T)$ on the train data during training is shown in @train_f1_hinton, and the f1 score of the tasks in $cal(T)$ on the validation data during training is shown in @valid_f1_hinton.
-//
+Overall, our results demonstrate that the model effectively learns to solve multiple modular arithmetic tasks by developing internal representations that capture the periodic nature of these tasks. The analysis of embeddings and neuron activations provides insights into how the model generalizes from simpler to more complex tasks, possibly through the reuse and integration of learned circuits.
 
 = Discussion
 
@@ -665,7 +630,7 @@ These findings contribute to our understanding of mechanistic interpretability i
 
   // Training plot of model trained on $cal(T)_"miiii"$ without dropout.
 
-  == Training loss <training_loss>
+  == Training loss
   #figure(
     stack(
       dir: ttb,
@@ -733,7 +698,7 @@ These findings contribute to our understanding of mechanistic interpretability i
 
   = Sub-symbolic implementation of $f(x, y)$<subsymbolic>
 
-  Compute $f(x)$ for ${(a,b) in NN^2 : 0 <= a,b < 113}$, by adding the two rows of $W_E_"pos"$ in @embeds to a one-hot encoded $a$ and $b$, and then multiplying by $W_E_"tok"$. Then multiply by $W_k, W_q$ and $W_v$ indecently in performing the operation described in @attn, and then add to the output of the embedding operations. Send that through the feed-forward network with the weights in @ffwd_fun. The reader is asked to confirm visually that the weight in the figures indeed computes $f(x, y) = cos (a x) + sin (b x)$ when applied in the order described above.
+  Compute $f(x)$ for ${(a,b) in NN^2 : 0 <= a,b < 113)$, by adding the two rows of $W_E_"pos"$ in @embeds to a one-hot encoded $a$ and $b$, and then multiplying by $W_E_"tok"$. Then multiply by $W_k, W_q$ and $W_v$ indecently in performing the operation described in @attn, and then add to the output of the embedding operations. Send that through the feed-forward network with the weights in @ffwd_fun. The reader is asked to confirm visually that the weight in the figures indeed computes $f(x, y) = cos (a x) + sin (b x)$ when applied in the order described above.
 
   #figure(
     stack(
@@ -769,7 +734,7 @@ These findings contribute to our understanding of mechanistic interpretability i
 
   #pagebreak()
 
-  = Training curves
+  = Training curves<ugly_training_curves>
 
   #figure(
     stack(
