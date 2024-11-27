@@ -41,7 +41,15 @@ def log_axis_array(arr):
 
 
 def plot_run(
-    metrics, ds: mi.tasks.Dataset, cfg: mi.utils.Conf, task: mi.tasks.Task, hash, activations=None, font_size=12
+    metrics,
+    ds: mi.tasks.Dataset,
+    cfg: mi.utils.Conf,
+    task: mi.tasks.Task,
+    hash,
+    activations=None,
+    font_size=12,
+    log_axis=False,
+    log_scale=False,
 ):
     os.makedirs(os.path.join(FIGS_DIR, hash), exist_ok=True)
 
@@ -50,7 +58,17 @@ def plot_run(
     _metrics = ["loss", "acc"]
     for s in splits:
         for m in _metrics:
-            plot_training(getattr(getattr(metrics, s), m), s, m, cfg, task, hash, font_size=font_size)
+            plot_training(
+                getattr(getattr(metrics, s), m),
+                s,
+                m,
+                cfg,
+                task,
+                hash,
+                font_size=font_size,
+                log_axis=log_axis,
+                log_scale=log_scale,
+            )
 
     # plot exploratory plots
     # attention weights. SVD. etc.
@@ -78,14 +96,22 @@ def fourier_analysis(matrix):
     return magnitude_spectrum_centered, freq_activations, significant_freqs
 
 
-def plot_training(metric, split, name, cfg, task, hash, font_size=1.0):
+def plot_training(metric, split, name, cfg, task, hash, font_size=1.0, log_axis=False, log_scale=False):
     path = os.path.join(FIGS_DIR, hash, f"{name}_{split}_training.svg")
-    # data = metric[:: cfg.epochs // 100].T
-    data = log_axis_array(metric)[:, 10:]
+    if log_axis:
+        data = log_axis_array(metric)[:, 10:]
+    else:
+        data = metric[:: cfg.epochs // 100].T
+    if log_scale:
+        data = np.log10(data + 1e-8) + 1e-8
     left = esch.EdgeConfig(label="Task", show_on="first")
     ticks = [(i, str(prime.item())) for i, prime in enumerate(task.primes) if i % 2 == 0]
     right = esch.EdgeConfig(ticks=ticks, show_on="all")  # type: ignore
-    top = esch.EdgeConfig(ticks=[(0, "1"), (90 - 1, f"{cfg.epochs:g}")], show_on="first", label="Time (log)")
+    top = esch.EdgeConfig(
+        ticks=[(0, "1"), (90 - 1, f"{cfg.epochs:g}")],
+        show_on="first",
+        label=f"Time ({'log' if log_axis else 'linear'})",
+    )
     name = f"{split.capitalize()} Accuracy" if name == "acc" else f"{split.capitalize()} Cross Entropy"
     bottom = esch.EdgeConfig(label=name.capitalize(), show_on="all")
     edge = esch.EdgeConfigs(right=right, top=top, left=left, bottom=bottom)

@@ -15,6 +15,7 @@ from einops import rearrange
 from functools import partial
 from jax import random, tree, vmap
 from jax.numpy import fft
+from collections import Counter
 
 
 # %% Utils ####################################################################
@@ -26,16 +27,32 @@ def load_hash(hash, task="miiii"):
     acts = apply(state.params, x)
     return state, metrics, scope, cfg, ds, task, apply, x, acts
 
-    # def emb_eda(params, cfg, hash):
-    #
+
+def run_fn(hashes):
+    # plot svd
+    # emb_svd(state.params, cfg, f_hash)
+
+    # plot training "curves"
+    # mi.plots.plot_run(metrics, ds, cfg, task, f_hash, font_size=16)  # plot training "curves"
+
+    # FFT plot
+    # emb_fft(state.params, cfg, f_hash)
+
+    # Plot active freqs through time
+    # omega_fn(cfg, (jnp.abs(scope.neuron_freqs)))
+    pass
+
+    # plot first five neurons
 
 
 # %% Constants ####################################################################
 rng = random.PRNGKey(0)
 slice = 37
-f_hash = "b3badfdadef542d4b24f81bb"  # hash of miiii task
+m_hash = "d4bfd7f829ed4a398f3b0a54"  # hash of masked miiii
+f_hash = "0aacbd66fd4a49da86574cc3"  # hash of miiii task
+s_hash = "7c2a10494ff64e66a9af2731"  # shuffled miiii task  10k epochs currently
 p_hash = "0c848c1444264cbfa1a4de6e"  # hash of nanda task
-state, metrics, scope, cfg, ds, task, apply, x, acts = load_hash(f_hash)
+data = {hash: load_hash(hash) for hash in [f_hash, m_hash, s_hash]}
 
 
 # %% Functions ##################################################################
@@ -65,51 +82,80 @@ def fft_fn(matrix):
     return magnitude_spectrum_centered, freq_activations, significant_freqs
 
 
-def omega_fn(neuron_freqs, cfg, length=150):
-    kernel_size = (cfg.epochs // length) // 2
+def omega_aux(freqs, length=200, kernel_size=7):
+    epochs = freqs.shape[0]
+    # kernel_size = epochs // length
     conv = lambda row: jnp.convolve(row, jnp.ones(kernel_size) / kernel_size, mode="valid")  # noqa
-    neuron_freqs = vmap(conv)(jnp.abs(neuron_freqs).T)  # smooth this stuff
-    neuron_freqs /= neuron_freqs.sum(axis=1, keepdims=True)
-    # tmp = data.var(axis=0)
-    # Simple moving average
-    # kernel = jnp.ones(window_size) / window_size
-    # tmp = jnp.convolve(tmp, kernel, mode="valid")
-    # tmp = tmp / tmp.max()
+    freq_series = vmap(conv)(jnp.abs(freqs).T)  # smooth this stuff
+    freq_series = freq_series[1:, :: epochs // length]
+    freq_series /= freq_series.sum(axis=1, keepdims=True)
 
-    left = esch.EdgeConfig(label="Frequency", show_on="all")
-    top = esch.EdgeConfig(label="Time", show_on="last")
-    edge = esch.EdgeConfigs(left=left, top=top)
-    esch.plot(neuron_freqs[1:, :: cfg.epochs // length] ** 1.5, path="paper/finding.svg", edge=edge, font_size=24)
+    freq_variance = freq_series.var(axis=0)
+    freq_active = (freq_series > (freq_series.mean() + freq_series.std())).sum(0)  # noqa
+    # print(freq_active)
+
+    # return the line as well
+    return freq_series, freq_variance, freq_active
+
+
+def omega_series_fn(freqs, label_top, label_bottom, fname="finding.svg"):
+    # neuron_freqs = omega_aux(neuron_freqs)
+
+    right = esch.EdgeConfig(label="Time", show_on="all")
+    left = esch.EdgeConfig(label="Frequency" if label_top != "" else "", show_on="all")
+    top = esch.EdgeConfig(label=label_top, show_on="first")
+    bottom = esch.EdgeConfig(label=label_bottom, show_on="last")
+    edge = esch.EdgeConfigs(left=left, top=top, bottom=bottom, right=right)
+    data = freqs**2
+    esch.plot(data / data.max(1)[:, None], path=f"paper/{fname}.svg", edge=edge, font_size=24)
 
     # left = esch.EdgeConfig(label=["ω σ²", "|ω > μ + 2σ|"], show_on="all")
     # edge = esch.EdgeConfigs(left=left)
 
-    # v1 = tmp[None, :: cfg.epochs // length]
-    # v2 = (data > data.mean() + data.std())[1:, :: f_cfg.epochs // length].astype(jnp.float16).sum(0)[None, :]
-    # v3 = (data > data.mean() + 2 * data.std())[1:, :: cfg.epochs // length].astype(jnp.float16).sum(0)[None, :]
-    # v = jnp.stack((v1, v3))
-    # esch.plot(v / v.max(2, keepdims=True), edge=edge, path="paper/finding2.svg", font_size=24)
+    # tmp = neuron_freqs.var(axis=0)
+    # data = neuron_freqs
+    # v1 = tmp[None, :]
+    # v3 = (data > (data.mean() + 2 * data.std()))[1:].astype(jnp.float16).sum(0)[None, :]
+    # v = jnp.concat((v1, v3))
+    # esch.plot(v / v.mean(1, keepdims=True), edge=edge, path="paper/finding2.svg", font_size=24)
+    # print((v3 == 0).sum())
+    # print(Counter(v3.tolist()))
     # v.shape
 
 
-def tsne_fn():
-    pass
+# %% work space #################################################################
+f_data, m_data, s_data = data.values()
+f_scope, m_scope, s_scope = f_data[2], m_data[2], s_data[2]
 
 
-# %% plots
-# mi.plots.plot_run(metrics, ds, cfg, task, f_hash, font_size=16)  # plot training "curves"
-# emb_svd(state.params, cfg, f_hash)
-# emb_fft(state.params, cfg, f_hash)
-omega_fn(scope.neuron_freqs, cfg)
-#
-#
-# %% work space
-neurons = rearrange(acts.ffwd.squeeze(), "(x0 x1) p h -> p h x0 x1", x0=cfg.p, x1=cfg.p)[-1]
-data = jnp.stack((neurons[42], jnp.real(fft.fft(jnp.eye(cfg.p))), jnp.abs(fft.fft(jnp.eye(cfg.p) @ neurons[42]))))
-esch.plot(data / data.max((1, 2), keepdims=True), path="paper/tmp.svg")
-# esch.plot()
+# %% Omega plots
+for hash in [f_hash, s_hash]:  # ,s_hash]:
+    state, metrics, scope, cfg, ds, task, apply, x, acts = data[hash]
+    neurons = rearrange(acts.ffwd.squeeze(), "(x0 x1) p h -> p h x0 x1", x0=cfg.p, x1=cfg.p)[-1]
+    esch.plot(neurons[:12, :slice, :slice], path=f"paper/{hash}_tmp_1.svg")
+    # freq_varaince = jnp.stack((omega_aux(f_scope.neuron_freqs)[1], omega_aux(m_scope.neuron_freqs)[1]))
+    # esch.plot(freq_varaince)
 
+# %%
+freq_active = jnp.stack((omega_aux(f_scope.neuron_freqs)[2], omega_aux(s_scope.neuron_freqs)[2]))
+left = esch.EdgeConfig(ticks=[(0, "𝑎")], show_on="all")
+right = esch.EdgeConfig(ticks=[(1, "𝑏")], show_on="all")
+edge = esch.EdgeConfigs(left=left, right=right)
+esch.plot(freq_active[0][None, :], edge=edge, font_size=30, path="paper/figs/omega.svg")
+# omega_fn(cfg, scope.neuron_freqs)
+# plt.plot(freq_active.T)
 
+freq_series = jnp.stack(
+    (omega_aux(f_scope.neuron_freqs)[0], omega_aux(s_scope.neuron_freqs)[0], omega_aux(m_scope.neuron_freqs)[0])
+)
+omega_series_fn(freq_series[0], "Time", "", fname="omega-series-1")
+# omega_series_fn(freq_series[1], "", "", fname="omega-series-2")
+# omega_series_fn(freq_series[2], "", "", fname="omega-series-3")
+
+# %% Training curves
+for hash in [f_hash, m_hash, s_hash]:
+    state, metrics, scope, cfg, ds, task, apply, x, acts = data[hash]
+    mi.plots.plot_run(metrics, ds, cfg, task, hash, font_size=16, log_axis=False)
 # %% nanda plots ###########################################################
 
 # %% p task

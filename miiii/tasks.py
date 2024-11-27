@@ -71,7 +71,10 @@ def miiii_fn(key, cfg, task_type, task_span):
     y = (jnp.arange(cfg.p**2)[:, None] % factors[None, :]).astype(jnp.int8)
     y = y if task_type == "remainder" else (y == 0).astype(jnp.int8)  # this was a serious bug i just fixed it
     x, y = x[idxs], y[idxs]
+    # print(y[:2])
     y = y[random.permutation(random.split(key)[0], jnp.arange(cfg.p**2))] if cfg.shuffle else y
+    # print(y[:2])
+    # exit()
     sep = int(cfg.train_frac * cfg.p**2)
     x_train, y_train = x[:sep], y[:sep]
     x_eval, y_eval = x[sep:], y[sep:]
