@@ -49,7 +49,7 @@ def run_fn(hashes):
 rng = random.PRNGKey(0)
 slice = 37
 m_hash = "d4bfd7f829ed4a398f3b0a54"  # hash of masked miiii
-f_hash = "0aacbd66fd4a49da86574cc3"  # hash of miiii task
+f_hash = "0abbce892f104fc7bf65f898"  # hash of miiii task
 s_hash = "7c2a10494ff64e66a9af2731"  # shuffled miiii task  10k epochs currently
 p_hash = "0c848c1444264cbfa1a4de6e"  # hash of nanda task
 data = {hash: load_hash(hash) for hash in [f_hash, m_hash, s_hash]}
@@ -154,11 +154,21 @@ for hash in [f_hash, s_hash]:  # ,s_hash]:
     )
 
 # %%
-freq_active = jnp.stack((omega_aux(f_scope.neuron_freqs)[2], omega_aux(s_scope.neuron_freqs)[2]))
+# esch.plot(omega_aux(f_scope.neuron_freqs)[0])
+esch.plot(f_scope.neuron_freqs[-1][None, :])
+f_neurs = jnp.abs(fft.rfft2(rearrange(f_acts.ffwd.squeeze()[:, -1], "(x0 x1) h -> h x0 x1", x0=113, x1=113)))[
+    ..., 1:, 1:
+]
+f_neurs = f_neurs / f_neurs.max(axis=(0, 2), keepdims=True)
+esch.plot((f_neurs > 0.5).sum((0, 1))[None, :])
+esch.plot(f_neurs[0])
+
+# %%
+
 # left = esch.EdgeConfig(ticks=[(0, "𝑎")], show_on="all")
 # right = esch.EdgeConfig(ticks=[(1, "𝑏")], show_on="all")
 # edge = esch.EdgeConfigs(left=left, right=right)
-esch.plot(freq_active[0][None, :], font_size=30, path="paper/figs/omega.svg")
+# esch.plot(freq_active[0][None, :], font_size=30, path="paper/figs/omega.svg")
 # omega_fn(cfg, scope.neuron_freqs)
 # plt.plot(freq_active.T)
 
