@@ -49,6 +49,14 @@ Recent years have seen deep learning (DL) models achieve remarkable proficiency 
 
 Indeed, the increasing prevalence of DL can be understood as a transition from symbolic to sub-symbolic algorithms: the gradual subsuming of computational tasks. Precursors to modern DL methods learned how to weigh human-designed features @shannon1950, with later works learning to create features from data to then weigh @tesauro1993, @silver2017—in combination with tree search strategies, in the case of games @browne2012. Recent DL work has even eliminated tree search, mapping directly from observation space to action space @ruoss2024. Pure DL methods are thus increasingly prevalent, but almost equally inscrutable, with recent works still attempting to define what interpretability even means in the DL context @lipton2018. Given the breadth @cybenko1989 of tasks that DL models can be (and are) trained to solve—along with their sub-symbolic nature—it is, however, hardly a surprise that their interpretation remains difficult.
 
+#figure(
+  image("figs/polar.svg", width: 120%),
+  caption: [
+    Periodic patterns in polar coordinates $(n, n mod tau)$ for numbers less than #num(12769). Left: numbers with remainder 0 mod 7 or 23 (see the two spirals). Middle: numbers with remainder 0 mod 11. Right: prime numbers.
+  ],
+)<nats>
+
+
 Mathematically, DL refers to a set of methods that combine linear maps (matrix multiplications) with non-linearities (activation functions). Formally, all the potential numerical values of a given model's weights $W$ can be thought of as a hypothesis space $cal(H)$. Often, $cal(H)$ is determined by human decisions (number of layers, kinds of layers, sizes of layers, etc.). $cal(H)$ is then navigated using some optimization heuristic, such as gradient descent, in hope of finding a $W$ that "performs well" (i.e., successfully minimizes some loss $cal(L)$ computed by a differentiable function) on whatever training data we have. This vast hypothesis space, while enabling impressive performance and the solving of relatively exotic#footnote[Try manually writing a function in a language of your choice that classifies dogs and cats from images.] tasks, makes it challenging to understand how any particular solution actually works.
 
 #figure(
@@ -227,13 +235,6 @@ For each input $x$, a vector $y in Y$ contains the remainder when dividing by ea
 
 To provide insight into the periodic structure of these remainders (and motivate thinking in rotational terms), @nats visualizes various modular patterns in polar coordinates. The periodic nature of remainders becomes apparent when plotting points $(n, n mod tau)$, where $tau = 2pi$ in polar coordinates, where clustering indicates common remainders.
 One could imagine tightening and loosening the spiral by multiplying $tau$ by a constant, to align multiples of a given number in a straight line (imagining this is encouraged).
-
-#figure(
-  image("figs/polar.svg", width: 120%),
-  caption: [
-    Periodic patterns in polar coordinates $(n, n mod tau)$ for numbers less than #num(12769). Left: numbers with remainder 0 mod 7 or 23 (see the two spirals). Middle: numbers with remainder 0 mod 11. Right: prime numbers.
-  ],
-)<nats>
 
 == Model
 
