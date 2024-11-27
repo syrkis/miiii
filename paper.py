@@ -155,7 +155,11 @@ for hash in [f_hash, s_hash]:  # ,s_hash]:
 
 # %%
 # esch.plot(omega_aux(f_scope.neuron_freqs)[0])
-esch.plot(f_scope.neuron_freqs[-1][None, :])
+f_neurs = f_scope.neuron_freqs[:, 1:]
+esch.plot((f_neurs / f_neurs.max(1, keepdims=True))[:300].T ** 0.5)
+
+
+# %%
 f_neurs = jnp.abs(fft.rfft2(rearrange(f_acts.ffwd.squeeze()[:, -1], "(x0 x1) h -> h x0 x1", x0=113, x1=113)))[
     ..., 1:, 1:
 ]
