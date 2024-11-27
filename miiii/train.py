@@ -113,16 +113,17 @@ def evaluate_fn(ds: Dataset, task: Task, cfg: Conf, apply):
         train_metrics = Split(loss=train_loss, acc=acc_fn(train_acts.logits.argmax(-1), ds.y.train))
 
         metrics = Metrics(train=train_metrics, valid=valid_metrics)
-        return metrics, scope(params, grads, train_acts, valid_acts)
+        return tree.map(lambda x: x.astype(jnp.float16), metrics), scope(params, grads, train_acts, valid_acts)
 
     return evaluate
 
 
 def scope_fn(ds, cfg, apply, fn):
-    def scope(params, grads, train_acts, valid_acts):
+    def scope_aux(params, grads, train_acts, valid_acts):
         acts = tree.map(fn, train_acts, valid_acts)
         neuron_freqs = fft.rfft2(rearrange(acts.ffwd[:, :, -1], "x0 x1 d -> d x0 x1")).mean((0, 1))  # CONFUSING
         grad_norms = tree.map(lambda x: jnp.linalg.norm(x), grads)
-        return Scope(grad_norms=grad_norms, neuron_freqs=neuron_freqs)
+        scope = Scope(grad_norms=grad_norms, neuron_freqs=neuron_freqs)
+        return tree.map(lambda x: x.astype(jnp.float16), scope)
 
-    return scope
+    return scope_aux
