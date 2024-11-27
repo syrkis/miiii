@@ -117,7 +117,7 @@ def evaluate_fn(ds: Dataset, task: Task, cfg: Conf, apply):
     return evaluate
 
 
-def scope_fn(ds, cfg, apply, fn):
+def scope_fn(ds, cfg, apply):
     fn = lambda a, b: rearrange(jnp.concat((a, b))[ds.udxs].squeeze(), "(a b) ... -> a b ...", a=cfg.p, b=cfg.p)  # noqa
 
     def scope_aux(params, grads, train_acts, valid_acts):
