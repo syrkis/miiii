@@ -80,9 +80,10 @@ def miiii_fn(key, cfg, task_type, task_span):
     mask = mask if task_type == "remainder" else jnp.array(1)
     loss = loss_fn(task_type, task_span, mask)
     # mask = jnp.zeros((*y_train.shape, primes.max())).at[:, mask].set(1).astype(jnp.bool)
-    weight = jnp.log(
-        mask.sum(-1)
-    )  #  correct for number of classes in task. This is an good informational theoritical enhancement. Make it optional?
+    weight = 1 / jnp.log(mask.sum(-1))  # modify to ignore masked away tasks
+    weight = weight.at[:4].set(0) if cfg.mask else weight  # mask first four tasks. maybe.
+    print(weight)
+    exit()
     task = Task(loss_fn=jit(loss), type=task_type, span=task_span, mask=mask, weight=weight, primes=primes)
     x = Split(train=x_train, eval=x_eval)
     y = Split(train=y_train, eval=y_eval)

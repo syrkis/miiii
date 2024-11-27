@@ -319,9 +319,14 @@ Training uses full batch gradient descent with the entire dataset of $p^2$ sampl
 Much of the data worked with here is inherently high dimensional. For training, for example, we have $n$ steps, two splits (train/valid) about $p/ln(p)$ tasks, and two metrics (accuracy, and loss). This, along with the inherent opaqueness of deep learning models, motivated the developed custom visualization library, `esch`#footnote[https://github.com/syrkis/esch] to visualize attention weights, intermediate representations, training metrics, and more. The most important plot type for the reader to keep in mind is seen in @plot_type. As there are only #num(12769) samples when $p=113$, all samples can be fed at once to the model. Inspecting a specific activation thus yields a $1 times$ #num(12796) vector $v$, which can be reshaped at a $113 times 113$ matrix, with the two axes varying $x_0$ and $x_1$ from 0 to 112, respectively. The top-left corner then shows the given value for the sample $(0 dot p^0 + 0 dot p^1)$, and so on.
 
 #figure(
-  image("figs/plot_intro.svg", width: 110%),
+  stack(
+    dir: ltr,
+    image("tmp.svg", width: 120%),
+  ),
   caption: [Top left $37 times 37$ slice of the attention pattern from $hat(y)$ to $x_0$ in the first attention head of all $(x_0, x_1)$ pairs, for a model trained on $cal(T)_"nanda"$. Note that each square of the plot represents a unique sample and is thus entirely independent of one another. The periodicity is thus a function of the model learning an order of the natural numbers in question.],
 )<plot_type>
+
+TODO: ADD FOURIER PLOTS
 
 Note that that in `esch` plots, when appropriate, only the top leftmost $37 times 37$ slice is shown, to not overwhelm the reader. Visualizations are available in the Appendix.
 

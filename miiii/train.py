@@ -46,7 +46,7 @@ def grad_fn(ds: Dataset, task: Task, cfg: Conf, apply, loss_fn, mask):
     def grad(params: Params, rng) -> Tuple[Array, Array, Activation, Array]:
         def loss_and_logits(params: Params) -> Tuple[jnp.ndarray, Tuple[Array, Activation]]:
             acts: Activation = apply(rng, params, ds.x.train)
-            losses = loss_fn(acts.logits, ds.y.train, 1 - ds.y.train.mean(0), 2, mask) / task.weight
+            losses = loss_fn(acts.logits, ds.y.train, 1 - ds.y.train.mean(0), 2, mask) * task.weight
             return losses.mean(), (losses, acts)
 
         (loss, (losses, acts)), grads = value_and_grad(loss_and_logits, has_aux=True)(params)
@@ -63,7 +63,7 @@ def filter_fn(grads, emas, lamb: float):
 
 
 def step_fn(ds: Dataset, task: Task, cfg: Conf, opt, scope):
-    opt = optax.adamw(cfg.lr, weight_decay=cfg.l2)
+    # opt = optax.adamw(cfg.lr, weight_decay=cfg.l2)
     update, train_apply, valid_apply = update_fn(opt, ds, task, cfg)
     evaluate = evaluate_fn(ds, task, cfg, valid_apply)
 
@@ -107,7 +107,7 @@ def evaluate_fn(ds: Dataset, task: Task, cfg: Conf, apply):
     @jit
     def evaluate(params, grads, train_loss, train_acts):
         valid_acts = apply(params, ds.x.eval)
-        valid_loss = task.loss_fn(valid_acts.logits, ds.y.eval, 1 - ds.y.train.mean(0), 2, task.mask) / task.weight
+        valid_loss = task.loss_fn(valid_acts.logits, ds.y.eval, 1 - ds.y.train.mean(0), 2, task.mask) * task.weight
 
         valid_metrics = Split(loss=valid_loss, acc=acc_fn(valid_acts.logits.argmax(-1), ds.y.eval))
         train_metrics = Split(loss=train_loss, acc=acc_fn(train_acts.logits.argmax(-1), ds.y.train))
