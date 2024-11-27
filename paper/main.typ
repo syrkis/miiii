@@ -29,7 +29,8 @@
     ),
   ),
   abstract: [
-    This paper investigates how neural networks learn to solve multiple related mathematical tasks simultaneously, through the lens of mechanistic interpretability. We train a transformer model on 29 parallel tasks, each requiring the prediction of remainders when dividing two-digit base-113 numbers by different potential prime factors (there are 29 primes less than 113). This setup naturally creates a spectrum of task complexity, from binary classification (division by 2) to 109-way classification (division by 109). Analysis of the model's learned representations reveals that after independently solving the first four tasks (mod 2, 3, 5, and 7), the model develops a shared computational strategy that enables rapid generalization to the remaining 25 tasks. We show that this multi-task setting promotes the emergence of more general algorithmic solutions, as evidenced by distinct periodic patterns in the model's internal representations. Additionally, we reproduce recent findings that amplifying slow-moving gradients significantly accelerates this generalization process. Our results provide insights into how neural networks discover and implement mathematical algorithms, particularly when learning multiple related tasks of varying complexity.
+    This paper investigates how neural networks learn to solve multiple related mathematical tasks simultaneously, through the lens of mechanistic interpretability (MI). A transformer model is trained on 29 parallel tasks, each requiring the prediction of remainders when dividing two-digit base-113 numbers—as has been the domain of previous MI work @nanda2023—by all potential prime factors less than 113. This setup naturally creates a spectrum of task complexity, from binary classification (division by 2) to 109-way classification (division by 109). Analysis of the model's learned representations indicates that after independently solving the first four tasks (mod 2, 3, 5, and 7), the model develops a shared computational strategy that enables rapid generalization to the remaining 25 tasks.
+    Additionally, findings @lee2024a that show amplifying slow-moving gradients significantly accelerates this generalization process, are reproduced. Our results provide insights into how neural networks discover and implement mathematical algorithms, particularly when learning multiple related tasks of varying complexity.
     Project repo is https://github.com/syrkis/miiii.
   ],
 )
@@ -45,57 +46,73 @@
 
 = Introduction
 
-Recent years have seen deep learning (DL) models achieve remarkable proficiency in complex computational tasks, including protein structure prediction @jumper2021, strategic reasoning @dinan2022, and natural language generation@radford2018a—areas previously thought to be the exclusive domain of human intelligence. Traditional (symbolic) programming allows functions like $f(x, y) = cos(a dot x) + sin(b dot y)$ to be implemented with clear typographical isomorphism—meaning the code's structure directly mirrors the mathematical notation. For example, in Haskell: `f x y = cos(a * x) + sin(b * y)`. In contrast, DL models are inherently sub-symbolic, meaning that the models' atomic constituents (often 32-bit floating-point numbers centered around 0) are meaningless when viewed directly. For reference, @subsymbolic shows a DL-based implementation of $q$.
+Recent years have seen deep learning (DL) models achieve remarkable proficiency in complex computational tasks, including protein structure prediction @jumper2021, strategic reasoning @dinan2022, and natural language generation @radford2018a—areas previously thought to be the exclusive domain of human intelligence. Traditional (symbolic) programming allows functions like $f(x, y) = cos(a dot x) + sin(b dot y)$ to be implemented in code with clear typographical isomorphism—meaning the code's structure directly mirrors the mathematical notation. For example, in Haskell: `f x y = cos(a * x) + sin(b * y)`. In contrast, DL models are inherently sub-symbolic, meaning that the models' atomic constituents (often 32-bit floating-point numbers centered around 0) are meaningless when viewed directly. For reference, @subsymbolic shows a DL-based implementation of the affore mentioned function. Indeed, the increasing prevalence of DL can be understood as a transition from symbolic to sub-symbolic algorithms.
 
-Indeed, the increasing prevalence of DL can be understood as a transition from symbolic to sub-symbolic algorithms: the gradual subsuming of computational tasks. Precursors to modern DL methods learned how to weigh human-designed features @shannon1950, with later works learning to create features from data to then weigh @tesauro1993, @silver2017—in combination with tree search strategies, in the case of games @browne2012. Recent DL work has even eliminated tree search, mapping directly from observation space to action space @ruoss2024. Pure DL methods are thus increasingly prevalent, but almost equally inscrutable, with recent works still attempting to define what interpretability even means in the DL context @lipton2018. Given the breadth @cybenko1989 of tasks that DL models can be (and are) trained to solve—along with their sub-symbolic nature—it is, however, hardly a surprise that their interpretation remains difficult.
-
-#figure(
-  image("figs/polar.svg", width: 120%),
-  caption: [
-    Periodic patterns in polar coordinates $(n, n mod tau)$ for numbers less than #num(12769). Left: numbers with remainder 0 mod 7 or 23 (see the two spirals). Middle: numbers with remainder 0 mod 11. Right: prime numbers.
-  ],
-)<nats>
+Precursors to modern DL methods learned how to weigh human-designed features @shannon1950, with later works learning to create features from data to then weigh @tesauro1993, @silver2017—in combination with tree search strategies, in the case of games @browne2012. Very recent DL work has even eliminated tree search in the case of chess, mapping directly from observation space to action space @ruoss2024. Pure DL methods are thus becoming
+ubiquitous but remain largely inscrutable, with recent works still attempting to define what interpretability even means in the DL context @lipton2018. Given the breadth @cybenko1989 of tasks that DL models can be (and are) trained to solve—along with their sub-symbolic nature—it is, however, hardly a surprise that their interpretation remains difficult.
 
 
-Mathematically, DL refers to a set of methods that combine linear maps (matrix multiplications) with non-linearities (activation functions). Formally, all the potential numerical values of a given model's weights $W$ can be thought of as a hypothesis space $cal(H)$. Often, $cal(H)$ is determined by human decisions (number of layers, kinds of layers, sizes of layers, etc.). $cal(H)$ is then navigated using some optimization heuristic, such as gradient descent, in hope of finding a $W$ that "performs well" (i.e., successfully minimizes some loss $cal(L)$ computed by a differentiable function) on whatever training data we have. This vast hypothesis space, while enabling impressive performance and the solving of relatively exotic#footnote[Try manually writing a function in a language of your choice that classifies dogs and cats from images.] tasks, makes it challenging to understand how any particular solution actually works.
 
-#figure(
-  stack(
-    dir: ttb,
-    image("figs/" + f_hash + "/acc_valid_training.svg"),
-    // image("figs/" + f_hash + "/acc_valid_training.svg"),
-  ),
-  caption: [Visualization of the validation accuracy for all 29 tasks through training (log) time. Notice the first (top) four tasks are generalized in succession, with the rest occurring around the same time, as if by phase-transition.],
-)<trainig_loss_tio>
+Mathematically, DL refers to a set of methods that combine linear maps (matrix multiplications) with non-linearities (activation functions). Formally, all the potential numerical values of a given model's weights $W$ can be thought of as a hypothesis space $cal(H)$. Often, $cal(H)$ is determined by human decisions (number of layers, kinds of layers, sizes of layers, etc.). $cal(H)$ is then navigated using some optimization heuristic, such as gradient descent, in hope of finding a $W$ that "performs well" (i.e., successfully minimizes some loss $cal(L)$ often computed by a differentiable function) on whatever training data is present. This vast, sub-symbolic hypothesis space, while enabling impressive performance and the solving of relatively exotic#footnote[Try manually writing a function in a language of your choice that classifies dogs and cats from images.] tasks, makes it challenging to understand how any one particular solution actually works.
+
+// #figure(
+//   stack(
+//     dir: ttb,
+//     image("figs/" + f_hash + "/acc_valid_training.svg"),
+//     // image("figs/" + f_hash + "/acc_valid_training.svg"),
+//   ),
+//   caption: [Visualization of the validation accuracy for all 29 tasks through training (log) time. Notice the first (top) four tasks are generalized in succession, with the rest occurring around the same time, as if by phase-transition.],
+// )<trainig_loss_tio>
 
 
-The ways in which a given model can minimize $cal(L)$ can be placed on a continuum: on one side, we have overfitting (remembering the training data, or functioning as an archive akin to lossy and even lossless compression), and on the other, we have generalizing (learning the rules that govern the relationship between input and output, or functioning as an algorithm).
+The ways in which a given model can minimize $cal(L)$ can be placed on a continuum: on one side, we have overfitting, remembering the training data, (i.e. functioning as an archive akin to lossy and even lossless compression); and on the other, we have generalization, learning the rules that govern the relationship between input and output (i.e. functioning as an algorithm).
 
-When describing a mechanistic explanation for a given DL model, generalization is a necessary (though insufficient) condition. Generalization ensures that there _is_ an algorithm present to be uncovered; however, it is possible for that algorithm to be so obscurely implemented that reverse engineering, for all intents and purposes, is impossible. Various tricks, known as "regularization," exist to incentivize the emergence of algorithmic rather than archiving behavior. @ba2016, @krizhevsky2017, @krogh1991. As will be covered in @related_works, the mechanistic interpretability (MI) literature has, despite its nascent state, already established some conventions and successes. Circuits solving basic algorithmic tasks have been successfully reverse-engineered @nanda2023, and aspects of this workflow have been automated @conmy2023.
+When attempting to give a mechanistic of a given DL model's behavior, it entails the exsistence of a mechanism.
+MI assumed this mechanism to be general, thus mkaing generalization a necessary (though insufficient) condition. Generalization ensures that there _is_ an algorithm present to be uncovered (necesity); however, it is possible for that algorithm to be so obscurely implemented that reverse engineering, for all intents and purposes, is impossible (insufficiceny). Various forms of regularization are used to incentivize the emergence of algorithmic (generalized) rather than archiving (overfitted) behavior @ba2016, @krizhevsky2017, @krogh1991.
 
-This empirical approach to understanding neural networks makes MI more akin to botany than theoretical computer science: while finding an interesting specimen (training a working model on an original task) is relatively straightforward—like strolling a botanical garden, looking for an unstudied flower—carefully dissecting it to understand its internal mechanisms remains challenging and labor-intensive.
+// As will be covered in @related_works, the mechanistic interpretability (MI) literature has, despite its nascent state, already established some conventions and successes. Circuits solving basic algorithmic tasks have been successfully reverse-engineered @nanda2023, and aspects of this workflow have been automated @conmy2023.
 
-The specimen of this paper was chosen since, as of yet, no MI work has explored the effect of multitask learning, the focus of this paper. Multitask learning also has a regularizing effect @baxter2011—weights $W$ in $cal(H)$ that perform well across tasks are more likely to be general. #cite(<baxter2011>, form:"prose") refers to the set of hypotheses spaces for the different tasks in a given environment of tasks as $cal(H) in HH$. A $W$ performing well across tasks can thus be thought of as the intersection of the hypotheses spaces across $HH$.
+// kinde insecure about this
+As of yet, no MI work has explored the effect of multitask learning, the focus of this paper. Multitask learning also has a regularizing effect @baxter2011. Formally, the set of hyptheses spaces for each task of a set of tasks (often called environment) is denoted by $cal(H) in HH$. When minising the losses across all tasks in parallel, generalising $W$'s are thus incentivised, as these help lower loss across tasks (in contract to memorizing $W$'s that lower loss for one task). A $W$ derived from a multi-task training process can thus be thought of as the intersection of the high-performing areas of all $cal(H) in HH$.
 
-In this spirit, the present paper builds on the work of #cite(<nanda2023>, form:"prose"), which trains a transformer @vaswani2017 model to perform modular addition, as seen in @nanda_task:
+// This empirical approach to understanding neural networks makes MI more akin to botany than theoretical computer science: while finding an interesting specimen (training a working model on an original task) is relatively straightforward—like strolling a botanical garden, looking for an unstudied flower—carefully dissecting it to understand its internal mechanisms remains challenging and labor-intensive.
+
+
+// weights $W$ in $cal(H)$ that perform well across tasks are more likely to be general. #cite(<baxter2011>, form:"prose") refers to the set of hypotheses spaces for the different tasks in a given environment of tasks as $cal(H) in HH$. A $W$ performing well across tasks can thus be thought of as the intersection of the hypotheses spaces across $HH$..
+
+In this spirit, the present paper builds on the work of #cite(<nanda2023>, form:"prose"), which trains a transformer @vaswani2017 model to perform modular addition, as seen in @nanda_task, as task denoted as $cal(T)_"nanda"$ throughout the paper.
 
 $
   (x_0 + x_1) mod p, quad forall x_0, x_1 < p, quad p = 113
 $<nanda_task>
 
+#figure(
+  image("figs/polar.svg", width: 120%),
+  caption: [
+    Periodic patterns in polar coordinates $(n, n mod tau)$ for numbers less than #num(12769). Left: numbers with remainder 0 mod 17 or 23 (see the two spirals). Middle: numbers with remainder 0 mod 11. Right: prime numbers.
+  ],
+)<nats>
 
-This is referred to as $cal(T)_("nanda")$. The task of this paper focuses on predicting remainders modulo all primes less than $p$, where $x$ is interpreted as $x_0 p^0 + x_1 p^1$, formally shown in @miiii_task, and is referred to as $cal(T)_("miiii")$:
+
+The task of this paper focuses on predicting remainders modulo all primes $q$ less than $p$, where $x$ is interpreted as $x_0 p^0 + x_1 p^1$, formally shown in @miiii_task, and is referred to as $cal(T)_("miiii")$:
+
+
+
+// $
+// mat(delim: "|", 2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47; 53, 59, 61, 67, 71, 73, 79, 83, 89, 97, 101, 103, 107, 109, 113)
+// $
 
 $
   (
     x_0 p^0 + x_1 p^1
-  ) mod f, quad forall x_0, x_1 < p, quad forall f < p, quad p = 113
+  ) mod q, quad forall x_0, x_1 < p, quad forall q < p, quad p = 113
 $<miiii_task>
 
-$cal(T)_("miiii")$ thus differentiates itself from $cal(T)_("nanda")$ in two significant ways: _1)_ it is non-commutative, and _2)_ it is multitask. These differences present unique challenges for mechanistic interpretation, as the model must learn to handle both the order-dependent nature of the inputs and develop shared representations across multiple modular arithmetic tasks. Further, $cal(T)_("miiii")$ is harder than $cal(T)_("nanda")$ the model does not generalize when trained in the same way. Therefore, #cite(<lee2024a>, form:"prose")'s recent work on making generalization happen quicker, by positing the gradients through time can be viewed as the sum a slow varying generalizing component (which is boosted) and a quick varying overfitting component (which is muted), was (successfully) replicated to make training tractable.
+$cal(T)_("miiii")$ differentiates itself from $cal(T)_("nanda")$ in two significant ways: _1)_ it is non-commutative, and _2)_ it is, as mentioned, multitask. These differences present unique challenges for mechanistic interpretation, as the model must learn to handle both the order-dependent nature of the inputs and develop shared representations across multiple modular arithmetic tasks. Further, as $cal(T)_("miiii")$ is harder than $cal(T)_("nanda")$ the model can be expected to generalize slower when trained on the former. Therefore, #cite(<lee2024a>, form:"prose")'s recent work on speeding up generalization, by positing the model parameters gradients through time can be viewed as the sum a slow varying generalizing component (which is boosted) and a quick varying overfitting component (which is suppressed), was (successfully) replicated to make training tractable.
 
+More generally, modular arithmetic on primes is a particularly useful task for MI as it ensures uniformity among the output classes, allows for comparison with other MI work @nanda2023, and, from a number-theoretic point of view, primes contain mysteries ranging from the trivially solved—are there an infinite number of primes?—to the deceptively difficult—can all even numbers larger than 4 be described as the sum of two primes? The latter, known as Goldbach's Conjecture, remains unsolved after centuries. The choice of using every prime less than the square root of the largest number of the dataset, also serves the following purpose: to test if a given natural number is prime, it suffices to test that it is not a multiple of any prime less than its square root—the set of tasks trained for here, can thus be viewed in conjunction as a single prime detection task (primes are the only samples whose target vector is the zero vector).
 
-More generally, modular arithmetic on primes is a particularly useful task for MI as it ensures uniformity among the output classes, allows for comparison with other MI work, and, from a number-theoretic point of view, primes contain mysteries ranging from the trivially solved—are there an infinite number of primes?—to the deceptively difficult—can all even numbers larger than 4 be described as the sum of two primes? The latter, known as Goldbach's Conjecture, remains unsolved after centuries. The choice of using every prime less than the square root of the largest number of the dataset, also serves the following purpose: to test if a given natural number is prime, it suffices to test that it is not a multiple of any prime less than its square root—the set of tasks trained for here, can thus be viewed in conjunction as a single prime detection task (primes are the only samples whose target vector is the zero vector).
+To provide insight into the periodic structure of these remainders mod $1$ for natual numbers less than #num(12769) (and motivate thinking in rotational terms), @nats visualizes various modular patterns in polar coordinates ($n, n mod 2 pi$). One could imagine tightening and loosening the spiral by multiplying $tau$ by a constant, to align multiples of a given number in a straight line (imagining this is encouraged).
 
 // Lastly, the reader is asked to accept the inspection of a DL model transitioning from archive to algorithm on multiple simultaneous tasks as inherently interesting, independent of the current literature's scarcity on the subject.
 
@@ -233,9 +250,6 @@ For each input $x$, a vector $y in Y$ contains the remainder when dividing by ea
   caption: [Output space $Y$ for $p=11$. The first four plots show remainders when dividing by 2, 3, 5, and 7 respectively. The rightmost plot shows the output space of the modular addition task for comparison.],
 )<miiii_y_11>
 
-To provide insight into the periodic structure of these remainders (and motivate thinking in rotational terms), @nats visualizes various modular patterns in polar coordinates. The periodic nature of remainders becomes apparent when plotting points $(n, n mod tau)$, where $tau = 2pi$ in polar coordinates, where clustering indicates common remainders.
-One could imagine tightening and loosening the spiral by multiplying $tau$ by a constant, to align multiples of a given number in a straight line (imagining this is encouraged).
-
 == Model
 
 // Architectural decisions are made to align with #cite(<lee2024a>, form: "prose") and #cite(<nanda2023>, form: "prose").
@@ -322,12 +336,12 @@ Much of the data worked with here is inherently high dimensional. For training, 
 #figure(
   stack(
     dir: ltr,
-    image("tmp.svg", width: 120%),
+    image("tmp.svg", width: 100%),
   ),
   caption: [Top left $37 times 37$ slice of the attention pattern from $hat(y)$ to $x_0$ in the first attention head of all $(x_0, x_1)$ pairs, for a model trained on $cal(T)_"nanda"$. Note that each square of the plot represents a unique sample and is thus entirely independent of one another. The periodicity is thus a function of the model learning an order of the natural numbers in question.],
 )<plot_type>
 
-TODO: ADD FOURIER PLOTS
+// TODO: ADD FOURIER PLOTS
 
 Note that that in `esch` plots, when appropriate, only the top leftmost $37 times 37$ slice is shown, to not overwhelm the reader. Visualizations are available in the Appendix.
 
@@ -449,7 +463,7 @@ As seen in figures @trainig_acc and @training_loss, the model grokked on all 29 
     image("finding.svg", width: 110%),
     image("finding2.svg", width: 110%),
   ),
-  caption: [Representation of active frequencies (as per the FFT) of the transformer block neurons throught training (top). Variance of frequency activations, and number of frequencies about a threshold of $omega > mu + 2 sigma$ (bottom)],
+  caption: [Representation of active frequencies (as per the FFT) of the transformer block neurons throught training (top). Variance of frequency activations, and number of frequencies above a threshold of $omega > mu + 2 sigma$ (bottom)],
 )<finding>
 
 
@@ -579,13 +593,6 @@ Unlike @nanda_task, our attention heads focus on one digit or the other. This co
   caption: [Neuron 0 for sample (0, 0) in Fourier space. We see that frequencies responding to the given sample are extremely sparse.],
 )
 
-// shows the focal loss decreasing significantly across tasks in $cal(T)$. Classification of primes $PP$ (i.e. $cal(T)_1$)
-// starts with a slightly higher loss than other tasks but quickly converges to the same loss as the other tasks, blah blah.
-// We see in that we are indeed overfitting despite the heavy regularization, as the validation loss is increasing, blah blah.
-
-// It is also clear that the sub-tasks in $cal(T)_2$ increase in difficulty
-// with the $p$ is being tested for. This makes intuitive sense, as it is easier to see if a number is a multiple of 2 than if it is a multiple of 17. There are also more multiples of 2 than 17, though the use of $alpha$ in the focal loss should account for this.
-
 // #figure(
 //   image("figs/runs/" + run + "/train_f1_hinton.svg"),
 //   caption: [The f1 score of $cal(T)$ on the train data during training.],
@@ -601,9 +608,13 @@ Unlike @nanda_task, our attention heads focus on one digit or the other. This co
 
 = Discussion
 
+The evolution of the frequencies $omega$ in the neuron space shown in @finding echoes the generalization phases shown in @trainig_acc. As the model groks on the primes 2, 3, 5, and 7 in the first fifth of the training run a handful of frequencies become dominant, #cite(<nanda2023>, form:"prose")'s findings. As the model improves training loss with respect to the rest of the tasks, we see a more uniform distribution of active frequencies, with no single frequenci cross the frequently used signal processing threshold of $mu + 2 omega$.
 
-I AM RUNNING AN EXPERIMENT IN WHICH TASKS ARE MASKED AWAY TO SEE THE PERFORMANCE OF THE REMAINING TASKS. ALSO I AM MISSING PLOTS OF CIRCUIT FORMATION.
+As the reamining 25 tasks are solved, we do see a significant number of frequencies cross the significance threshold. The gully generalized sollution to all 29 tasks has 9 frequencies above the threshold, while the soultuion to the first four tasks has 4. This is indication of circuit reuse and generality, though more work needs to be done to fully confirm this.
 
+One possible alternative explenation is that the standard $mu + 2 sigma$ threshold is too high, and that multiple frequencies are present and doing useful work, but there remains too much noise.
+
+Interstingly, the number of active frequencies for the first four tasks is similar to that of a model trained on $cal(T)_"nanda"$.
 
 = Further work
 

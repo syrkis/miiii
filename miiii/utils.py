@@ -95,6 +95,7 @@ def parse_args():
     parser.add_argument("--epochs", type=int, help="Number of training epochs")
     parser.add_argument("--train_frac", type=float, help="Fraction of data used for training")
     parser.add_argument("--mask", type=bool, help="should i mask the first four tasks?")
+    parser.add_argument("--shuffle", type=bool, help="should i completely shuffle the y labels for stupid baseline?")
     parser.add_argument("--l2", type=float, help="L2 regularization")
     parser.add_argument("--lr", type=float, help="Learning rate")
     parser.add_argument("--dropout", type=float, help="Dropout rate")
@@ -119,6 +120,7 @@ class Conf:
     dropout: float = 0.5
     train_frac: float = 0.5
     mask: bool = False  # weather to mask first four tasks
+    shuffle: bool = False  # weather to shuffle the y labels
 
 
 def create_cfg(**kwargs) -> Conf:
