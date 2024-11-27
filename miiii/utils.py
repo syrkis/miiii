@@ -73,8 +73,8 @@ class Metrics:
 
 @dataclass
 class Scope:
-    grad_norms: Params
     # logit_freqs: Array
+    grad_norms: Params | None
     neuron_freqs: Array
 
 

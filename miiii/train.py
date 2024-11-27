@@ -122,9 +122,9 @@ def scope_fn(ds, cfg, apply):
 
     def scope_aux(params, grads, train_acts, valid_acts):
         acts = tree.map(acts_fn, train_acts, valid_acts)
-        grad_norms = tree.map(lambda x: jnp.linalg.norm(x), grads)
+        grad_norms = None  # tree.map(lambda x: jnp.linalg.norm(x), grads)
         neurs = jnp.abs(fft.fft2(rearrange(acts.ffwd, "(x0 x1) n -> n x0 x1", x0=cfg.p, x1=cfg.p)))[..., 1:, 1:]
-        freqs = ((neurs / neurs.max(axis=(0, 1), keepdims=True)) > 0.5).sum((0, 1))
+        freqs = ((neurs / neurs.max(axis=(0, 1), keepdims=True)) > 0.5).mean((0, 1))
         scope = Scope(grad_norms=grad_norms, neuron_freqs=freqs)
         return tree.map(lambda x: x.astype(jnp.float16), scope)
 
