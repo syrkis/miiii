@@ -2,7 +2,7 @@
 # Base configuration
 p: 113
 depth: 1
-epochs: 65_536
+epochs: 50_000
 latent_dim: 256
 lr: 0.0003
 train_frac: 0.5
