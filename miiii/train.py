@@ -30,6 +30,7 @@ def update_fn(opt, ds: Dataset, task: Task, cfg: Conf):
     valid_apply = partial(apply_fn(cfg, ds, task, eval=True), random.PRNGKey(0))
     grad = grad_fn(ds, task, cfg, train_apply, task.loss_fn, task.mask)
 
+    @jit
     def update(state, key):
         loss, losses, output, grads = grad(state.params, key)
         grads, emas = filter_fn(grads, state.emas, cfg.lamb)  # grokfast values
@@ -44,6 +45,7 @@ def update_fn(opt, ds: Dataset, task: Task, cfg: Conf):
 def grad_fn(ds: Dataset, task: Task, cfg: Conf, apply, loss_fn, mask):
     @jit
     def grad(params: Params, rng) -> Tuple[Array, Array, Activation, Array]:
+        @jit
         def loss_and_logits(params: Params) -> Tuple[jnp.ndarray, Tuple[Array, Activation]]:
             acts: Activation = apply(rng, params, ds.x.train)
             losses = loss_fn(acts.logits, ds.y.train, 1 - ds.y.train.mean(0), 2, mask) * task.weight
@@ -99,6 +101,7 @@ def train(rng, cfg: Conf, ds: Dataset, task: Task, scope=False) -> Tuple[State, 
 def evaluate_fn(ds: Dataset, task: Task, cfg: Conf, apply):
     scope = scope_fn(ds, cfg, apply)
 
+    @jit
     @partial(vmap, in_axes=((1, 1) if task.span == "factors" else (None, None)))
     def acc_fn(y_pred, y_true):
         return (y_pred == y_true).mean()
@@ -112,20 +115,21 @@ def evaluate_fn(ds: Dataset, task: Task, cfg: Conf, apply):
         train_metrics = Split(loss=train_loss, acc=acc_fn(train_acts.logits.argmax(-1), ds.y.train))
 
         metrics = Metrics(train=train_metrics, valid=valid_metrics)
-        return tree.map(lambda x: x.astype(jnp.float16), metrics), scope(params, grads, train_acts, valid_acts)
+        return metrics, scope(params, grads, train_acts, valid_acts)
 
     return evaluate
 
 
 def scope_fn(ds, cfg, apply):
-    acts_fn = lambda a, b: jnp.concat((a, b))[ds.udxs].squeeze()[:, -1]  # noqa
+    acts_fn = lambda a, b: jnp.concat((a, b))[ds.udxs, 0, -1]  # noqa
 
+    @jit
     def scope_aux(params, grads, train_acts, valid_acts):
         acts = tree.map(acts_fn, train_acts, valid_acts)
         grad_norms = None  # tree.map(lambda x: jnp.linalg.norm(x), grads)
         neurs = jnp.abs(fft.rfft2(rearrange(acts.ffwd, "(x0 x1) n -> n x0 x1", x0=cfg.p, x1=cfg.p)))[..., 1:, 1:]
         freqs = ((neurs / neurs.sum(axis=(0, 1), keepdims=True)) > 0.5).mean((0, 1))
-        scope = Scope(grad_norms=grad_norms, neuron_freqs=freqs)
-        return tree.map(lambda x: x.astype(jnp.float16), scope)
+        return Scope(grad_norms=grad_norms, neuron_freqs=freqs)
+        # return tree.map(lambda x: x.astype(jnp.float16), scope)
 
     return scope_aux
