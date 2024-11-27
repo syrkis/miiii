@@ -3,8 +3,8 @@
 #import "@preview/unify:0.6.1": num // <- for making numbers look nice
 
 
-#let b_hash = "41e20b3a4790402f8a5be458"
 #let f_hash = "0aacbd66fd4a49da86574cc3"
+#let s_hash = "7c2a10494ff64e66a9af2731"
 #let p_hash = "0c848c1444264cbfa1a4de6e"
 #show: equate.with(breakable: true, sub-numbering: true)
 #set math.equation(numbering: "(1.1)", supplement: "Eq.")
@@ -460,11 +460,28 @@ As seen in figures @trainig_acc and @training_loss, the model grokked on all 29 
     dir: ttb,
     image("omega-series-1.svg", width: 110%),
     image("figs/omega.svg", width: 110%),
-    image("omega-series-2.svg", width: 110%),
+    // image("omega-series-2.svg", width: 110%),
   ),
   caption: [Representation of active frequencies (as per the FFT) of the transformer block neurons throught training (top). Variance of frequency activations, and number of frequencies above a threshold of $omega > mu + 2 sigma$ (bottom)],
 )<finding>
 
+#figure(
+  stack(
+    dir: ttb,
+    image(f_hash + "_tmp_1.svg", width: 110%),
+    image(f_hash + "_astrid.svg", width: 110%),
+  ),
+  caption: [Representation of active frequencies (as per the FFT) of the transformer block neurons throught training (top). Variance of frequency activations, and number of frequencies above a threshold of $omega > mu + 2 sigma$ (bottom)],
+),
+
+#figure(
+  stack(
+    dir: ttb,
+    image(s_hash + "_tmp_1.svg", width: 110%),
+    image(s_hash + "_astrid.svg", width: 110%),
+  ),
+  caption: [Representation of active frequencies (as per the FFT) of the transformer block neurons throught training (top). Variance of frequency activations, and number of frequencies above a threshold of $omega > mu + 2 sigma$ (bottom)],
+)
 
 
 #figure(

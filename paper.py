@@ -82,7 +82,7 @@ def fft_fn(matrix):
     return magnitude_spectrum_centered, freq_activations, significant_freqs
 
 
-def omega_aux(freqs, length=200, kernel_size=7):
+def omega_aux(freqs, length=150, kernel_size=3):
     epochs = freqs.shape[0]
     # kernel_size = epochs // length
     conv = lambda row: jnp.convolve(row, jnp.ones(kernel_size) / kernel_size, mode="valid")  # noqa
@@ -126,32 +126,50 @@ def omega_series_fn(freqs, label_top, label_bottom, fname="finding.svg"):
 # %% work space #################################################################
 f_data, m_data, s_data = data.values()
 f_scope, m_scope, s_scope = f_data[2], m_data[2], s_data[2]
+f_acts, m_acts, s_acts = f_data[-1], m_data[-1], s_data[-1]
 
 
+# %%
+# f_acts.ffwd.squeeze()[:, -1].shape
+neurs = jnp.abs(fft.fft2(rearrange(f_acts.ffwd.squeeze()[:, -1], "(x0 x1) h -> h x0 x1", x0=113, x1=113)))[..., 1:, 1:]
+esch.plot(((neurs / neurs.max()) > 0.5).sum((0, 1))[None, :])
+
+
+# %%
+esch.plot(
+    jnp.abs(fft.rfft2(rearrange(f_acts.ffwd.squeeze()[:, -1], "(x0 x1) h -> h x0 x1", x0=113, x1=113))[:3])[
+        ..., 1 : 113 // 2, 1 : 113 // 2
+    ],
+)
 # %% Omega plots
 for hash in [f_hash, s_hash]:  # ,s_hash]:
     state, metrics, scope, cfg, ds, task, apply, x, acts = data[hash]
-    neurons = rearrange(acts.ffwd.squeeze(), "(x0 x1) p h -> p h x0 x1", x0=cfg.p, x1=cfg.p)[-1]
-    esch.plot(neurons[:12, :slice, :slice], path=f"paper/{hash}_tmp_1.svg")
-    # freq_varaince = jnp.stack((omega_aux(f_scope.neuron_freqs)[1], omega_aux(m_scope.neuron_freqs)[1]))
-    # esch.plot(freq_varaince)
+    neurons = rearrange(acts.ffwd.squeeze()[:, -1], "(x0 x1) h ->h x0 x1", x0=cfg.p, x1=cfg.p)
+    esch.plot(neurons[:3, :slice, :slice], path=f"paper/{hash}_tmp_1.svg")
+    esch.plot(
+        jnp.abs(fft.rfft2(rearrange(acts.ffwd.squeeze()[:, -1], "(x0 x1) h -> h x0 x1", x0=113, x1=113))[:3])[
+            ..., 1 : 113 // 2, 1 : 113 // 2
+        ],
+        path=f"paper/{hash}_astrid.svg",
+    )
 
 # %%
 freq_active = jnp.stack((omega_aux(f_scope.neuron_freqs)[2], omega_aux(s_scope.neuron_freqs)[2]))
-left = esch.EdgeConfig(ticks=[(0, "𝑎")], show_on="all")
-right = esch.EdgeConfig(ticks=[(1, "𝑏")], show_on="all")
-edge = esch.EdgeConfigs(left=left, right=right)
-esch.plot(freq_active[0][None, :], edge=edge, font_size=30, path="paper/figs/omega.svg")
+# left = esch.EdgeConfig(ticks=[(0, "𝑎")], show_on="all")
+# right = esch.EdgeConfig(ticks=[(1, "𝑏")], show_on="all")
+# edge = esch.EdgeConfigs(left=left, right=right)
+esch.plot(freq_active[0][None, :], font_size=30, path="paper/figs/omega.svg")
 # omega_fn(cfg, scope.neuron_freqs)
 # plt.plot(freq_active.T)
 
-freq_series = jnp.stack(
-    (omega_aux(f_scope.neuron_freqs)[0], omega_aux(s_scope.neuron_freqs)[0], omega_aux(m_scope.neuron_freqs)[0])
-)
-omega_series_fn(freq_series[0], "Time", "", fname="omega-series-1")
+# freq_series = jnp.stack(
+# (omega_aux(f_scope.neuron_freqs)[0], omega_aux(s_scope.neuron_freqs)[0], omega_aux(m_scope.neuron_freqs)[0])
+# )
+# omega_series_fn(freq_series[0], "Time", "", fname="omega-series-1")
 # omega_series_fn(freq_series[1], "", "", fname="omega-series-2")
 # omega_series_fn(freq_series[2], "", "", fname="omega-series-3")
 
+# %%
 # %% Training curves
 for hash in [f_hash, m_hash, s_hash]:
     state, metrics, scope, cfg, ds, task, apply, x, acts = data[hash]
