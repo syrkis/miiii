@@ -1,5 +1,5 @@
-# %% notebook.py
-#   miiii notebook
+# %% paper.py
+#   generating plots for the paper (and some exploratory stuff)
 # by: Noah Syrkis
 
 
@@ -10,7 +10,9 @@ from jax import random, tree
 from jax.numpy import fft
 from functools import partial
 from einops import rearrange
-# import matplotlib.pyplot as plt
+
+import matplotlib.pyplot as plt
+from oeis import oeis
 
 import miiii as mi
 
@@ -67,7 +69,7 @@ left = esch.EdgeConfig(label=["nanda", "miiii"], show_on="all")
 esch.plot(f_U[:, : f_S_50.item()].T, path="paper/figs/f_U.svg")
 # esch.plot(p_U[:, : p_S_50.item()].T, path="paper/figs/p_U.svg")
 # %% plots
-mi.plots.plot_run(f_metrics, f_ds, f_cfg, f_task, f_hash)
+mi.plots.plot_run(f_metrics, f_ds, f_cfg, f_task, f_hash, font_size=16)
 
 
 # %% Embeddings fourier analsysis
@@ -80,12 +82,12 @@ r_m, r_f, r_s = mi.plots.fourier_analysis(mi.model.initializer(rng, f_state.para
 def fourier_plots(m, f, s, name):
     esch.plot(m, path=f"paper/figs/fourier_{name}_m.svg")
     ticks_bottom = [(i.item(), f"cos {i//2}") for i in jnp.where(s)[0] if i % 2 == 1]
-    ticks_top = [(0, "constant")] + [(i.item(), f"sin {i//2}") for i in jnp.where(s)[0] if i % 2 == 0]
+    ticks_top = [(0, "const")] + [(i.item(), f"sin {i//2}") for i in jnp.where(s)[0] if i % 2 == 0]
     top = esch.EdgeConfig(ticks=ticks_top, show_on="all")  # type: ignore
     bottom = esch.EdgeConfig(ticks=ticks_bottom, show_on="all")
     edge = esch.EdgeConfigs(top=top, bottom=bottom)
     if name != "r":
-        esch.plot(f[None, :], path=f"paper/figs/fourier_{name}_f.svg", edge=edge)
+        esch.plot(f[None, :], path=f"paper/figs/fourier_{name}_f.svg", edge=edge, font_size=8)
     else:
         esch.plot(f[None, :], path=f"paper/figs/fourier_{name}_f.svg")
 
@@ -146,7 +148,7 @@ data = jnp.array(leafs)[:, 1000 :: f_cfg.epochs // 50]
 data = data / data.max(axis=1, keepdims=True)
 # data = data / data.sum(axis=0, keepdims=True)
 data = data[[4, 5, 0, 1, 2, 3, 6, 7, 8], :]
-esch.plot(data, edge=edge, path=f"paper/figs/grads_norms_miiii.svg")
+esch.plot(data, edge=edge, path="paper/figs/grads_norms_miiii.svg")
 # struct
 
 # %%
@@ -180,7 +182,7 @@ neuron_freq_norm = neuron_freq_norm / (f_neurs**2).sum(axis=(-1, -2), keepdims=T
 
 esch.plot(jnp.abs(fft.fft2(f_neurs).max((0, 1)))[None, 1:])  # THIS IS INTERSTING
 esch.plot(jnp.abs(fft.fft2(f_neurs).mean((0, 1)))[None, 1:])  # THIS IS INTERSTING
-f_neurs.shape, fft.rfft2(f_neurs).shape
+# f_neurs.shape, fft.rfft2(f_neurs).shape
 # %%
 data = jnp.abs(dft @ f_neurs).mean(2)
 
@@ -201,30 +203,186 @@ esch.plot(frac_explainedby_top[None, :])
 
 
 # %% Progress measures
-rearrange(p_acts.logits, "(a b) c -> a b c", a=p_cfg.p, b=p_cfg.p).shape
+# rearrange(p_acts.logits, "(a b) c -> a b c", a=p_cfg.p, b=p_cfg.p).shape
 
 # %%
-f_acts.ffwd.squeeze().shape, f_neurs.shape
+# f_acts.ffwd.squeeze().shape, f_neurs.shape
 
 
 # %%
 data = jnp.abs(f_scope.neuron_freqs).T
-data = data**2
+# data = data**abs
+length = 150
+window_size = (f_cfg.epochs // length) // 2
+data = jnp.array([jnp.convolve(row, jnp.ones(window_size) / window_size, mode="valid") for row in data])
 data = data / data.sum(axis=1, keepdims=True)
-esch.plot(data[1:, :: f_cfg.epochs // 200], path="noajh.svg")
+tmp = data.var(axis=0)
+# Simple moving average
+kernel = jnp.ones(window_size) / window_size
+tmp = jnp.convolve(tmp, kernel, mode="valid")
+tmp = tmp / tmp.max()
+
+left = esch.EdgeConfig(label="Frequency", show_on="all")
+top = esch.EdgeConfig(label="Time", show_on="last")
+edge = esch.EdgeConfigs(left=left, top=top)
+esch.plot(data[1:, :: f_cfg.epochs // length] ** 1.5, path="paper/finding.svg", edge=edge, font_size=24)
+left = esch.EdgeConfig(label=["ω σ²", "|ω > μ + 2σ|"], show_on="all")
+edge = esch.EdgeConfigs(left=left)
+
+
+v1 = tmp[None, :: f_cfg.epochs // length]
+# v2 = (data > data.mean() + data.std())[1:, :: f_cfg.epochs // length].astype(jnp.float16).sum(0)[None, :]
+v3 = (data > data.mean() + 2 * data.std())[1:, :: f_cfg.epochs // length].astype(jnp.float16).sum(0)[None, :]
+v = jnp.stack((v1, v3))
+esch.plot(v / v.max(2, keepdims=True), edge=edge, path="paper/finding2.svg", font_size=24)
+v.shape
 
 
 # %%
-import matplotlib.pyplot as plt
-
-tmp = data.std(axis=0)
-# Simple moving average
-window_size = 200
-kernel = jnp.ones(window_size) / window_size
-tmp = jnp.convolve(tmp, kernel, mode="valid")
-tmp = tmp[1000:]
-
-plt.plot(tmp)
+# v3 in jnp.unique(v3).sort()[-3:]
 
 
-# vmap(jnp.convolve
+# %%
+#
+# fig, ax = plt.subplots(figsize=(12, 2), dpi=100)
+# ax.plot(tmp, c="w")
+# # x in log scale
+# # ax.set_xscale("log")
+# # crop first 1000 x values
+# ax.set_xlim(100, None)
+# # hide x ticks and labels
+# ax.set_xticks([])
+# # y ticks and labels should only be 0 and 1
+# ax.set_yticks([0, 1])
+# ax.set_yticklabels(["0", "1"])
+
+# %%
+
+
+# %% paper.py
+#   generates all plots for paper
+# by: Noah Syrkis
+
+# %% Imports
+
+
+# %% Constants
+factors_hash = "713e658dbfca4ab98c6e53ed"
+# prime_hash = "713e658dbfca4ab98c6e53ed"
+
+
+# Diagrams and illustrations
+# %% X plots
+#
+cfg = mi.utils.Conf(p=11)
+rng = random.PRNGKey(0)
+ds, task = mi.tasks.task_fn(rng, cfg, "remainder", "factors")
+x = jnp.concat((ds.x.train, ds.x.eval), axis=0)[ds.idxs.argsort()]
+y = jnp.concat((ds.y.train, ds.y.eval), axis=0)[ds.idxs.argsort()]
+left = esch.EdgeConfig(ticks=[(i, str(i)) for i in range(cfg.p)], show_on="first")
+bottom = esch.EdgeConfig(label=[str(i) for i in range(cfg.p)], show_on="all")
+edge = esch.EdgeConfigs(left=left, bottom=bottom)
+esch.plot(
+    rearrange(x[:, :2], "(x1 x0) seq ->  x0 x1 seq ", x0=cfg.p, x1=cfg.p),
+    edge=edge,
+    path="figs/x_11_plot.svg",
+    font_size=10,
+)
+
+# %% Y plots
+nanda_cfg = mi.utils.Conf(p=11)
+nanda_ds, _ = mi.tasks.task_fn(random.PRNGKey(0), nanda_cfg, "remainder", "prime")
+nanda_y = jnp.concat((nanda_ds.y.train, nanda_ds.y.eval), axis=0)[nanda_ds.idxs.argsort()].reshape(
+    (nanda_cfg.p, nanda_cfg.p)
+)
+primes = jnp.array(oeis["A000040"][1 : y.shape[1] + 1])
+bottom = esch.EdgeConfig(label=[f"{factor} remainder" for factor in primes] + ["𝑝 remainder"], show_on="all")
+top = esch.EdgeConfig(ticks=[(i, str(i)) for i in range(cfg.p)], show_on="first")
+left = esch.EdgeConfig(ticks=[(i, str(i)) for i in range(cfg.p)], show_on="first")
+edge = esch.EdgeConfigs(top=top, left=left, bottom=bottom)
+data = jnp.concat((rearrange(y, "(x0 x1) task ->  task x0 x1 ", x0=cfg.p, x1=cfg.p), nanda_y[None, ...]), axis=0)
+# data /= data.max(axis=(1, 2))[:, None, None]
+esch.plot(data, edge=edge, path="figs/y_11_plot.svg", font_size=10)
+
+
+# %%
+
+
+# %% Polar Plots
+primes = jnp.array(oeis["A000040"][1:1000])
+ps = jnp.array(primes[primes < (113**2)])
+_11s = jnp.arange(0, 113**2, 11)
+_7_23 = jnp.concat((jnp.arange(0, 113**2, 13), jnp.arange(0, 113**2, 23)))
+plt.style.use("default")
+mi.plots.small_multiples(fnames=["n", "t", "n"], seqs=[_7_23, _11s, ps], f_name="polar", n_rows=1, n_cols=3)
+# remove plot
+# plt.close()
+
+
+# %% Constants
+hash = "8817b4ba85254125b7af28ec"
+slice = 43
+state, metrics, cfg = mi.utils.get_metrics_and_params(hash, "factors")  # get a run
+rng = random.PRNGKey(0)
+ds, task = mi.tasks.task_fn(rng, cfg, "remainder", "factors")
+x = jnp.concat((ds.x.train, ds.x.eval), axis=0)[ds.idxs.argsort()]
+y = jnp.concat((ds.y.train, ds.y.eval), axis=0)[ds.idxs.argsort()]
+
+
+# %% ATTENTION WEIGHTS
+apply = mi.model.apply_fn(cfg, ds, task, eval=True)
+acts = apply(rng, state.params, x)
+esch.plot(
+    rearrange(acts.wei.squeeze(), "(x0 x1) heads from to ->  heads x0 x1 from to", x0=cfg.p, x1=cfg.p)[:, :, :, -1, 1][
+        :, :slice, :slice
+    ],
+    path="noah.svg",
+)
+
+# %% EMBEDDINGS
+U, S, V = jnp.linalg.svd(state.params.embeds.tok_emb[: cfg.p])
+s = (S / S.sum()).cumsum()
+_5 = jnp.where(s < 0.5)[0].max()
+_9 = jnp.where(s <= 0.9)[0].max()
+_99 = jnp.where(s <= 0.99)[0].max()
+
+# %% singular values
+bottom = esch.EdgeConfig(
+    ticks=[(_5.item(), "0.5"), (_9.item() - 1, "0.9"), (_99.item() - 1, "0.99")],
+    show_on="first",
+)
+left = esch.EdgeConfig(ticks=[(0, "S")], show_on="first")
+edge = esch.EdgeConfigs(bottom=bottom, left=left)
+esch.plot(S[None, :], edge=edge)
+
+# %% singular vectors
+esch.plot(U[:, :_5].T)
+
+
+W_E = state.params.embeds.tok_emb[: cfg.p]
+F = mi.utils.fourier_basis(cfg.p)
+esch.plot((F @ W_E))
+esch.plot(jnp.linalg.norm(F @ W_E, axis=1)[None, :])
+
+# %% FFWD WEIGHTS
+n_neurons = 6
+esch.plot(
+    rearrange(acts.ffwd.squeeze()[:, -1, ...], "(x0 x1) h -> h x0 x1", x0=cfg.p, x1=cfg.p)[:n_neurons][
+        :, :slice, :slice
+    ],
+    path=f"figs/ffwd_{slice}_{n_neurons}.svg",
+)
+
+
+# %% Training curves
+left = esch.EdgeConfig(label="Task", show_on="first")
+right = esch.EdgeConfig(ticks=[(i, str(prime.item())) for i, prime in enumerate(task.primes)], show_on="first")  # type: ignore
+top = esch.EdgeConfig(ticks=[(0, "1"), (100, f"{cfg.epochs:g}")], show_on="first", label="Time")
+edge = esch.EdgeConfigs(right=right, top=top, left=left)
+esch.plot(metrics.train.acc[: cfg.epochs // 2 : cfg.epochs // 100 // 2].T, edge=edge, path="figs/train_acc.svg")
+esch.plot(metrics.valid.acc[: cfg.epochs // 2 : cfg.epochs // 100 // 2].T, edge=edge, path="figs/valid_acc.svg")
+
+# %%
+# U, S, V = jnp.linalg.svd(state.params.embeds.pos_emb)
+# U.round(1)
+tmp = state.params.embeds.pos_emb.round(3)

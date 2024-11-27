@@ -1116,13 +1116,13 @@ files = [
 
 [[package]]
 name = "esch"
-version = "0.5.1"
+version = "0.5.3"
 description = "esch (v.) : to turn matricies into high quality svg (animations)"
 optional = false
 python-versions = "<3.12,>=3.11"
 files = [
-    {file = "esch-0.5.1-py3-none-any.whl", hash = "sha256:ca932b0a4aa387aba23704b20d670e812c874aa9d9292d72c4301bc063d4e443"},
-    {file = "esch-0.5.1.tar.gz", hash = "sha256:42307807df1ceaa3f9024c074f92646d0074c16428fa7cd742dbed1b4e7b7699"},
+    {file = "esch-0.5.3-py3-none-any.whl", hash = "sha256:a74ba2b9513e6c67c3aea055667f557f526463f123edac9c4f4d6521dd5a383b"},
+    {file = "esch-0.5.3.tar.gz", hash = "sha256:be5a5e2ac9ebe11430c63e70268ef64779d7bef72d1803e47d16c0b75e278965"},
 ]
 
 [package.dependencies]
@@ -4183,4 +4183,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.11,<3.12"
-content-hash = "6ff060a6795a058171f05743136f719dcd849e8abf4d93f04a14e9b94169d91d"
+content-hash = "33db4c2ed6d26de223a7ac8a516f60aa9acf11490d2d9dd3228a0a24c4830af1"

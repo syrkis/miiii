@@ -3,7 +3,8 @@
 #import "@preview/unify:0.6.1": num // <- for making numbers look nice
 
 
-#let f_hash = "4a98603ba79c4ed2895f9670"
+#let b_hash = "41e20b3a4790402f8a5be458"
+#let f_hash = "0aacbd66fd4a49da86574cc3"
 #let p_hash = "0c848c1444264cbfa1a4de6e"
 #show: equate.with(breakable: true, sub-numbering: true)
 #set math.equation(numbering: "(1.1)", supplement: "Eq.")
@@ -50,6 +51,16 @@ Indeed, the increasing prevalence of DL can be understood as a transition from s
 
 Mathematically, DL refers to a set of methods that combine linear maps (matrix multiplications) with non-linearities (activation functions). Formally, all the potential numerical values of a given model's weights $W$ can be thought of as a hypothesis space $cal(H)$. Often, $cal(H)$ is determined by human decisions (number of layers, kinds of layers, sizes of layers, etc.). $cal(H)$ is then navigated using some optimization heuristic, such as gradient descent, in hope of finding a $W$ that "performs well" (i.e., successfully minimizes some loss $cal(L)$ computed by a differentiable function) on whatever training data we have. This vast hypothesis space, while enabling impressive performance and the solving of relatively exotic#footnote[Try manually writing a function in a language of your choice that classifies dogs and cats from images.] tasks, makes it challenging to understand how any particular solution actually works.
 
+#figure(
+  stack(
+    dir: ttb,
+    image("figs/" + f_hash + "/acc_valid_training.svg"),
+    // image("figs/" + f_hash + "/acc_valid_training.svg"),
+  ),
+  caption: [Visualization of the validation accuracy for all 29 tasks through training (log) time. Notice the first (top) four tasks are generalized in succession, with the rest occurring around the same time, as if by phase-transition.],
+)<trainig_loss_tio>
+
+
 The ways in which a given model can minimize $cal(L)$ can be placed on a continuum: on one side, we have overfitting (remembering the training data, or functioning as an archive akin to lossy and even lossless compression), and on the other, we have generalizing (learning the rules that govern the relationship between input and output, or functioning as an algorithm).
 
 When describing a mechanistic explanation for a given DL model, generalization is a necessary (though insufficient) condition. Generalization ensures that there _is_ an algorithm present to be uncovered; however, it is possible for that algorithm to be so obscurely implemented that reverse engineering, for all intents and purposes, is impossible. Various tricks, known as "regularization," exist to incentivize the emergence of algorithmic rather than archiving behavior. @ba2016, @krizhevsky2017, @krogh1991. As will be covered in @related_works, the mechanistic interpretability (MI) literature has, despite its nascent state, already established some conventions and successes. Circuits solving basic algorithmic tasks have been successfully reverse-engineered @nanda2023, and aspects of this workflow have been automated @conmy2023.
@@ -74,14 +85,6 @@ $
 $<miiii_task>
 
 $cal(T)_("miiii")$ thus differentiates itself from $cal(T)_("nanda")$ in two significant ways: _1)_ it is non-commutative, and _2)_ it is multitask. These differences present unique challenges for mechanistic interpretation, as the model must learn to handle both the order-dependent nature of the inputs and develop shared representations across multiple modular arithmetic tasks. Further, $cal(T)_("miiii")$ is harder than $cal(T)_("nanda")$ the model does not generalize when trained in the same way. Therefore, #cite(<lee2024a>, form:"prose")'s recent work on making generalization happen quicker, by positing the gradients through time can be viewed as the sum a slow varying generalizing component (which is boosted) and a quick varying overfitting component (which is muted), was (successfully) replicated to make training tractable.
-
-#figure(
-  stack(
-    dir: ttb,
-    image("figs/" + f_hash + "/acc_valid_training.svg"),
-  ),
-  caption: [Visualization of the validation accuracy for all 29 tasks through training (log) time. Notice the first (top) four tasks are generalized in succession, with the rest occurring around the same time, as if by phase-transition.],
-)<trainig_loss_tio>
 
 
 More generally, modular arithmetic on primes is a particularly useful task for MI as it ensures uniformity among the output classes, allows for comparison with other MI work, and, from a number-theoretic point of view, primes contain mysteries ranging from the trivially solved—are there an infinite number of primes?—to the deceptively difficult—can all even numbers larger than 4 be described as the sum of two primes? The latter, known as Goldbach's Conjecture, remains unsolved after centuries. The choice of using every prime less than the square root of the largest number of the dataset, also serves the following purpose: to test if a given natural number is prime, it suffices to test that it is not a multiple of any prime less than its square root—the set of tasks trained for here, can thus be viewed in conjunction as a single prime detection task (primes are the only samples whose target vector is the zero vector).
@@ -342,11 +345,6 @@ This analysis helps identify the dominant frequencies in the model's computation
 
 The default basis of the one-hot encoded representation of the input is thus the identity matrix. This can be projected into a Fourier basis by multiplying with the discrete Fourier transform (DFT) matrix visualized in @dft.
 
-#figure(
-  image("figs/real_dft.svg"),
-  caption: [DFT matrix],
-)<dft>
-
 
 // We track how representations evolve through the network by:
 // - Visualizing activation matrices at each layer
@@ -400,7 +398,7 @@ Notably, the model never converges when $lambda = 0$, thus confirming the utilit
 Setting dropout to 0 results in performance on the validation set to diverge (overfitting) in spite of the heavy regularization used.
 
 
-As seen in figures @trainig_acc and @trainig_loss, the model grokked on all 29 tasks, achieving perfect accuracy on all 29 tasks on the validation and test sets. Note that tasks 2, 3, 5 and 7 generalize succeeding one another, while the rest happen more or less simultaneously after the initial four. This could indicate that a more general solution has been found, allowing for a sort of phase transition for the remaining tasks by reusing circuitry developed through the first four.
+As seen in figures @trainig_acc and @training_loss, the model grokked on all 29 tasks, achieving perfect accuracy on all 29 tasks on the validation and test sets. Note that tasks 2, 3, 5 and 7 generalize succeeding one another, while the rest happen more or less simultaneously after the initial four. This could indicate that a more general solution has been found, allowing for a sort of phase transition for the remaining tasks by reusing circuitry developed through the first four.
 
 #figure(
   table(
@@ -421,14 +419,6 @@ As seen in figures @trainig_acc and @trainig_loss, the model grokked on all 29 t
 )<hyper_param_search_result>
 
 
-#figure(
-  stack(
-    dir: ttb,
-    image("figs/" + f_hash + "/loss_train_training.svg"),
-    image("figs/" + f_hash + "/loss_valid_training.svg"),
-  ),
-  caption: [Representation of training and validation loss ($x$-axis is in log scale).],
-)<trainig_loss>
 
 #figure(
   stack(
@@ -438,6 +428,23 @@ As seen in figures @trainig_acc and @trainig_loss, the model grokked on all 29 t
   ),
   caption: [Representation of training and validation acc ($x$-axis is in log scale).],
 )<trainig_acc>
+
+#figure(
+  stack(
+    image("figs/41e20b3a4790402f8a5be458/acc_train_training.svg"),
+    image("figs/41e20b3a4790402f8a5be458/acc_valid_training.svg"),
+  ),
+  caption: [Representation of training and validation acc with dropout disabled],
+)<bad_training_acc>
+
+#figure(
+  stack(
+    dir: ttb,
+    image("finding.svg", width: 110%),
+    image("finding2.svg", width: 110%),
+  ),
+  caption: [Representation of active frequencies (as per the FFT) of the transformer block neurons throught training (top). Variance of frequency activations, and number of frequencies about a threshold of $omega > mu + 2 sigma$ (bottom)],
+)<finding>
 
 
 
@@ -623,13 +630,16 @@ These findings contribute to our understanding of mechanistic interpretability i
 
   // Training plot of model trained on $cal(T)_"miiii"$ without dropout.
 
+  == Training loss <training_loss>
   #figure(
     stack(
-      image("figs/41e20b3a4790402f8a5be458/acc_train_training.svg"),
-      image("figs/41e20b3a4790402f8a5be458/acc_valid_training.svg"),
+      dir: ttb,
+      image("figs/" + f_hash + "/loss_train_training.svg"),
+      image("figs/" + f_hash + "/loss_valid_training.svg"),
     ),
-    caption: [Accuracy for run with dropout disabled],
+    caption: [Representation of training and validation loss ($x$-axis is in log scale).],
   )
+
 
 
   #figure(
@@ -676,6 +686,15 @@ These findings contribute to our understanding of mechanistic interpretability i
 
   #pagebreak()
 
+  = Discrete Fourier transform (DFT) matrix<dft>
+
+  #figure(
+    image("figs/real_dft.svg"),
+    caption: [DFT matrix],
+  )
+
+
+  #pagebreak()
 
   = Sub-symbolic implementation of $f(x, y)$<subsymbolic>
 

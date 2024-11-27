@@ -40,7 +40,9 @@ def log_axis_array(arr):
     return arr
 
 
-def plot_run(metrics, ds: mi.tasks.Dataset, cfg: mi.utils.Conf, task: mi.tasks.Task, hash, activations=None):
+def plot_run(
+    metrics, ds: mi.tasks.Dataset, cfg: mi.utils.Conf, task: mi.tasks.Task, hash, activations=None, font_size=12
+):
     os.makedirs(os.path.join(FIGS_DIR, hash), exist_ok=True)
 
     # training and final plots
@@ -48,7 +50,7 @@ def plot_run(metrics, ds: mi.tasks.Dataset, cfg: mi.utils.Conf, task: mi.tasks.T
     _metrics = ["loss", "acc"]
     for s in splits:
         for m in _metrics:
-            plot_training(getattr(getattr(metrics, s), m), s, m, cfg, task, hash)
+            plot_training(getattr(getattr(metrics, s), m), s, m, cfg, task, hash, font_size=font_size)
 
     # plot exploratory plots
     # attention weights. SVD. etc.
@@ -76,7 +78,7 @@ def fourier_analysis(matrix):
     return magnitude_spectrum_centered, freq_activations, significant_freqs
 
 
-def plot_training(metric, split, name, cfg, task, hash):
+def plot_training(metric, split, name, cfg, task, hash, font_size=1.0):
     path = os.path.join(FIGS_DIR, hash, f"{name}_{split}_training.svg")
     # data = metric[:: cfg.epochs // 100].T
     data = log_axis_array(metric)[:, 10:]
@@ -87,7 +89,7 @@ def plot_training(metric, split, name, cfg, task, hash):
     name = f"{split.capitalize()} Accuracy" if name == "acc" else f"{split.capitalize()} Cross Entropy"
     bottom = esch.EdgeConfig(label=name.capitalize(), show_on="all")
     edge = esch.EdgeConfigs(right=right, top=top, left=left, bottom=bottom)
-    esch.plot(data, path=path, edge=edge)
+    esch.plot(data, path=path, edge=edge, font_size=font_size)
 
 
 def plot_final(metric, split, name, cfg, task, hash):
