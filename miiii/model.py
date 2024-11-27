@@ -20,11 +20,10 @@ from typing import Tuple
 initializer = nn.initializers.he_normal()
 
 
-
 # %% Forward
 def apply_fn(cfg: Conf, ds: Dataset, task: Task, eval):
     dropout = 0.0 if eval else cfg.dropout
-    step = partial(block_fn, dropout=dropout)
+    step = jit(partial(block_fn, dropout=dropout))
 
     @jit
     @partial(vmap, in_axes=(None, None, 0))  # type: ignore
