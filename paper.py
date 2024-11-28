@@ -49,7 +49,7 @@ def run_fn(hashes):
 rng = random.PRNGKey(0)
 slice = 37
 m_hash = "d4bfd7f829ed4a398f3b0a54"  # hash of masked miiii
-f_hash = "2bca407ccf414c058e7bcc6e"  # hash of miiii task
+f_hash = "0923141b21704ee59679b51f"  # hash of miiii task
 s_hash = "7c2a10494ff64e66a9af2731"  # shuffled miiii task  10k epochs currently
 p_hash = "0c848c1444264cbfa1a4de6e"  # hash of nanda task
 data = {hash: load_hash(hash) for hash in [f_hash, m_hash, s_hash]}
@@ -135,9 +135,7 @@ freqs = jnp.abs(fft.rfft2(neurs))
 neurs.shape, freqs.shape
 
 # %%
-data = (f_scope.neuron_freqs / f_scope.neuron_freqs.max(1, keepdims=True))[1000 :: 50000 // 226].T
-esch.plot(data)
-# f_scope.neuron_freqs
+esch.plot(f_scope.neuron_freqs[::4].transpose((1, 2, 0)))
 
 # %%
 # f_acts.ffwd.squeeze()[:, -1].shape
