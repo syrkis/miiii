@@ -577,8 +577,8 @@ The analysis of active frequencies _through training_ using the Fast Fourier Tra
 #figure(
   stack(
     dir: ttb,
-    image("figs/" + "omega-series-2.svg"),
-    image("figs/" + "omega-series-3.svg"),
+    image("figs/miiii_large_finding.svg"),
+    image("figs/miiii_small_finding.svg"),
   ),
   caption: [Top: Evolution of active frequencies (as per the FFT) of the transformer block neurons during training. Bottom: Variance of frequency activations and the number of frequencies exceeding the threshold $omega > mu + 2 sigma$.],
 )<finding>

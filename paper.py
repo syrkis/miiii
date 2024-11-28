@@ -122,27 +122,6 @@ def plot_grad_norms(scope, cfg, name):
     # struct
 
 
-def omega_aux(freqs, kernel_size=3, log_scale=False):
-    print(freqs.shape)
-    length = (freqs.shape[1] - 1) * 3
-    epochs = freqs.shape[0]
-    # kernel_size = epochs // length
-    conv = lambda row: jnp.convolve(row, jnp.ones(kernel_size) / kernel_size, mode="valid")  # noqa
-    freq_series = vmap(conv)(jnp.abs(freqs).T)  # smooth this stuff
-    if log_scale:
-        freq_series = mi.plots.log_axis_array(freq_series.T, length)
-    else:
-        freq_series = freq_series[1:, :: epochs // length][..., :length]
-    freq_series /= freq_series.sum(axis=1, keepdims=True)
-
-    freq_variance = freq_series.var(axis=0)
-    freq_active = (freq_series > (freq_series.mean() + freq_series.std())).sum(0)  # noqa
-    # print(freq_active)
-
-    # return the line as well
-    return freq_series, freq_variance, freq_active
-
-
 def omega_series_fn(freqs, fname, log_scale=False):
     # neuron_freqs = omega_aux(neuron_freqs)
 
@@ -186,23 +165,47 @@ def emb_fourier_plots(m, f, s, name):
         esch.plot(f[None, :] ** 2, path=f"paper/figs/fourier_{name}_f.svg")
 
 
-def finding_fn(scope, cfg):
-    m, *_ = omega_aux(scope.neuron_freqs[:, 0], log_scale=True)
+def omega_aux(freqs, kernel_size=3, log_scale=False):
+    print(freqs.shape)
+    length = (freqs.shape[1] - 1) * 3
+    epochs = freqs.shape[0]
+    # kernel_size = epochs // length
+    conv = lambda row: jnp.convolve(row, jnp.ones(kernel_size) / kernel_size, mode="valid")  # noqa
+    freq_series = vmap(conv)(jnp.abs(freqs).T)  # smooth this stuff
+    if log_scale:
+        freq_series = mi.plots.log_axis_array(freq_series.T, length)
+    else:
+        freq_series = freq_series[1:, :: epochs // length][..., :length]
+    freq_series /= freq_series.sum(axis=1, keepdims=True)
+
+    freq_variance = freq_series.var(axis=0)
+
+    freq_active = (freq_series > freq_series.mean() + freq_series.std()).sum(0)
+    # (freq_series > (freq_series.mean() + 1 * freq_series.std())).sum(0)  # noqa
+    # print(freq_active)
+
+    # return the line as well
+    return freq_series, freq_variance, freq_active
+
+
+def finding_fn(scope, cfg, task):
+    m, variance, active = omega_aux(scope.neuron_freqs[:, 0], log_scale=True)
     # omega_series_fn(, "Time", "", fname="omega-series-1")
-    omega_series_fn(m, fname="figs/omega-series-2")
-    tmp = m / m.max(0, keepdims=True)
-    tmp = (tmp > (tmp.mean(0, keepdims=True) + tmp.std(0, keepdims=True))).astype(float).sum(0, keepdims=True) ** 2
+    omega_series_fn(m, fname=f"figs/{task}_large_finding")
+    # tmp = m / m.max(0, keepdims=True)
+    # tmp = (tmp > (tmp.mean(0, keepdims=True) + tmp.std(0, keepdims=True))).astype(float).sum(0, keepdims=True) ** 2
+    tmp = active[None, :] ** 1.5
 
     left = esch.EdgeConfig(label="|{ω}|", show_on=[0])
     bottom = esch.EdgeConfig(label="Time", show_on="all", ticks=[(1, "1"), (56 * 3 - 2, str(cfg.epochs))])
     top = esch.EdgeConfig(
-        ticks=[(i, str(int((tmp.squeeze()[i] ** 0.5).item()))) for i in range(1, 56 * 3, 11)],
+        ticks=[(i, str(int((tmp.squeeze()[i] ** 0.5).item()))) for i in range(1, 56 * 3, 10)],
         show_on="first",
     )
     edge = esch.EdgeConfigs(left=left, bottom=bottom, top=top)
     esch.plot(
         tmp,
-        path="paper/figs/omega-series-3.svg",
+        path=f"paper/figs/{task}_small_finding.svg",
         edge=edge,
         font_size=22,
     )
@@ -218,12 +221,14 @@ def plot_hash(hash, name):
     # emb_svd(state.params, cfg, name)  # type: ignore
     if name not in ["basis", "nanda", "nodro"]:
         # plot_grad_norms(scope, cfg, name)
-        finding_fn(scope, cfg)
+        finding_fn(scope, cfg, name)
     if name not in ["nanda"]:
-        mi.plots.plot_run(metrics, ds, cfg, task, hash, font_size=16, log_axis=True)
+        # mi.plots.plot_run(metrics, ds, cfg, task, hash, font_size=16, log_axis=True)
+        pass
 
 
 plot_hash(miiii_hash, "miiii")
+# plot_hash(masks_hash, "masks")
 # plot_hash(basis_hash, "basis")
 # plot_hash(nanda_hash, "nanda")
 # plot_hash(nodro_hash, "nodro")
