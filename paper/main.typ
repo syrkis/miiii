@@ -3,9 +3,10 @@
 #import "@preview/unify:0.6.1": num // <- for making numbers look nice
 
 
-#let f_hash = "0aacbd66fd4a49da86574cc3"
+#let f_hash = "50115caac50c4fbfa6bce4cc"
 #let s_hash = "7c2a10494ff64e66a9af2731"
 #let p_hash = "0c848c1444264cbfa1a4de6e"
+#let nodro_hash = "c7f717cb50ac4762bd866831"
 #show: equate.with(breakable: true, sub-numbering: true)
 #set math.equation(numbering: "(1.1)", supplement: "Eq.")
 #set raw(align: center)
@@ -461,8 +462,8 @@ As can be seen in @bad_training_acc when dropout was disabled (i.e., set to zero
 
 #figure(
   stack(
-    image("figs/41e20b3a4790402f8a5be458/acc_train_training.svg"),
-    image("figs/41e20b3a4790402f8a5be458/acc_valid_training.svg"),
+    image("figs/" + nodro_hash + "/acc_train_training.svg"),
+    image("figs/" + nodro_hash + "/acc_valid_training.svg"),
   ),
   caption: [Training and validation accuracy with dropout disabled, showing divergence due to overfitting.],
 )<bad_training_acc>
@@ -498,45 +499,50 @@ Recall that a matrix $upright(bold(M))$ of size $m times n$ can be decomposed to
 Figure @s displays the singular values of the token embeddings learned for $cal(T)_"nanda"$ and $cal(T)_"miiii"$. The singular values for $cal(T)_"miiii"$ are more diffuse, indicating that a larger number of components are needed to capture the variance in the embeddings compared to $cal(T)_"nanda"$. This suggests that the token embeddings for $cal(T)_"miiii"$ encode more complex information, reflecting the increased complexity of the multi-task learning scenario.
 
 #figure(
-  image("figs/S.svg"),
+  stack(
+    image("figs/nanda_S.svg"),
+    image("figs/miiii_S.svg"),
+  ),
   caption: [First 83 of 113 singular values (truncated for clarity) of $upright(text(U))$ for $cal(T)_"nanda"$ (top) and $cal(T)_"miiii"$ (bottom). The ticks indicate the points where 50% and 90% of the variance is accounted for.],
 )<s>
 
 Figures @p_U and @f_U present the most significant singular vectors of $upright(text(U))$ for $cal(T)_"nanda"$ and $cal(T)_"miiii"$, respectively. Visual inspection shows periodicity in the top vectors for both models, but the $cal(T)_"miiii"$ model requires more vectors to capture the same amount of variance, consistent with the diffuse singular values observed.
 
 
-To further understand the structure of the token embeddings, we applied the Fast Fourier Transform (FFT). Figure @p_f shows the Fourier spectrum of the token embeddings for the $cal(T)_"nanda"$ model. Only a few frequencies are particularly active, consistent with the model implementing a cosine-sine lookup table as described in #cite(<nanda2023>, form:"prose").
+To further understand the structure of the token embeddings, we applied the Fast Fourier Transform (FFT). Figure @f_f shows the Fourier spectrum of the token embeddings for the $cal(T)_"nanda"$ model. Only a few frequencies are particularly active, consistent with the model implementing a cosine-sine lookup table as described in #cite(<nanda2023>, form:"prose").
 
 For the $cal(T)_"miiii"$ model, we observe a broader spectrum of active frequencies (Figure @f_f). This is expected due to the model having to represent periodicity corresponding to multiple primes. Comparing with a randomly initialized baseline, the periodicity remains apparent, reinforcing that these patterns result from the learned representations rather than initialization.
 
 
+// #figure(
+//   stack(
+//     dir: ttb,
+//     image("figs/fourier_f_m.svg"),
+//     image("figs/fourier_f_f.svg"),
+//     image("figs/fourier_r_m.svg"),
+//     image("figs/fourier_r_f.svg"),
+//   ),
+//   caption: [Fourier spectrum of the token embeddings $W_"E_t"$ for $cal(T)_"miiii"$ (top two plots) and $cal(T)_"basis"$, with row norms below each.],
+// )<f_f>
+
 #figure(
   stack(
     dir: ttb,
-    image("figs/fourier_f_m.svg"),
-    image("figs/fourier_f_f.svg"),
-    image("figs/fourier_r_m.svg"),
-    image("figs/fourier_r_f.svg"),
+    image("figs/fourier_miiii_m.svg"),
+    image("figs/fourier_miiii_f.svg"),
+    image("figs/fourier_basis_m.svg"),
+    image("figs/fourier_basis_f.svg"),
   ),
-  caption: [Fourier spectrum of the token embeddings $W_"E_t"$ for $cal(T)_"miiii"$ (top two plots) and $cal(T)_"basis"$, with row norms below each.],
+  caption: [Fourier spectrum of the token embeddings $W_"E_t"$ for $cal(T)_"nanda"$, with row norms below.],
 )<f_f>
 
 #figure(
-  stack(
-    dir: ttb,
-    image("figs/fourier_p_m.svg"),
-    image("figs/fourier_p_f.svg"),
-  ),
-  caption: [Fourier spectrum of the token embeddings $W_"E_t"$ for $cal(T)_"nanda"$, with row norms below.],
-)<p_f>
-
-#figure(
-  image("figs/p_U.svg"),
+  image("figs/nanda_U.svg"),
   caption: [Most significant singular vectors of $upright(text(U))$ for $cal(T)_"nanda"$.],
 )<p_U>
 
 #figure(
-  image("figs/f_U.svg"),
+  image("figs/miiii_U.svg"),
   caption: [Most significant singular vectors of $upright(text(U))$ for $cal(T)_"miiii"$.],
 )<f_U>
 
@@ -582,7 +588,7 @@ However, we observe that significant frequencies appear after generalization has
 @l2_norms shows the L2 norms of gradients through time for the different weight matrices of the model trained on $cal(T)_"miiii"$. The gradient norms provide insights into how different parts of the model are being updated during training. Like with #cite(<nanda2023>, form:"prose", style:"american-psychological-association"), the attention layer converges quickly, echoing their finding that it does not contribute much to solving their modular eritmetic task.
 
 #figure(
-  image("figs/grads_norms.svg"),
+  image("figs/grads_norms_miiii.svg"),
   caption: [L2 norms of gradients over time for the different weight matrices of the model trained on $cal(T)_"miiii"$.],
 )<l2_norms>
 

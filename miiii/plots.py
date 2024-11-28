@@ -26,7 +26,7 @@ FIGS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../paper/fi
 
 
 # %% functions
-def log_axis_array(arr):
+def log_axis_array(arr, length=100):
     # array is (time, task)
     # out put will be (task, 100)
     # we get to 100 by doing [:: cfg.epochs // 100]
@@ -34,7 +34,7 @@ def log_axis_array(arr):
     arr = arr.T  # make it (task, time)
     # step_size = arr.shape[1] // 100
     # create log-spaced indices
-    log_indices = np.logspace(0, np.log10(arr.shape[1]), 100, dtype=int) - 1
+    log_indices = np.logspace(0, np.log10(arr.shape[1]), length, dtype=int) - 1
     log_indices = np.clip(log_indices, 0, arr.shape[1] - 1)
     arr = arr[:, log_indices]
     return arr
@@ -107,13 +107,13 @@ def plot_training(metric, split, name, cfg, task, hash, font_size=1.0, log_axis=
     left = esch.EdgeConfig(label="Task", show_on="first")
     ticks = [(i, str(prime.item())) for i, prime in enumerate(task.primes) if i % 2 == 0]
     right = esch.EdgeConfig(ticks=ticks, show_on="all")  # type: ignore
-    top = esch.EdgeConfig(
+    bottom = esch.EdgeConfig(
         ticks=[(0, "1"), (90 - 1, f"{cfg.epochs:g}")],
         show_on="first",
         label=f"Time ({'log' if log_axis else 'linear'})",
     )
     name = f"{split.capitalize()} Accuracy" if name == "acc" else f"{split.capitalize()} Cross Entropy"
-    bottom = esch.EdgeConfig(label=name.capitalize(), show_on="all")
+    top = esch.EdgeConfig(label=name.capitalize(), show_on="all")
     edge = esch.EdgeConfigs(right=right, top=top, left=left, bottom=bottom)
     esch.plot(data, path=path, edge=edge, font_size=font_size)
 

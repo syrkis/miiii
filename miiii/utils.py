@@ -265,11 +265,17 @@ def get_metrics_and_params(hash, task_span="factors"):
 
             # Check if the file already exists before downloading
             if not os.path.exists(file_path):
-                run.artifacts[f"{thing}_{task_type}_{task_span}.pkl"].download(hash_run_dir)  # type: ignore
+                try:
+                    run.artifacts[f"{thing}_{task_type}_{task_span}.pkl"].download(hash_run_dir)  # type: ignore
+                except:  # noqa
+                    print(f"Could not download {thing}_{task_type}_{task_span}.pkl")
 
             # Load the file content
-            with open(file_path, "rb") as f:
-                outs[thing] = pickle.load(f)
+            if os.path.exists(file_path):
+                with open(file_path, "rb") as f:
+                    outs[thing] = pickle.load(f)
+            else:
+                continue
 
         state: State = outs["state"]  # type: ignore
         metrics: Metrics = outs["metrics"]  # type: ignore
