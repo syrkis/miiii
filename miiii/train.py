@@ -101,10 +101,10 @@ def train(rng, cfg: Conf, ds: Dataset, task: Task, scope=False) -> Tuple[State, 
 def evaluate_fn(ds: Dataset, task: Task, cfg: Conf, apply):
     scope = scope_fn(ds, cfg, apply)
 
-    @jit
-    @partial(vmap, in_axes=((1, 1) if task.span == "factors" else (None, None)))
     def acc_fn(y_pred, y_true):
         return (y_pred == y_true).mean()
+
+    acc_fn = vmap(acc_fn, in_axes=(1, 1)) if task.span == "factors" else acc_fn
 
     @jit
     def evaluate(params, grads, train_loss, train_acts):
