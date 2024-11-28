@@ -30,7 +30,8 @@
   ),
   abstract: [
     This paper investigates how neural networks learn to solve multiple related mathematical tasks simultaneously, through the lens of mechanistic interpretability (MI). A transformer model is trained on 29 parallel tasks, each requiring the prediction of remainders when dividing two-digit base-113 numbers—as has been the domain of previous MI work @nanda2023—by all potential prime factors less than 113. This setup naturally creates a spectrum of task complexity, from binary classification (division by 2) to 109-way classification (division by 109). Analysis of the model's learned representations indicates that after independently solving the first four tasks (mod 2, 3, 5, and 7), the model develops a shared computational strategy that enables rapid generalization to the remaining 25 tasks.
-    Additionally, findings @lee2024a that show amplifying slow-moving gradients significantly accelerates this generalization process, are reproduced. Our results provide insights into how neural networks discover and implement mathematical algorithms, particularly when learning multiple related tasks of varying complexity.
+    Additionally, findings @lee2024a that show amplifying slow-moving gradients significantly accelerates this generalization process, are reproduced. The results provide insights into how neural networks discover and implement mathematical algorithms, particularly when learning multiple related tasks of varying complexity.
+    Specifically, a phase transition _after_ generalization in which circuits merge is indicated, encouraging the community to explore this phenomnon.
     Project repo is https://github.com/syrkis/miiii.
   ],
 )
@@ -43,6 +44,11 @@
 }
 
 // body ///////////////////////////////////////////////////////////////////////
+//
+// TODO: LABEL PLOTS OR DIE
+// - In intro explain it to a 4 year old baby.
+// - Concepts.
+// - add tables.
 
 = Introduction
 
@@ -326,6 +332,8 @@ where $e_t$ is the exponential moving average of gradients with decay rate $alph
 
 Training uses full batch gradient descent with the entire dataset of $p^2$ samples (#num(12769) when $p=113$). The model is evaluated on a held-out validation set after each epoch, tracking per-task accuracy and loss. As the setup used in $cal(T)_"nanda"$, training was done on thirty percent of the total dataset, with the remaining used for validation (1000 samples) and testing (remaining). Further as $cal(T)_"miiii"$ involves the learning of 29 (when $p=113$) tasks rather then 1, and due to each task's non-commutativity, a larger hidden dimension of 256 was added to the hyper parameter search space, as well as the potential for 8 heads ($cal(T)_"nanda"$ was solved with a hidden dimension of 128, and 4 heads). The number of transformer blocks was kept at 1, as this ensures consistency with $cal(T)_"nanda"$ (and as full generalization was possible, as we shall see in the results).
 
+Training was done on a NVIDIA GeForce RTX 4090 GPU, with Python3.11 and extensive use of "JAX 0.4.35" and it's assocaited ecosystem.
+Neuron activations were calculated at every training step, and logged for later analysis.
 
 == Visualization
 
@@ -471,50 +479,6 @@ As can be seen in @bad_training_acc when dropout was disabled (i.e., set to zero
 
 
 
-== Analysis of Neuron Activations and Frequencies
-
-To understand the internal mechanisms developed by the model, we analyzed the neuron activations after the output weight matrix $W_"out"$ for the model trained on $cal(T)_"miiii"$. Figure @miiii_neurons shows that these activations exhibit periodic patterns with respect to $(x_0, x_1)$. This periodicity aligns with the modular arithmetic nature of the tasks, mirrors #cite(<nanda2023>, form:"prose", style:"american-psychological-association") ($cal(T)_"nanda"$).
-
-#figure(
-  stack(
-    dir: ttb,
-    image(f_hash + "_tmp_1.svg"),
-    image(f_hash + "_astrid.svg"),
-  ),
-  caption: [Neuron activations after $W_"out"$ for the model trained on $cal(T)_"miiii"$ (top), with corresponding Fourier transforms below. The activations demonstrate periodicity in $(x_0, x_1)$.],
-)<miiii_neurons>
-
-For comparison, Figure @basis_neurons shows the neuron activations for a model trained on $cal(T)_"basis"$. These activations do _not_ exhibit periodicity, confirming that the observed periodic patterns in the models trained for $cal(T)_"miiii"$ and $cal(T)_"nanda"$ are indeed a result of the moduli operations inherent in the tasks.
-
-#figure(
-  stack(
-    dir: ttb,
-    image(s_hash + "_tmp_1.svg"),
-    image(s_hash + "_astrid.svg"),
-  ),
-  caption: [Neuron activations after $W_"out"$ for the model trained on $cal(T)_"basis"$ (top), with corresponding Fourier transforms below. The absence of periodicity contrasts with the activations in Figure @miiii_neurons, emphasizing the influence of the mod operator in $cal(T)_"miiii"$.],
-)<basis_neurons>
-
-The analysis of active frequencies _through training_ using the Fast Fourier Transform (FFT) is illustrated in Figure @finding. The top plot shows the different frequencies of the transformer block's MLP neurons evolving as the model learns. The bottom plot displays the variance of frequency activations and the number of frequencies exceeding a significance threshold $omega > mu + 2 sigma$ (i.e., which spots like the ones of the bottom row of @miiii_neurons are active). Initially, a handful of frequencies become dominant as the model generalizes on the first four tasks. As training progresses and the model begins to generalize on the remaining tasks, more frequencies become significant, suggesting that the model is developing more complex internal representations to handle the additional tasks.
-
-#figure(
-  stack(
-    dir: ttb,
-    image("omega-series-1.svg"),
-    image("figs/omega.svg"),
-  ),
-  caption: [Top: Evolution of active frequencies (as per the FFT) of the transformer block neurons during training. Bottom: Variance of frequency activations and the number of frequencies exceeding the threshold $omega > mu + 2 sigma$.],
-)<finding>
-
-However, we observe that significant frequencies appear after generalization has occurred, which may suggest the presence of another phase following grokking in the context of multi-task learning. This could be indicative of circuit merging or the integration of task-specific circuits into a more general solution.
-
-@l2_norms shows the L2 norms of gradients through time for the different weight matrices of the model trained on $cal(T)_"miiii"$. The gradient norms provide insights into how different parts of the model are being updated during training. Like with #cite(<nanda2023>, form:"prose", style:"american-psychological-association"), the attention layer converges quickly, echoing their finding that it does not contribute much to solving their modular eritmetic task.
-
-#figure(
-  image("figs/grads_norms.svg"),
-  caption: [L2 norms of gradients over time for the different weight matrices of the model trained on $cal(T)_"miiii"$.],
-)<l2_norms>
-
 
 == Embeddings
 
@@ -540,19 +504,22 @@ Figure @s displays the singular values of the token embeddings learned for $cal(
 
 Figures @p_U and @f_U present the most significant singular vectors of $upright(text(U))$ for $cal(T)_"nanda"$ and $cal(T)_"miiii"$, respectively. Visual inspection shows periodicity in the top vectors for both models, but the $cal(T)_"miiii"$ model requires more vectors to capture the same amount of variance, consistent with the diffuse singular values observed.
 
-#figure(
-  image("figs/p_U.svg"),
-  caption: [Most significant singular vectors of $upright(text(U))$ for $cal(T)_"nanda"$.],
-)<p_U>
-
-#figure(
-  image("figs/f_U.svg"),
-  caption: [Most significant singular vectors of $upright(text(U))$ for $cal(T)_"miiii"$.],
-)<f_U>
 
 To further understand the structure of the token embeddings, we applied the Fast Fourier Transform (FFT). Figure @p_f shows the Fourier spectrum of the token embeddings for the $cal(T)_"nanda"$ model. Only a few frequencies are particularly active, consistent with the model implementing a cosine-sine lookup table as described in #cite(<nanda2023>, form:"prose").
 
 For the $cal(T)_"miiii"$ model, we observe a broader spectrum of active frequencies (Figure @f_f). This is expected due to the model having to represent periodicity corresponding to multiple primes. Comparing with a randomly initialized baseline, the periodicity remains apparent, reinforcing that these patterns result from the learned representations rather than initialization.
+
+
+#figure(
+  stack(
+    dir: ttb,
+    image("figs/fourier_f_m.svg"),
+    image("figs/fourier_f_f.svg"),
+    image("figs/fourier_r_m.svg"),
+    image("figs/fourier_r_f.svg"),
+  ),
+  caption: [Fourier spectrum of the token embeddings $W_"E_t"$ for $cal(T)_"miiii"$ (top two plots) and $cal(T)_"basis"$, with row norms below each.],
+)<f_f>
 
 #figure(
   stack(
@@ -564,17 +531,68 @@ For the $cal(T)_"miiii"$ model, we observe a broader spectrum of active frequenc
 )<p_f>
 
 #figure(
+  image("figs/p_U.svg"),
+  caption: [Most significant singular vectors of $upright(text(U))$ for $cal(T)_"nanda"$.],
+)<p_U>
+
+#figure(
+  image("figs/f_U.svg"),
+  caption: [Most significant singular vectors of $upright(text(U))$ for $cal(T)_"miiii"$.],
+)<f_U>
+
+
+
+== Analysis of Neuron Activations and Frequencies
+
+To understand the internal mechanisms developed by the model, we analyzed the neuron activations after the output weight matrix $W_"out"$ for the model trained on $cal(T)_"miiii"$. Figure @miiii_neurons shows that these activations exhibit periodic patterns with respect to $(x_0, x_1)$. This periodicity aligns with the modular arithmetic nature of the tasks, mirrors #cite(<nanda2023>, form:"prose", style:"american-psychological-association") ($cal(T)_"nanda"$).
+
+#figure(
   stack(
     dir: ttb,
-    image("figs/fourier_f_m.svg"),
-    image("figs/fourier_f_f.svg"),
-    image("figs/fourier_r_m.svg"),
-    image("figs/fourier_r_f.svg"),
+    image("figs/neurs_113_miiii.svg"),
+    image("figs/neurs_113_miiii_fft.svg"),
   ),
-  caption: [Fourier spectrum of the token embeddings $W_"E_t"$ for $cal(T)_"miiii"$ (top two plots) and a random matrix initialized as per #cite(<he2015>) of the same shape (bottom two plots), with row norms below each.],
-)<f_f>
+  caption: [Neuron activations after $W_"out"$ for the model trained on $cal(T)_"miiii"$ (top), with corresponding Fourier transforms below. The activations demonstrate periodicity in $(x_0, x_1)$.],
+)<miiii_neurons>
+
+For comparison, Figure @basis_neurons shows the neuron activations for a model trained on $cal(T)_"basis"$. These activations do _not_ exhibit periodicity, confirming that the observed periodic patterns in the models trained for $cal(T)_"miiii"$ and $cal(T)_"nanda"$ are indeed a result of the moduli operations inherent in the tasks.
+
+#figure(
+  stack(
+    dir: ttb,
+    image("figs/neurs_113_basis.svg"),
+    image("figs/neurs_113_basis_fft.svg"),
+  ),
+  caption: [Neuron activations after $W_"out"$ for the model trained on $cal(T)_"basis"$ (top), with corresponding Fourier transforms below. The absence of periodicity contrasts with the activations in Figure @miiii_neurons, emphasizing the influence of the mod operator in $cal(T)_"miiii"$.],
+)<basis_neurons>
+
+The analysis of active frequencies _through training_ using the Fast Fourier Transform (FFT) is illustrated in Figure @finding. The top plot shows the different frequencies of the transformer block's MLP neurons evolving as the model learns. The bottom plot displays the variance of frequency activations and the number of frequencies exceeding a significance threshold $omega > mu + 2 sigma$ (i.e., which spots like the ones of the bottom row of @miiii_neurons are active). Initially, a handful of frequencies become dominant as the model generalizes on the first four tasks. As training progresses and the model begins to generalize on the remaining tasks, more frequencies become significant, suggesting that the model is developing more complex internal representations to handle the additional tasks.
+
+#figure(
+  stack(
+    dir: ttb,
+    image("figs/" + "omega-series-2.svg"),
+    image("figs/" + "omega-series-3.svg"),
+  ),
+  caption: [Top: Evolution of active frequencies (as per the FFT) of the transformer block neurons during training. Bottom: Variance of frequency activations and the number of frequencies exceeding the threshold $omega > mu + 2 sigma$.],
+)<finding>
+
+However, we observe that significant frequencies appear after generalization has occurred, which may suggest the presence of another phase following grokking in the context of multi-task learning. This could be indicative of circuit merging or the integration of task-specific circuits into a more general solution.
+
+@l2_norms shows the L2 norms of gradients through time for the different weight matrices of the model trained on $cal(T)_"miiii"$. The gradient norms provide insights into how different parts of the model are being updated during training. Like with #cite(<nanda2023>, form:"prose", style:"american-psychological-association"), the attention layer converges quickly, echoing their finding that it does not contribute much to solving their modular eritmetic task.
+
+#figure(
+  image("figs/grads_norms.svg"),
+  caption: [L2 norms of gradients over time for the different weight matrices of the model trained on $cal(T)_"miiii"$.],
+)<l2_norms>
 
 These results demonstrate that more frequencies are involved when training on $cal(T)_"miiii"$ compared to $cal(T)_"nanda"$. The increased frequency components reflect the need for the model to encode multiple periodic patterns corresponding to the various modular arithmetic tasks.
+
+Combining the anaysis of embeddings and the transformer block neurons, we see that:
+1. A lot more frequencies are in play for $cal(T)_"miiii"$ than in $cal(T)_"nanda"$.
+2. Each individual neuron i still higly reactive to a very small set of frequencies.
+3. The reactivity is confirmed to be an artificat of the moduli group by analysis of $cal(T)_"basis"$
+
 
 == Attention Patterns
 
@@ -585,7 +603,7 @@ In contrast to the model trained on $cal(T)_"nanda"$, where attention heads may 
   caption: [Attention from $hat(y)$ to $x_0$ for the four attention heads in the $cal(T)_"miiii"$ model. The attention heads tend to focus on one digit, reflecting the non-commutative nature of the task.],
 )<attention_heads>
 
-Overall, our results demonstrate that the model effectively learns to solve multiple modular arithmetic tasks by developing internal representations that capture the periodic nature of these tasks. The analysis of embeddings and neuron activations provides insights into how the model generalizes from simpler to more complex tasks, possibly through the reuse and integration of learned circuits.
+Overall, our results demonstrate that the model effectively learns to solve multiple modular arithmetic tasks by developing internal representations that capture the periodic nature of these tasks. The analysis of embeddings and neuron activations provides insights into how the model generalizes from simpler to more complex tasks, possibly through the reuse and integration of learned circuits. Interestingly, circuits seem to merge only _after_ generalization on all tasks, indicating a post grokking phaseshift.
 
 = Discussion
 
@@ -599,11 +617,18 @@ Interstingly, the number of active frequencies for the first four tasks is simil
 
 However, inspecting when generalization happens, and when significant frequencies appear in the neuron space, we see that frequencies appear AFTER generalization. This could be an indication that there exists another phase after grokking in the case of multi task learning, i.e. task circuit merging. A sort of syzygy of circuits.
 
+A limitation of the work is that inspite of increasing model size and epoch count for $cal(T)_"miiii"$ compared to that used of #cite(<nanda2023>, form:"prose"), the late stage circuit merger is only subtley visible (could be solved by increasing epoch count an order of magnitude, but is computationally intractable with the resources used to run the experiemnts of this paper.).
+
 = Further work
+
+
+A logical next step would be to further explore post grokking phase transitions, and todo so for bigger models, on tasks where such phase transtions could be expected to exists: i.e. tasks that involve the repeasted use of the same functions, were they to be implemented functionally.
 
 Several promising directions emerge from this work. First, our observation that circuits developed for initial tasks are later reused suggests a novel approach to accelerating learning: by identifying and amplifying these emergent circuits early in training, we might extend #cite(<lee2024a>, form:"prose", style:"american-psychological-association")'s gradient-based acceleration techniques. While their method amplifies slow-moving components of the gradient signal uniformly, targeted amplification of specific emerging circuits could provide even greater speedups.
 
 // Second, the relationship between model capacity and prime size remains unexplored. How does a model trained on remainders modulo primes less than $p$ perform when tested on primes less than some larger $q$? This question connects to fundamental issues in neural network generalization and could provide insights into how these models encode mathematical concepts.
+
+Would be cool to remove the attention path entirely, and test with pure MLP.
 
 Second, the choice between predicting remainders versus binary divisibility presents an interesting trade-off. While remainder prediction requires more output neurons, it might provide richer gradient signals during training. A systematic comparison of these approaches could yield practical insights for training mathematical neural networks.
 
