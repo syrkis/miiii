@@ -78,18 +78,11 @@ As of yet, no MI work has explored the effect of multitask learning, the focus o
 
 // weights $W$ in $cal(H)$ that perform well across tasks are more likely to be general. #cite(<baxter2011>, form:"prose") refers to the set of hypotheses spaces for the different tasks in a given environment of tasks as $cal(H) in HH$. A $W$ performing well across tasks can thus be thought of as the intersection of the hypotheses spaces across $HH$..
 
-In this spirit, the present paper builds on the work of #cite(<nanda2023>, form:"prose", style:"american-anthropological-association"), which trains a transformer @vaswani2017 model to perform modular addition, as seen in @nanda_task, as task denoted as $cal(T)_"nanda"$ throughout the paper.
+In this spirit, the present paper builds on the work of #cite(<nanda2023>, form:"prose", style:"american-psychological-association"), which trains a transformer @vaswani2017 model to perform modular addition, as seen in @nanda_task, as task denoted as $cal(T)_"nanda"$ throughout the paper.
 
 $
   (x_0 + x_1) mod p, quad forall x_0, x_1 < p, quad p = 113
 $<nanda_task>
-
-#figure(
-  image("figs/polar.svg", width: 120%),
-  caption: [
-    Periodic patterns in polar coordinates $(n, n mod tau)$ for numbers less than #num(12769). Left: numbers with remainder 0 mod 17 or 23 (see the two spirals). Middle: numbers with remainder 0 mod 11. Right: prime numbers.
-  ],
-)<nats>
 
 
 The task of this paper focuses on predicting remainders modulo all primes $q$ less than $p$, where $x$ is interpreted as $x_0 p^0 + x_1 p^1$, formally shown in @miiii_task, and is referred to as $cal(T)_("miiii")$:
@@ -106,7 +99,14 @@ $
   ) mod q, quad forall x_0, x_1 < p, quad forall q < p, quad p = 113
 $<miiii_task>
 
-$cal(T)_("miiii")$ differentiates itself from $cal(T)_("nanda")$ in two significant ways: _1)_ it is non-commutative, and _2)_ it is, as mentioned, multitask. These differences present unique challenges for mechanistic interpretation, as the model must learn to handle both the order-dependent nature of the inputs and develop shared representations across multiple modular arithmetic tasks. Further, as $cal(T)_("miiii")$ is harder than $cal(T)_("nanda")$ the model can be expected to generalize slower when trained on the former. Therefore, #cite(<lee2024a>, form:"prose", style:"american-anthropological-association")'s recent work on speeding up generalization, by positing the model parameters gradients through time can be viewed as the sum a slow varying generalizing component (which is boosted) and a quick varying overfitting component (which is suppressed), was (successfully) replicated to make training tractable.
+$cal(T)_("miiii")$ differentiates itself from $cal(T)_("nanda")$ in two significant ways: _1)_ it is non-commutative, and _2)_ it is, as mentioned, multitask. These differences present unique challenges for mechanistic interpretation, as the model must learn to handle both the order-dependent nature of the inputs and develop shared representations across multiple modular arithmetic tasks. Further, as $cal(T)_("miiii")$ is harder than $cal(T)_("nanda")$ the model can be expected to generalize slower when trained on the former. Therefore, #cite(<lee2024a>, form:"prose", style:"american-psychological-association")'s recent work on speeding up generalization, by positing the model parameters gradients through time can be viewed as the sum a slow varying generalizing component (which is boosted) and a quick varying overfitting component (which is suppressed), was (successfully) replicated to make training tractable.
+
+#figure(
+  image("figs/polar.svg", width: 120%),
+  caption: [
+    Periodic patterns in polar coordinates $(n, n mod tau)$ for numbers less than #num(12769). Left: numbers with remainder 0 mod 17 or 23 (see the two spirals). Middle: numbers with remainder 0 mod 11. Right: prime numbers.
+  ],
+)<nats>
 
 More generally, modular arithmetic on primes is a particularly useful task for MI as it ensures uniformity among the output classes, allows for comparison with other MI work @nanda2023, and, from a number-theoretic point of view, primes contain mysteries ranging from the trivially solved—are there an infinite number of primes?—to the deceptively difficult—can all even numbers larger than 4 be described as the sum of two primes? The latter, known as Goldbach's Conjecture, remains unsolved after centuries. The choice of using every prime less than the square root of the largest number of the dataset, also serves the following purpose: to test if a given natural number is prime, it suffices to test that it is not a multiple of any prime less than its square root—the set of tasks trained for here, can thus be viewed in conjunction as a single prime detection task (primes are the only samples whose target vector is the zero vector).
 
@@ -122,21 +122,21 @@ To provide insight into the periodic structure of these remainders mod $1$ for n
 
 == Generalization and grokking
 
-#cite(<power2022>, form: "prose", style:"american-anthropological-association") shows generalization can happen #quote(attribution: cite(<power2022>), "[...] well past the point of overfitting"), dubbing the phenomenon "grokking". The phenomenon is now well established @nanda2023, @humayun2024, @wang2024. #cite(<nanda2023>, form: "prose", style:"american-anthropological-association") shows that a generalized circuit #quote(attribution: cite(<nanda2023>), "arises from the gradual amplification of structured mechanisms encoded in the weights,") rather than being a relatively sudden and stochastic encounter of an appropriate region of $cal(H)$. The important word of the quote is thus "gradual". Further, by regarding the series of gradients in time as a stochastic signal, #cite(<lee2024a>, form:"author", style:"american-anthropological-association") proposes decomposing the signal into two components: a fast-varying overfitting component and a slow-varying generalization component. They show that amplification of the slow-varying component accelerates grokking substantially (more than fifty-fold in some cases). This echoes the idea that generalized circuits go through gradual amplification @nanda2023. To the extent that this phenomenon is widespread, it bodes well for generalizable deep learning, in that the generalizing signal that one would want to amplify exists long before the model is fully trained, and might be boosted in a targeted way my the method described by #cite(<lee2024a>, form: "author", style:"american-anthropological-association").
+#cite(<power2022>, form: "prose", style:"american-psychological-association") shows generalization can happen #quote(attribution: cite(<power2022>), "[...] well past the point of overfitting"), dubbing the phenomenon "grokking". The phenomenon is now well established @nanda2023, @humayun2024, @wang2024. #cite(<nanda2023>, form: "prose", style:"american-psychological-association") shows that a generalized circuit #quote(attribution: cite(<nanda2023>), "arises from the gradual amplification of structured mechanisms encoded in the weights,") rather than being a relatively sudden and stochastic encounter of an appropriate region of $cal(H)$. The important word of the quote is thus "gradual". Further, by regarding the series of gradients in time as a stochastic signal, #cite(<lee2024a>, form:"author", style:"american-psychological-association") proposes decomposing the signal into two components: a fast-varying overfitting component and a slow-varying generalization component. They show that amplification of the slow-varying component accelerates grokking substantially (more than fifty-fold in some cases). This echoes the idea that generalized circuits go through gradual amplification @nanda2023. To the extent that this phenomenon is widespread, it bodes well for generalizable deep learning, in that the generalizing signal that one would want to amplify exists long before the model is fully trained, and might be boosted in a targeted way my the method described by #cite(<lee2024a>, form: "author", style:"american-psychological-association").
 
-Conceptually, #cite(<lee2024a>, form:"author", style:"american-anthropological-association") argues that in the case of gradient descent, the ordered sequence of gradient updates can be viewed as consisting of two components: _1)_ a fast varying overfitting component, and _2)_ a slow varying generalizing components. The general algorithm explaining the relationship between input and output is the same for all samples, whereas the weights that allow a given model to function are unique for all samples. Though not proven, this intuition bears out in that generalization is sped up fifty-fold in some cases.
+Conceptually, #cite(<lee2024a>, form:"author", style:"american-psychological-association") argues that in the case of gradient descent, the ordered sequence of gradient updates can be viewed as consisting of two components: _1)_ a fast varying overfitting component, and _2)_ a slow varying generalizing components. The general algorithm explaining the relationship between input and output is the same for all samples, whereas the weights that allow a given model to function are unique for all samples. Though not proven, this intuition bears out in that generalization is sped up fifty-fold in some cases.
 
 
 == Mechanistic Interpretability (MI)
 
 === Foundations and definitions
-MI is a relatively new field focused on reverse-engineering the internal mechanisms of neural networks. #cite(<lipton2018>, form: "prose", style:"american-anthropological-association") contrasts MI with other forms of interpretability, such as feature importance analysis. While feature importance measures correlations between inputs and outputs (e.g., red pixels correlating with "rose" classifications), MI aims to understand how the model actually processes information.
+MI is a relatively new field focused on reverse-engineering the internal mechanisms of neural networks. #cite(<lipton2018>, form: "prose", style:"american-psychological-association") contrasts MI with other forms of interpretability, such as feature importance analysis. While feature importance measures correlations between inputs and outputs (e.g., red pixels correlating with "rose" classifications), MI aims to understand how the model actually processes information.
 
 === Current methods and tools
-Methods and tools used so far in MI include: Activation visualization across large datasets; Singular value decomposition of weight matrices; Ablation studies to identify critical circuits; Circuit discovery automation #cite(<conmy2023>) #cite(<weiss2021>, form: "prose", style:"american-anthropological-association")'s RASP language demonstrates how architectural constraints can be made explicit, helping researchers "think like a transformer" by expressing computation in terms of the architecture's native operations (attention as reduction, MLP as mapping). Current research is being done (CITE GROW AI?) into how to grow and merge neural network models, indicating a potential for composition of networks, with "modules" fulfilling certain properties.
+Methods and tools used so far in MI include: Activation visualization across large datasets; Singular value decomposition of weight matrices; Ablation studies to identify critical circuits; Circuit discovery automation #cite(<conmy2023>) #cite(<weiss2021>, form: "prose", style:"american-psychological-association")'s RASP language demonstrates how architectural constraints can be made explicit, helping researchers "think like a transformer" by expressing computation in terms of the architecture's native operations (attention as reduction, MLP as mapping). Current research is being done (CITE GROW AI?) into how to grow and merge neural network models, indicating a potential for composition of networks, with "modules" fulfilling certain properties.
 
 === Case study: modular addition
-#cite(<nanda2023>, form: "prose", style:"american-anthropological-association")'s analysis of a transformer trained on modular addition ($cal(T)_("nanda")$) exemplifies MI methodology. They discovered that:
+#cite(<nanda2023>, form: "prose", style:"american-psychological-association")'s analysis of a transformer trained on modular addition ($cal(T)_("nanda")$) exemplifies MI methodology. They discovered that:
 - The embedding layer learns trigonometric lookup tables
 - The feed-forward network combines these through multiplication
 - The final layer performs the equivalent of argmax
@@ -171,7 +171,7 @@ The term circuit is frequently used in MI. It refers to a distinct subset of the
 
 == Multi-task learning in DL
 
-As stated, multitask learning has been shown to have a regularizing effect @baxter2011, @maurer as the hypothesis *W* that performs well across the of hypothesis spaces $HH$ is more likely to be general. Viewed information theoretically, this concept is reminiscent of #cite(<shannon2001>, form:"prose", style:"american-anthropological-association")'s asymptotic equipartition property @cover2006, or even more generally, the law of large numbers, which states that the more samples we have of a distribution, the closer our estimates of its underlying properties will align with the true underlying property.
+As stated, multitask learning has been shown to have a regularizing effect @baxter2011, @maurer as the hypothesis *W* that performs well across the of hypothesis spaces $HH$ is more likely to be general. Viewed information theoretically, this concept is reminiscent of #cite(<shannon2001>, form:"prose", style:"american-psychological-association")'s asymptotic equipartition property @cover2006, or even more generally, the law of large numbers, which states that the more samples we have of a distribution, the closer our estimates of its underlying properties will align with the true underlying property.
 
 In the DL context, multitask learning is done by having the last layer output predictions for multiple tasks independently. Thus, whereas $cal(T)_("nanda")$ outputs a single $1 times 113$ vector for each of the potential remainders, $cal(T)_("miiii")$, as we shall see, outputs one vector for each prime $f < p$ (29 when $p=113$), each of which has shape $1 times f$. The embeddings layer and the transformer block is thus shared for all tasks, meaning that representations that perform well across tasks are incentivized.
 
@@ -222,7 +222,7 @@ My setup thus differentiates itself from $cal(T)_"nanda"$ in two crucial ways:
 
 A model deep learning model, $cal(M)$, consists of a set of model weights $cal(W)$ and a procedure on how to apply these to a given input $cal(X)$. Viewed in the context of the procedure, the set of potential values of $cal(W)$ can be thought of as a hypothesis space $cal(H)$ on the mapping between $cal(X)$ and $cal(Y)$, regarding a loss function $cal(L)$. Algorithms, like gradient descent, are heuristics for finding optimal / optimized values of $cal(W)$ within $cal(H)$. $H$ itself is not modified by optimization algorithms of this level (i.e. $a x+b$ yields optimal $a "and" b$ values, but we might need an $x^2$ term to describe the given phenomena).
 
-#cite(<baxter2011>, form:"prose", style:"american-anthropological-association") further extends the notion of generalization and training to a multitask paradigm.
+#cite(<baxter2011>, form:"prose", style:"american-psychological-association") further extends the notion of generalization and training to a multitask paradigm.
 
 == Tasks
 
@@ -251,7 +251,7 @@ For each input $x$, a vector $y in Y$ contains the remainder when dividing by ea
 == Model
 
 // Architectural decisions are made to align with #cite(<lee2024a>, form: "prose") and #cite(<nanda2023>, form: "prose").
-The model follows the original transformer architecture @vaswani2017 with several key design choices aligned with recent work on mechanistic interpretability @nanda2023, @lee2024a: biases are disabled, and layer normalization is not used. The model consists of three main components: an embedding layer, transformer blocks, and an output layer. All weights are initialized following #cite(<he2015>, form: "prose", style:"american-anthropological-association").
+The model follows the original transformer architecture @vaswani2017 with several key design choices aligned with recent work on mechanistic interpretability @nanda2023, @lee2024a: biases are disabled, and layer normalization is not used. The model consists of three main components: an embedding layer, transformer blocks, and an output layer. All weights are initialized following #cite(<he2015>, form: "prose", style:"american-psychological-association").
 
 Input tokens are embedded into a $d$-dimensional space using learned token and positional embeddings:
 $
@@ -276,7 +276,7 @@ where $W_("out")$ projects to $sum_(i=1)^k f_i$ dimensions for $k$ prime factors
 
 
 $
-  mat(delim:"[", quad x_0 quad x_1 quad \_ quad)
+  mat(delim:"[", quad x_0 quad x_1 quad hat(y) quad)
 $
 
 == Training<training>
@@ -329,16 +329,16 @@ Training uses full batch gradient descent with the entire dataset of $p^2$ sampl
 
 == Visualization
 
-Much of the data worked with here is inherently high dimensional. For training, for example, we have $n$ steps, two splits (train/valid) about $p/ln(p)$ tasks, and two metrics (accuracy, and loss). This, along with the inherent opaqueness of deep learning models, motivated the developed custom visualization library, `esch`#footnote[https://github.com/syrkis/esch] to visualize attention weights, intermediate representations, training metrics, and more. The most important plot type for the reader to keep in mind is seen in @plot_type. As there are only #num(12769) samples when $p=113$, all samples can be fed at once to the model. Inspecting a specific activation thus yields a $1 times$ #num(12796) vector $v$, which can be reshaped at a $113 times 113$ matrix, with the two axes varying $x_0$ and $x_1$ from 0 to 112, respectively. The top-left corner then shows the given value for the sample $(0 dot p^0 + 0 dot p^1)$, and so on.
+Much of the data worked with here is inherently high dimensional. For training, for example, we have $n$ steps, two splits (train/valid) about $p/ln(p)$ tasks, and two metrics (accuracy, and loss). This, along with the inherent opaqueness of deep learning models, motivated the developed custom visualization library, `esch`#footnote[https://github.com/syrkis/esch] to visualize attention weights, intermediate representations, training metrics, and more. The most important plot type for the reader to keep in mind is seen in TODO ADD. As there are only #num(12769) samples when $p=113$, all samples can be fed at once to the model. Inspecting a specific activation thus yields a $1 times$ #num(12796) vector $v$, which can be reshaped at a $113 times 113$ matrix, with the two axes varying $x_0$ and $x_1$ from 0 to 112, respectively. The top-left corner then shows the given value for the sample $(0 dot p^0 + 0 dot p^1)$, and so on.
 
-#figure(
-  stack(
-    dir: ltr,
-    image("tmp.svg", width: 100%),
-  ),
-  caption: [Top left $37 times 37$ slice of the attention pattern from $hat(y)$ to $x_0$ in the first attention head of all $(x_0, x_1)$ pairs, for a model trained on $cal(T)_"nanda"$. Note that each square of the plot represents a unique sample and is thus entirely independent of one another. The periodicity is thus a function of the model learning an order of the natural numbers in question.],
-)<plot_type>
-
+// #figure(
+// stack(
+// dir: ltr,
+// image("tmp.svg", width: 100%),
+// ),
+// caption: [Top left $37 times 37$ slice of the attention pattern from $hat(y)$ to $x_0$ in the first attention head of all $(x_0, x_1)$ pairs, for a model trained on $cal(T)_"nanda"$. Note that each square of the plot represents a unique sample and is thus entirely independent of one another. The periodicity is thus a function of the model learning an order of the natural numbers in question.],
+// )<plot_type>
+//
 // TODO: ADD FOURIER PLOTS
 
 Note that that in `esch` plots, when appropriate, only the top leftmost $37 times 37$ slice is shown, to not overwhelm the reader. Visualizations are available in the Appendix.
@@ -356,7 +356,7 @@ Using `esch`, the custom visualization library, to visualize attention weights a
 
 === The fast Fourier transform
 
-As periodicity is established by #cite(<nanda2023>, form: "prose", style:"american-anthropological-association") as a fundamental feature of the model trained on $cal(T)_"nanda"$, the fast Fourier transform (FFT) algorithm is used to detect which frequencies are in play.
+As periodicity is established by #cite(<nanda2023>, form: "prose", style:"american-psychological-association") as a fundamental feature of the model trained on $cal(T)_"nanda"$, the fast Fourier transform (FFT) algorithm is used to detect which frequencies are in play.
 Note that any square image, can be described as a sum of 2d sine and cosine waves varying in frequency from 1 to the size of the image divided by 2 (plus a constant).
 This is a fundamental tool used in signal processing. The theory is briefly outlined in @fft for reference.
 This analysis helps identify the dominant frequencies in the model's computational patterns.
@@ -413,7 +413,7 @@ The default basis of the one-hot encoded representation of the input is thus the
 
 == Hyperparameter Optimization
 
-The best-performing hyperparameters for training the model on $cal(T)_"miiii"$ are listed in @hyper_param_search_result. Notably, the model did not converge when $lambda = 0$, confirming the utility of the gradient amplification method proposed by #cite(<lee2024a>, form:"prose", style:"american-anthropological-association") in the context of $cal(T)_"miiii"$ (see @ugly_training_curves).
+The best-performing hyperparameters for training the model on $cal(T)_"miiii"$ are listed in @hyper_param_search_result. Notably, the model did not converge when $lambda = 0$, confirming the utility of the gradient amplification method proposed by #cite(<lee2024a>, form:"prose", style:"american-psychological-association") in the context of $cal(T)_"miiii"$ (see @ugly_training_curves).
 
 
 #figure(
@@ -437,7 +437,7 @@ The best-performing hyperparameters for training the model on $cal(T)_"miiii"$ a
 
 == Model Performance
 
-@trainig_acc show the training and validation accuracy on $cal(T)_"miiii"$ over time. The model achieved perfect accuracy on both the validation set across all 29 tasks. In short—and to use the terminology of #cite(<power2022>, form:"prose", style:"american-anthropological-association")—the model "grokked" on all tasks.
+@trainig_acc show the training and validation accuracy on $cal(T)_"miiii"$ over time. The model achieved perfect accuracy on both the validation set across all 29 tasks. In short—and to use the terminology of #cite(<power2022>, form:"prose", style:"american-psychological-association")—the model "grokked" on all tasks.
 Interestingly, tasks corresponding to moduli 2, 3, 5, and 7 generalized in succession, while the remaining 25 tasks generalized around epoch #num(40000) in no particular order. This might suggests that the model initially learned solutions for the simpler tasks and later developed a more general computational strategy that allowed it to generalize across the remaining, more complex tasks. To understand if this is a form of phase transition facilitated by the reuse of circuitry developed during the initial four tasks, more work is required.
 
 #figure(
@@ -473,7 +473,7 @@ As can be seen in @bad_training_acc when dropout was disabled (i.e., set to zero
 
 == Analysis of Neuron Activations and Frequencies
 
-To understand the internal mechanisms developed by the model, we analyzed the neuron activations after the output weight matrix $W_"out"$ for the model trained on $cal(T)_"miiii"$. Figure @miiii_neurons shows that these activations exhibit periodic patterns with respect to $(x_0, x_1)$. This periodicity aligns with the modular arithmetic nature of the tasks, mirrors #cite(<nanda2023>, form:"prose", style:"american-anthropological-association") ($cal(T)_"nanda"$).
+To understand the internal mechanisms developed by the model, we analyzed the neuron activations after the output weight matrix $W_"out"$ for the model trained on $cal(T)_"miiii"$. Figure @miiii_neurons shows that these activations exhibit periodic patterns with respect to $(x_0, x_1)$. This periodicity aligns with the modular arithmetic nature of the tasks, mirrors #cite(<nanda2023>, form:"prose", style:"american-psychological-association") ($cal(T)_"nanda"$).
 
 #figure(
   stack(
@@ -508,7 +508,7 @@ The analysis of active frequencies _through training_ using the Fast Fourier Tra
 
 However, we observe that significant frequencies appear after generalization has occurred, which may suggest the presence of another phase following grokking in the context of multi-task learning. This could be indicative of circuit merging or the integration of task-specific circuits into a more general solution.
 
-@l2_norms shows the L2 norms of gradients through time for the different weight matrices of the model trained on $cal(T)_"miiii"$. The gradient norms provide insights into how different parts of the model are being updated during training. Like with #cite(<nanda2023>, form:"prose", style:"american-anthropological-association"), the attention layer converges quickly, echoing their finding that it does not contribute much to solving their modular eritmetic task.
+@l2_norms shows the L2 norms of gradients through time for the different weight matrices of the model trained on $cal(T)_"miiii"$. The gradient norms provide insights into how different parts of the model are being updated during training. Like with #cite(<nanda2023>, form:"prose", style:"american-psychological-association"), the attention layer converges quickly, echoing their finding that it does not contribute much to solving their modular eritmetic task.
 
 #figure(
   image("figs/grads_norms.svg"),
@@ -601,7 +601,7 @@ However, inspecting when generalization happens, and when significant frequencie
 
 = Further work
 
-Several promising directions emerge from this work. First, our observation that circuits developed for initial tasks are later reused suggests a novel approach to accelerating learning: by identifying and amplifying these emergent circuits early in training, we might extend #cite(<lee2024a>, form:"prose", style:"american-anthropological-association")'s gradient-based acceleration techniques. While their method amplifies slow-moving components of the gradient signal uniformly, targeted amplification of specific emerging circuits could provide even greater speedups.
+Several promising directions emerge from this work. First, our observation that circuits developed for initial tasks are later reused suggests a novel approach to accelerating learning: by identifying and amplifying these emergent circuits early in training, we might extend #cite(<lee2024a>, form:"prose", style:"american-psychological-association")'s gradient-based acceleration techniques. While their method amplifies slow-moving components of the gradient signal uniformly, targeted amplification of specific emerging circuits could provide even greater speedups.
 
 // Second, the relationship between model capacity and prime size remains unexplored. How does a model trained on remainders modulo primes less than $p$ perform when tested on primes less than some larger $q$? This question connects to fundamental issues in neural network generalization and could provide insights into how these models encode mathematical concepts.
 

@@ -49,7 +49,7 @@ def run_fn(hashes):
 rng = random.PRNGKey(0)
 slice = 37
 m_hash = "d4bfd7f829ed4a398f3b0a54"  # hash of masked miiii
-f_hash = "b4fa9f0fc94245418a28f030"  # hash of miiii task
+f_hash = "2bca407ccf414c058e7bcc6e"  # hash of miiii task
 s_hash = "7c2a10494ff64e66a9af2731"  # shuffled miiii task  10k epochs currently
 p_hash = "0c848c1444264cbfa1a4de6e"  # hash of nanda task
 data = {hash: load_hash(hash) for hash in [f_hash, m_hash, s_hash]}
@@ -128,9 +128,16 @@ f_data, m_data, s_data = data.values()
 f_scope, m_scope, s_scope = f_data[2], m_data[2], s_data[2]
 f_acts, m_acts, s_acts = f_data[-1], m_data[-1], s_data[-1]
 
+
 # %%
-esch.plot((f_scope.neuron_freqs / f_scope.neuron_freqs.max(1, keepdims=True))[::4].T)
-f_scope.neuron_freqs
+neurs = rearrange(f_acts.ffwd[:, 0, -1], "(x0 x1) h -> h x0 x1", x0=113, x1=113)
+freqs = jnp.abs(fft.rfft2(neurs))
+neurs.shape, freqs.shape
+
+# %%
+data = (f_scope.neuron_freqs / f_scope.neuron_freqs.max(1, keepdims=True))[1000 :: 50000 // 226].T
+esch.plot(data)
+# f_scope.neuron_freqs
 
 # %%
 # f_acts.ffwd.squeeze()[:, -1].shape
@@ -141,7 +148,7 @@ esch.plot(((neurs / neurs.max()) > 0.5).sum((0, 1))[None, :])
 f_neurs = jnp.abs(fft.fft2(rearrange(f_acts.ffwd.squeeze()[:, -1], "(x0 x1) h -> h x0 x1", x0=113, x1=113)))[
     ..., 1:, 1:
 ]
-esch.plot(f_neurs.mean((0, 2))[None, :])
+esch.plot(f_neurs.mean((0, 1))[None, :])
 
 
 # %%
