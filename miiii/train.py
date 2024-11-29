@@ -125,6 +125,8 @@ def scope_fn(ds, cfg, apply):
 
     @jit
     def scope_aux(params, grads, train_acts, valid_acts):
+        # print(train_acts.ffwd.shape, ds.udxs.shape, valid_acts.ffwd.shape)
+        # exit()
         acts = tree.map(acts_fn, train_acts, valid_acts)
         norms = tree.map(lambda x: jnp.linalg.norm(x), grads)
         neurs = rearrange(acts.ffwd, "(x0 x1) n -> n x0 x1", x0=cfg.p, x1=cfg.p)[:5, 1:, 1:]

@@ -15,7 +15,9 @@ import yaml
 def evaluate_config(config, rng) -> float:
     """Evaluate a single configuration"""
     cfg = mi.utils.create_cfg(**config)
-    ds, task = mi.tasks.task_fn(rng, cfg, "remainder", "prime")  # only task i have
+    args = mi.utils.parse_args()
+    scope = "prime" if args.task == "nanda" else "factors"
+    ds, task = mi.tasks.task_fn(rng, cfg, "remainder", scope)  # only task i have
     state, (metrics, scope) = mi.train.train(rng, cfg, ds, task)
     mi.utils.log_fn(state, metrics, scope, cfg, ds, task)
     return metrics.valid.loss[-10:].mean().item()  # mean over last 10 epochs

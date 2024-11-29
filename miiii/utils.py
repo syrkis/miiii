@@ -91,6 +91,7 @@ def parse_args():
     parser.add_argument("--p", type=int, help="Prime number for data configuration")
     parser.add_argument("--latent_dim", type=int, help="Latent dimension size")
     parser.add_argument("--depth", type=int, help="Depth of the model")
+    parser.add_argument("--task", type=str, help="Which task to train on", default="factors")
     parser.add_argument("--heads", type=int, help="Number of attention heads")
     parser.add_argument("--epochs", type=int, help="Number of training epochs")
     parser.add_argument("--train_frac", type=float, help="Fraction of data used for training")
@@ -135,7 +136,7 @@ def create_cfg(**kwargs) -> Conf:
             ), f"Duplicate argument: {key}"  # asset that everything in kwargs has none value in cliargs
         # merge cli_args and kwargs
         kwargs = {**cli_args.__dict__, **kwargs}
-        kwargs = {k: v for k, v in kwargs.items() if v is not None and k != "runs"}
+        kwargs = {k: v for k, v in kwargs.items() if v is not None and k != "runs" and k != "task"}
         cfg = Conf(**kwargs)
         return cfg
     else:

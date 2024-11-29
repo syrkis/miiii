@@ -96,14 +96,23 @@ def plot_neurs(neurs, cfg, task):
     bottom = esch.EdgeConfig(label="𝑥₁", show_on="first")
     top = esch.EdgeConfig(label=f"Neurons over data ({task})", show_on=[1])
     edge = esch.EdgeConfigs(left=left, bottom=bottom, top=top)
-    path = f"paper/figs/neurs_{cfg.p}_{task}.svg"
-    esch.plot(neurs[1:4, : slice - 8, : slice - 8], edge=edge, font_size=28, path=path)
+    path = f"paper/figs/neurs_{cfg.p}_{task}"
+    esch.plot(neurs[1:4, : slice - 8, : slice - 8], edge=edge, font_size=28, path=f"{path}_three.svg")
+    esch.plot(neurs[42, : slice - 8, : slice - 8], edge=edge, font_size=28, path=f"{path}_one.svg")
     left = esch.EdgeConfig(label="ω₀", show_on="first")
     bottom = esch.EdgeConfig(label="ω₁", show_on="first")
     top = esch.EdgeConfig(label=f"Neurons in Fourier space ({task})", show_on=[1])
     edge = esch.EdgeConfigs(top=top, bottom=bottom, left=left)
-    path = f"paper/figs/neurs_{cfg.p}_{task}_fft.svg"
-    esch.plot(fft.rfft2(neurs[1:4, :slice, :slice])[:, 1 : 1 + slice // 2, 1:], edge=edge, font_size=20, path=path)
+    path = f"paper/figs/neurs_{cfg.p}_{task}_fft"
+    esch.plot(
+        fft.rfft2(neurs[1:4, :slice, :slice])[:, 1 : 1 + slice // 2, 1:],
+        edge=edge,
+        font_size=20,
+        path=f"{path}_three.svg",
+    )
+    esch.plot(
+        fft.rfft2(neurs[42, :slice, :slice])[1 : 1 + slice // 2, 1:], edge=edge, font_size=20, path=f"{path}_one.svg"
+    )
 
 
 def plot_grad_norms(scope, cfg, name):
@@ -211,24 +220,41 @@ def finding_fn(scope, cfg, task):
     )
 
 
+def wei_plot(acts, cfg, task):
+    wei = rearrange(acts.wei[:, 0, :, -1, 0], "(x0 x1) h -> h x0 x1", x0=cfg.p, x1=cfg.p)
+    wei = wei[:, :slice, :slice]
+    top = esch.EdgeConfig(label=[f"Head {i+1}" for i in range(wei.shape[0])] if task != "nanda" else "", show_on="all")
+    left = esch.EdgeConfig(label="𝑥₀", show_on="first")
+    right = esch.EdgeConfig(label=task, show_on="last")
+    bottom = esch.EdgeConfig(label="𝑥₁", show_on="first")
+    edge = esch.EdgeConfigs(left=left, bottom=bottom, top=top, right=right)
+    esch.plot(wei, edge=edge, path=f"paper/figs/{task}_wei.svg", font_size=28)
+
+
+def final_epoch_neuron_freq(acts):
+    pass
+
+
+# wei_plot(data[nanda_hash][-1], data[nanda_hash][3], "nanda")
+
+
 # %% work space #################################################################
 def plot_hash(hash, name):
     state, metrics, scope, cfg, ds, task, apply, x, acts = data[hash]
-    # print(cfg, ds.y.train.shape, task)
-    # return
-    # plot_neurs(acts.ffwd, cfg, name)
-    # emb_fourier_plots(*fourier_analysis(state.params.embeds.tok_emb[:-1]), name)  # type: ignore
-    # emb_svd(state.params, cfg, name)  # type: ignore
+    plot_neurs(acts.ffwd, cfg, name)
+    emb_fourier_plots(*fourier_analysis(state.params.embeds.tok_emb[:-1]), name)  # type: ignore
+    emb_svd(state.params, cfg, name)  # type: ignore
+    wei_plot(acts, cfg, name)
     if name not in ["basis", "nanda", "nodro"]:
-        # plot_grad_norms(scope, cfg, name)
+        plot_grad_norms(scope, cfg, name)
         finding_fn(scope, cfg, name)
     if name not in ["nanda"]:
-        # mi.plots.plot_run(metrics, ds, cfg, task, hash, font_size=16, log_axis=True)
+        mi.plots.plot_run(metrics, ds, cfg, task, hash, font_size=16, log_axis=True)
         pass
 
 
-plot_hash(miiii_hash, "miiii")
-# plot_hash(masks_hash, "masks")
+# plot_hash(miiii_hash, "miiii")
+plot_hash(masks_hash, "masks")
 # plot_hash(basis_hash, "basis")
 # plot_hash(nanda_hash, "nanda")
 # plot_hash(nodro_hash, "nodro")
