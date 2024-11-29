@@ -543,7 +543,7 @@ For comparison, @basis_neurons shows the neuron activations for a model trained 
   caption: [Neuron activations for model trained on $cal(T)_"basis"$. As in @baseline_fft, no periodicity is observed for the baseline.],
 )<basis_neurons>
 
-The analysis of active frequencies _through training_ using the Fast Fourier Transform (FFT) is illustrated in @finding. The top plot shows the different frequencies of the transformer block's MLP neurons evolving as the model learns. The bottom plot displays the variance of frequency activations and the number of frequencies exceeding a significance threshold $omega > mu + 2 sigma$ (i.e., which spots like the ones of the bottom row of @miiii_neurons are active). Initially, a handful of frequencies become dominant as the model generalizes on the first four tasks. As training progresses and the model begins to generalize on the remaining tasks, more frequencies become significant, suggesting that the model is developing more complex internal representations to handle the additional tasks.
+The analysis of active frequencies _through training_ using the Fast Fourier Transform (FFT) is illustrated in @finding, with the core findings showing a spike in frequency activation around epoch 16384 visible in @tableeeee. The top plot shows the different frequencies of the transformer block's MLP neurons evolving as the model learns. The bottom plot displays the variance of frequency activations and the number of frequencies exceeding a significance threshold $omega > mu + 2 sigma$ (i.e., which spots like the ones of the bottom row of @miiii_neurons are active). Initially, a handful of frequencies become dominant as the model generalizes on the first four tasks. As training progresses and the model begins to generalize on the remaining tasks, more frequencies become significant, suggesting that the model is developing more complex internal representations to handle the additional tasks.
 
 #figure(
   stack(
@@ -554,7 +554,26 @@ The analysis of active frequencies _through training_ using the Fast Fourier Tra
   caption: [Top: Frequency dominance is averaged over neurons through training (average activation of frequencies as shown in @miiii_neurons). We see four distinct phases: _1)_ no significant frequencies, _2)_ frequencies gradually emerging, _3)_ a wall of frequencies, and _4)_ frequency count similar phase 2. Bottom: total number of active frequencies at the corresponding time step. A frequency $omega$ is active when $omega > mu + 2 sigma$ (a frequently used signal processing default).],
 )<finding>
 
-However, we observe that significant frequencies appear after generalization has occurred, which may suggest the presence of another phase following grokking in the context of multi-task learning. This could be indicative of circuit merging or the integration of task-specific circuits into a more general solution.
+
+#figure(
+  table(
+    columns: (1fr, 1fr, 1fr, 1fr, 1fr, 1fr),
+    align: center,
+    table.header(
+      "epoch",
+      "256",
+      "1024",
+      "4096",
+      "16384",
+      "65536",
+    ),
+
+    $|omega|$, $0$, $0$, $10$, $18$, "10",
+  ),
+  caption: [Number of active frequencies on $cal(T)_"miiii"$ over epochs.],
+)<tableeeee>
+
+// However, we observe that significant frequencies appear as generalization has occurred, which may suggest the presence of another phase following grokking in the context of multi-task learning. This could be indicative of circuit merging or the integration of task-specific circuits into a more general solution.
 
 @l2_norms shows the L2 norms of gradients through time for the different weight matrices of the model trained on $cal(T)_"miiii"$. The gradient norms provide insights into how different parts of the model are being updated during training. Like with #cite(<nanda2023>, form:"prose", style:"american-psychological-association"), the attention layer converges quickly, echoing their finding that it does not contribute much to solving their modular arithmetic task.
 
