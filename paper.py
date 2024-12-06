@@ -255,7 +255,7 @@ def plot_hash(hash, name):
 
 # plot_hash(miiii_hash, "miiii")
 # plot_hash(masks_hash, "masks")
-plot_hash(basis_hash, "basis")
+# plot_hash(basis_hash, "basis")
 # plot_hash(nanda_hash, "nanda")
 # plot_hash(nodro_hash, "nodro")
 
