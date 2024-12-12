@@ -429,16 +429,6 @@ Interestingly, tasks corresponding to modulo 2, 3, 5, and 7 generalized in succe
 )<training_loss>
 
 
-
-
-
-
-
-
-
-
-
-
 == Embeddings<emb_section>
 
 Positional embeddings play a crucial role in transformers by encoding the position of tokens in a sequence. @pos_emb compares the positional embeddings of models trained on $cal(T)_"nanda"$ and $cal(T)_"miiii"$.

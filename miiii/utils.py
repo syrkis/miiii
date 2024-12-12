@@ -15,7 +15,7 @@ import jax.numpy as jnp
 import numpy as np
 from aim import Repo, Run
 from chex import dataclass
-from jax import Array
+from jaxtyping import Array
 from oeis import oeis
 from tqdm import tqdm
 

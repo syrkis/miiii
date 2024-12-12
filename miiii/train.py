@@ -7,16 +7,15 @@ from typing import Tuple
 
 import jax.numpy as jnp
 import optax
-from chex import Array
-from jax import jit, lax, random, tree, value_and_grad, vmap
-from jax.numpy import fft
+from jax import lax, random, tree, value_and_grad, vmap
 from jax_tqdm import scan_tqdm
 from functools import partial
-from einops import rearrange
+from typing import cast
+from jaxtyping import Array
 
 from miiii.model import apply_fn, init_fn
 from miiii.tasks import Dataset, Task
-from miiii.utils import Activation, Conf, Metrics, Params, Split, State, Scope
+from miiii.utils import Conf, Metrics, Params, Split, State
 
 
 ADAM_BETA1 = 0.9  # @nanda2023
@@ -28,36 +27,31 @@ ALPHA = 0.98
 def update_fn(opt, ds: Dataset, task: Task, cfg: Conf):
     train_apply = apply_fn(cfg, ds, task, eval=False)
     valid_apply = partial(apply_fn(cfg, ds, task, eval=True), random.PRNGKey(0))
-    grad = grad_fn(ds, task, cfg, train_apply, task.loss_fn, task.mask)
+    grad = grad_fn(ds, task, cfg, train_apply)
 
-    @jit
     def update(state, key):
-        loss, losses, output, grads = grad(state.params, key)
+        loss, grads = grad(state.params, key)
         grads, emas = filter_fn(grads, state.emas, cfg.lamb)  # grokfast values
         updates, opt_state = opt.update(grads, state.opt_state, state.params)
-        params = optax.apply_updates(state.params, updates)
-        state = State(params=params, emas=emas, opt_state=opt_state)  # type: ignore
-        return state, (loss, losses, output), grads
+        params = cast(Params, optax.apply_updates(state.params, updates))
+        state = State(params=params, emas=emas, opt_state=opt_state)
+        return state, loss
 
     return update, train_apply, valid_apply
 
 
-def grad_fn(ds: Dataset, task: Task, cfg: Conf, apply, loss_fn, mask):
-    @jit
-    def grad(params: Params, rng) -> Tuple[Array, Array, Activation, Array]:
-        @jit
-        def loss_and_logits(params: Params) -> Tuple[jnp.ndarray, Tuple[Array, Activation]]:
-            acts: Activation = apply(rng, params, ds.x.train)
-            losses = loss_fn(acts.logits, ds.y.train, 1 - ds.y.train.mean(0), 2, mask) * task.weight
-            return losses.mean(), (losses, acts)
+def grad_fn(ds: Dataset, task: Task, cfg: Conf, apply):
+    loss_fn, mask, weight = task.loss_fn, task.mask, task.weight
 
-        (loss, (losses, acts)), grads = value_and_grad(loss_and_logits, has_aux=True)(params)
-        return loss, losses, acts, grads
+    @value_and_grad
+    def grad(params: Params, rng) -> Array:
+        acts = apply(rng, params, ds.x.train)
+        losses = loss_fn(acts.logits, ds.y.train, 1 - ds.y.train.mean(0), 2, mask) * weight
+        return losses.mean()
 
     return grad
 
 
-@jit
 def filter_fn(grads, emas, lamb: float):
     emas = tree.map(lambda grad, ema: ema * ALPHA + grad * (1 - ALPHA), grads, emas)
     grads = tree.map(lambda grad, ema: grad + lamb * ema, grads, emas)
@@ -65,17 +59,15 @@ def filter_fn(grads, emas, lamb: float):
 
 
 def step_fn(ds: Dataset, task: Task, cfg: Conf, opt, scope):
-    # opt = optax.adamw(cfg.lr, weight_decay=cfg.l2)
     update, train_apply, valid_apply = update_fn(opt, ds, task, cfg)
     evaluate = evaluate_fn(ds, task, cfg, valid_apply)
 
-    @jit
-    @scan_tqdm(cfg.epochs)
+    @scan_tqdm(100)
     def step(state, args):
         epoch, key = args
-        state, (loss, losses, train_acts), grads = update(state, key)
-        metrics, scope = evaluate(state.params, grads, losses, train_acts)
-        return state, (metrics, scope)  # output_fn(train_out, valid_out))
+        keys = random.split(key, cfg.epochs // 100)
+        state, loss = lax.scan(update, state, keys)
+        return state, evaluate(state)
 
     return step
 
@@ -87,51 +79,32 @@ def init_state(rng, cfg: Conf, ds: Dataset, task: Task, opt):
     return State(params=params, opt_state=opt_state, emas=emas)
 
 
-def train(rng, cfg: Conf, ds: Dataset, task: Task, scope=False) -> Tuple[State, Tuple[Metrics, Activation | None]]:
+def train(rng, cfg: Conf, ds: Dataset, task: Task, scope=False) -> Tuple[State, Metrics]:
     opt = optax.adamw(cfg.lr, weight_decay=cfg.l2, b1=ADAM_BETA1, b2=ADAM_BETA2)  # @nanda2023
     state = init_state(rng, cfg, ds, task, opt)
     step = step_fn(ds, task, cfg, opt, scope)
-    rngs = random.split(rng, cfg.epochs)
-    xs = (jnp.arange(cfg.epochs), rngs)
-    state, output = lax.scan(step, state, xs)
-    return state, output
+    state, metrics = lax.scan(step, state, (jnp.arange(100), random.split(rng, 100)))
+    return state, metrics
 
 
 # Evaluate
 def evaluate_fn(ds: Dataset, task: Task, cfg: Conf, apply):
-    scope = scope_fn(ds, cfg, apply)
-
     def acc_fn(y_pred, y_true):
         return (y_pred == y_true).mean()
 
     acc_fn = vmap(acc_fn, in_axes=(1, 1)) if task.span == "factors" else acc_fn
+    loss_fn, mask, weight = task.loss_fn, task.mask, task.weight
 
-    @jit
-    def evaluate(params, grads, train_loss, train_acts):
-        valid_acts = apply(params, ds.x.eval)
-        valid_loss = task.loss_fn(valid_acts.logits, ds.y.eval, 1 - ds.y.train.mean(0), 2, task.mask) * task.weight
+    def aux(state: State, x, y):
+        acts = apply(state.params, x)
+        losses = loss_fn(acts.logits, y, 1 - y.mean(0), 2, mask) * weight
+        accuracy = acc_fn(acts.logits.argmax(-1), y)
+        return Split(loss=losses, acc=accuracy)
 
-        valid_metrics = Split(loss=valid_loss, acc=acc_fn(valid_acts.logits.argmax(-1), ds.y.eval))
-        train_metrics = Split(loss=train_loss, acc=acc_fn(train_acts.logits.argmax(-1), ds.y.train))
-
+    def evaluate(state: State):
+        valid_metrics = aux(state, ds.x.eval, ds.y.eval)
+        train_metrics = aux(state, ds.x.train, ds.y.train)
         metrics = Metrics(train=train_metrics, valid=valid_metrics)
-        return metrics, scope(params, grads, train_acts, valid_acts)
+        return metrics
 
     return evaluate
-
-
-def scope_fn(ds, cfg, apply):
-    acts_fn = lambda a, b: jnp.concat((a, b))[ds.udxs, 0, -1]  # noqa
-
-    @jit
-    def scope_aux(params, grads, train_acts, valid_acts):
-        # print(train_acts.ffwd.shape, ds.udxs.shape, valid_acts.ffwd.shape)
-        # exit()
-        acts = tree.map(acts_fn, train_acts, valid_acts)
-        norms = tree.map(lambda x: jnp.linalg.norm(x), grads)
-        neurs = rearrange(acts.ffwd, "(x0 x1) n -> n x0 x1", x0=cfg.p, x1=cfg.p)[:5, 1:, 1:]
-        freqs = jnp.abs(fft.rfft2(neurs)).mean(1)
-        # freqs = (neurs / neurs.max(axis=1, keepdims=True)).mean(1)
-        return Scope(grad_norms=norms, neuron_freqs=freqs)
-
-    return scope_aux

@@ -23,9 +23,9 @@ ipywidgets = "^8.1.5"
 esch = ">=0.5.3"
 jax = "^0.4.35"
 aim = "^3.25.0"
-omegaconf = "^2.3.0"
 python-dotenv = "^1.0.1"
 optuna = "^4.1.0"
+jaxtyping = "^0.2.36"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3.2"
