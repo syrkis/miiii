@@ -20,7 +20,7 @@ from miiii.utils import Conf, Metrics, Params, Split, State
 
 ADAM_BETA1 = 0.9  # @nanda2023
 ADAM_BETA2 = 0.98  # @nanda2023
-ALPHA = 0.98
+ALPHA = 0.98  # @lee2024a
 
 
 # %% Functions
@@ -95,7 +95,6 @@ def cross_entropy(logits, y, mask):
     return optax.softmax_cross_entropy_with_integer_labels(logits, y, where=mask).mean()
 
 
-# Functions
 def make_eval_fn(ds: Dataset, cfg: Conf, arg, loss_fn):
     apply = partial(apply_fn(cfg, ds, dropout=cfg.dropout), random.PRNGKey(0))
     metrics_fn = make_metrics_fn(apply, loss_fn, arg, ds)
