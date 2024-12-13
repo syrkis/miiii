@@ -2,7 +2,7 @@
 default:
     p: 113
     depth: 1
-    epochs: 1000
+    epochs: 50_000
     latent_dim: 128
     lr: 0.0003
     train_frac: 0.5
@@ -17,4 +17,4 @@ search_space:
     alpha: [0.8, 0.95, 0.99]
     lamb: [0.1, 0.4, 2.0]
     dropout: [0.1, 0.3, 0.5]
-    train_frac: [0.3, 0.5, 0.7]
+    train_frac: [0.3, 0.5]
