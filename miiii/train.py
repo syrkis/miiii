@@ -7,7 +7,7 @@ from typing import Tuple
 
 import jax.numpy as jnp
 import optax
-from jax import lax, random, tree, value_and_grad, vmap
+from jax import lax, random, tree, value_and_grad, vmap, jit
 from jax_tqdm import scan_tqdm
 from functools import partial
 from typing import cast
@@ -25,33 +25,36 @@ ALPHA = 0.98
 
 # %% Functions
 def update_fn(opt, ds: Dataset, task: Task, cfg: Conf):
-    train_apply = apply_fn(cfg, ds, task, eval=False)
-    valid_apply = partial(apply_fn(cfg, ds, task, eval=True), random.PRNGKey(0))
-    grad = grad_fn(ds, task, cfg, train_apply)
+    train_apply = jit(apply_fn(cfg, ds, task, eval=False))
+    valid_apply = jit(partial(apply_fn(cfg, ds, task, eval=True), random.PRNGKey(0)))
+    grad = jit(grad_fn(ds, task, cfg, train_apply))
 
+    @jit
     def update(state, key):
         loss, grads = grad(state.params, key)
         grads, emas = filter_fn(grads, state.emas, cfg.lamb)  # grokfast values
         updates, opt_state = opt.update(grads, state.opt_state, state.params)
         params = cast(Params, optax.apply_updates(state.params, updates))
-        state = State(params=params, emas=emas, opt_state=opt_state)
+        state = State(params=params, emas=state.emas, opt_state=opt_state)
         return state, loss
 
     return update, train_apply, valid_apply
 
 
 def grad_fn(ds: Dataset, task: Task, cfg: Conf, apply):
-    loss_fn, mask, weight = task.loss_fn, task.mask, task.weight
+    loss_fn, mask, weight = jit(task.loss_fn), task.mask, task.weight
+    mu = ds.y.train.mean(0)
 
     @value_and_grad
     def grad(params: Params, rng) -> Array:
         acts = apply(rng, params, ds.x.train)
-        losses = loss_fn(acts.logits, ds.y.train, 1 - ds.y.train.mean(0), 2, mask) * weight
+        losses = loss_fn(acts.logits, ds.y.train, 1 - mu, 2, mask) * weight
         return losses.mean()
 
     return grad
 
 
+@jit
 def filter_fn(grads, emas, lamb: float):
     emas = tree.map(lambda grad, ema: ema * ALPHA + grad * (1 - ALPHA), grads, emas)
     grads = tree.map(lambda grad, ema: grad + lamb * ema, grads, emas)
@@ -63,11 +66,12 @@ def step_fn(ds: Dataset, task: Task, cfg: Conf, opt, scope):
     evaluate = evaluate_fn(ds, task, cfg, valid_apply)
 
     @scan_tqdm(100)
+    @jit
     def step(state, args):
         epoch, key = args
         keys = random.split(key, cfg.epochs // 100)
         state, loss = lax.scan(update, state, keys)
-        return state, evaluate(state)
+        return state, (loss, evaluate(state))
 
     return step
 
@@ -79,12 +83,12 @@ def init_state(rng, cfg: Conf, ds: Dataset, task: Task, opt):
     return State(params=params, opt_state=opt_state, emas=emas)
 
 
-def train(rng, cfg: Conf, ds: Dataset, task: Task, scope=False) -> Tuple[State, Metrics]:
+def train(rng, cfg: Conf, ds: Dataset, task: Task, scope=False) -> Tuple[State, Tuple[Array, Metrics]]:
     opt = optax.adamw(cfg.lr, weight_decay=cfg.l2, b1=ADAM_BETA1, b2=ADAM_BETA2)  # @nanda2023
     state = init_state(rng, cfg, ds, task, opt)
     step = step_fn(ds, task, cfg, opt, scope)
-    state, metrics = lax.scan(step, state, (jnp.arange(100), random.split(rng, 100)))
-    return state, metrics
+    state, output = lax.scan(step, state, (jnp.arange(100), random.split(rng, 100)))
+    return state, output
 
 
 # Evaluate
@@ -93,7 +97,7 @@ def evaluate_fn(ds: Dataset, task: Task, cfg: Conf, apply):
         return (y_pred == y_true).mean()
 
     acc_fn = vmap(acc_fn, in_axes=(1, 1)) if task.span == "factors" else acc_fn
-    loss_fn, mask, weight = task.loss_fn, task.mask, task.weight
+    loss_fn, mask, weight = jit(task.loss_fn), task.mask, task.weight
 
     def aux(state: State, x, y):
         acts = apply(state.params, x)
@@ -101,6 +105,7 @@ def evaluate_fn(ds: Dataset, task: Task, cfg: Conf, apply):
         accuracy = acc_fn(acts.logits.argmax(-1), y)
         return Split(loss=losses, acc=accuracy)
 
+    @jit
     def evaluate(state: State):
         valid_metrics = aux(state, ds.x.eval, ds.y.eval)
         train_metrics = aux(state, ds.x.train, ds.y.train)

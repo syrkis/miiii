@@ -9,7 +9,7 @@ import jax
 from jax import random, lax, nn, vmap, jit
 import jax.numpy as jnp
 from jax import Array
-from functools import partial
+from functools import partial  # , reduce
 
 # from einops import rearrange
 from oeis import A000040

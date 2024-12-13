@@ -68,7 +68,6 @@ class Params:
 class Metrics:
     train: Split
     valid: Split
-    # grads: Params
 
 
 @dataclass
@@ -85,25 +84,12 @@ class State:
     emas: Params
 
 
-def parse_args():
+def args_fn():
     parser = argparse.ArgumentParser(description="Run model with specified hyperparameters.")
     parser.add_argument("--runs", type=int, help="Number of trials to run", default=10)
-    parser.add_argument("--p", type=int, help="Prime number for data configuration")
-    parser.add_argument("--latent_dim", type=int, help="Latent dimension size")
-    parser.add_argument("--depth", type=int, help="Depth of the model")
-    parser.add_argument("--task", type=str, help="Which task to train on", default="factors")
-    parser.add_argument("--heads", type=int, help="Number of attention heads")
-    parser.add_argument("--epochs", type=int, help="Number of training epochs")
-    parser.add_argument("--train_frac", type=float, help="Fraction of data used for training")
+    parser.add_argument("--task", type=str, help="Which task to train on", default="miiii")  # nanda or baseline or miiii
+    parser.add_argument("--mods", type=str, help="Weather to test divisibility or remainders", default="remainder") # remainder or divisibility
     parser.add_argument("--mask", type=bool, help="should i mask the first four tasks?")
-    parser.add_argument("--shuffle", type=bool, help="should i completely shuffle the y labels for stupid baseline?")
-    parser.add_argument("--l2", type=float, help="L2 regularization")
-    parser.add_argument("--lr", type=float, help="Learning rate")
-    parser.add_argument("--dropout", type=float, help="Dropout rate")
-    parser.add_argument("--lamb", type=float, help="Lambda value for regularization")
-    # parser.add_argument("--gamma", type=float, help="Gamma value for optimization")
-    # parser.add_argument("--alpha", type=float, help="Alpha value for optimization")
-
     return parser.parse_args()
 
 
@@ -129,7 +115,7 @@ def create_cfg(**kwargs) -> Conf:
     Create a configuration object from parsed command-line arguments.
     """
     if "ipykernel" not in sys.argv[0]:
-        cli_args = parse_args()
+        cli_args = args_fn()
         for key in kwargs:
             assert (
                 getattr(cli_args, key, None) is None

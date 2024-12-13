@@ -10,17 +10,10 @@ import yaml
 from jax import random, tree
 
 
-def main():
-    # Load config
-    with open("config.yaml", "r") as f:
-        config = yaml.safe_load(f)
-
-    rng = random.PRNGKey(0)
-    cfg = mi.utils.create_cfg(**config)
-    ds, task = mi.tasks.task_fn(rng, cfg, "remainder", "factors")
-    state, metrics = mi.train.train(rng, cfg, ds, task)
-    print(tree.map(jnp.shape, metrics))
-
-
-if __name__ == "__main__":
-    main()
+# Load config
+cfg = mi.utils.Conf()
+args = mi.utils.args_fn()
+rng = random.PRNGKey(0)
+ds, task = mi.tasks.task_fn(rng, cfg, args.task)
+state, metrics = mi.train.train(rng, cfg, ds, task)
+print(tree.map(jnp.shape, metrics))
