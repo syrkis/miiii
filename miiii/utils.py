@@ -5,10 +5,11 @@
 # %% Imports
 import argparse
 import os
-import pickle
 import sys
+import pickle
 from dataclasses import field
 from functools import partial
+import yaml
 
 # import esch
 import jax.numpy as jnp
@@ -80,17 +81,8 @@ class Scope:
 @dataclass
 class State:
     params: Params
-    opt_state: Params
-    emas: Params
-
-
-def args_fn():
-    parser = argparse.ArgumentParser(description="Run model with specified hyperparameters.")
-    parser.add_argument("--runs", type=int, help="Number of trials to run", default=10)
-    parser.add_argument("--task", type=str, help="Which task to train on", default="miiii")  # nanda or baseline or miiii
-    parser.add_argument("--mods", type=str, help="Weather to test divisibility or remainders", default="remainder") # remainder or divisibility
-    parser.add_argument("--mask", type=bool, help="should i mask the first four tasks?")
-    return parser.parse_args()
+    opt_state: Params | None = None
+    emas: Params | None = None
 
 
 @dataclass
@@ -110,23 +102,28 @@ class Conf:
     shuffle: bool = False  # weather to shuffle the y labels
 
 
-def create_cfg(**kwargs) -> Conf:
-    """
-    Create a configuration object from parsed command-line arguments.
-    """
+def cfg_fn() -> Conf:
+    """Create a configuration object from parsed command-line arguments."""
+    with open("config.yaml", "r") as f:
+        cfg = yaml.safe_load(f)["default"]
+    return Conf(**cfg)
+
+
+def arg_fn():
+    parser = argparse.ArgumentParser(description="Run model with specified hyperparameters.")
+    parser.add_argument("--runs", type=int, help="Number of trials to run", default=10)
+    parser.add_argument("--tick", type=int, help="Number of trials to run", default=100)  # how often to scope
+    parser.add_argument(
+        "--task", type=str, help="Which task to train on", default="miiii"
+    )  # nanda or baseline or miiii
+    parser.add_argument(
+        "--mods", type=str, help="Weather to test divisibility or remainders", default="remainder"
+    )  # remainder or divisibility
+    parser.add_argument("--mask", type=bool, help="should i mask the first four tasks?")
     if "ipykernel" not in sys.argv[0]:
-        cli_args = args_fn()
-        for key in kwargs:
-            assert (
-                getattr(cli_args, key, None) is None
-            ), f"Duplicate argument: {key}"  # asset that everything in kwargs has none value in cliargs
-        # merge cli_args and kwargs
-        kwargs = {**cli_args.__dict__, **kwargs}
-        kwargs = {k: v for k, v in kwargs.items() if v is not None and k != "runs" and k != "task"}
-        cfg = Conf(**kwargs)
-        return cfg
+        return parser.parse_args()
     else:
-        return Conf(**kwargs)
+        return parser.parse_args(["--runs", "1", "--task", "miiii", "--mods", "remainder", "--mask", "True"])
 
 
 def digit_fn(n, base):

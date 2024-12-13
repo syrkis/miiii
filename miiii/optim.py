@@ -5,8 +5,8 @@ from typing import Dict, Any
 from jax import random
 
 from miiii.utils import Conf
-from miiii.train import train
-from miiii.tasks import Dataset, Task
+from miiii.train import train_fn
+from miiii.tasks import Dataset
 
 
 def load_config() -> Dict[str, Any]:
@@ -34,27 +34,27 @@ def create_trial_config(trial: optuna.Trial, config: Dict[str, Any]) -> Conf:
     return Conf(**full_params)
 
 
-def objective(trial: optuna.Trial, dataset: Dataset, task: Task):
+def objective(trial: optuna.Trial, dataset: Dataset):
     """Optuna objective function."""
     config = load_config()
     cfg = create_trial_config(trial, config)
 
     # Train model
     rng = random.PRNGKey(0)
-    state, metrics = train(rng, cfg, dataset, task)
+    state, metrics = train_fn(rng, cfg, dataset)
 
     # Return final validation accuracy
     return float(metrics.valid.acc[-1].mean())
 
 
-def optimize(dataset: Dataset, task: Task, n_trials: int = 100):
+def optimize(dataset: Dataset, task, n_trials: int = 100):
     """Run hyperparameter optimization."""
     study = optuna.create_study(
         direction="maximize", pruner=optuna.pruners.MedianPruner(), sampler=optuna.samplers.TPESampler(seed=0)
     )
 
     study.optimize(
-        lambda trial: objective(trial, dataset, task),
+        lambda trial: objective(trial, dataset),
         n_trials=n_trials,
     )
 

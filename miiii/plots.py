@@ -44,7 +44,6 @@ def plot_run(
     metrics,
     ds: mi.tasks.Dataset,
     cfg: mi.utils.Conf,
-    task: mi.tasks.Task,
     hash,
     activations=None,
     font_size=12,
@@ -63,7 +62,6 @@ def plot_run(
                 s,
                 m,
                 cfg,
-                task,
                 hash,
                 font_size=font_size,
                 log_axis=log_axis,
@@ -96,7 +94,7 @@ def fourier_analysis(matrix):
     return magnitude_spectrum_centered, freq_activations, significant_freqs
 
 
-def plot_training(metric, split, name, cfg, task, hash, font_size=1.0, log_axis=False, log_scale=False):
+def plot_training(metric, split, name, cfg: mi.utils.Conf, hash, font_size=1.0, log_axis=False, log_scale=False):
     path = os.path.join(FIGS_DIR, hash, f"{name}_{split}_training.svg")
     if log_axis:
         data = log_axis_array(metric)[:, 10:]
@@ -105,6 +103,7 @@ def plot_training(metric, split, name, cfg, task, hash, font_size=1.0, log_axis=
     if log_scale:
         data = np.log10(data + 1e-8) + 1e-8
     left = esch.EdgeConfig(label="Task", show_on="first")
+
     ticks = [(i, str(prime.item())) for i, prime in enumerate(task.primes) if i % 2 == 0]
     right = esch.EdgeConfig(ticks=ticks, show_on="all")  # type: ignore
     bottom = esch.EdgeConfig(

@@ -4,7 +4,7 @@
 
 # %% Imports
 from miiii.utils import Conf, Params, Activation, Feedforward, Attention, Embedding
-from miiii.tasks import Dataset, Task
+from miiii.tasks import Dataset
 import jax
 from jax import random, lax, nn, vmap, jit
 import jax.numpy as jnp
@@ -21,18 +21,15 @@ initializer = nn.initializers.he_normal()
 
 
 # %% Forward
-def apply_fn(cfg: Conf, ds: Dataset, task: Task, eval):
-    dropout = 0.0 if eval else cfg.dropout
-    step = jit(partial(block_fn, dropout=dropout))
-
-    @jit
+def apply_fn(cfg: Conf, ds: Dataset, dropout: float):
     @partial(vmap, in_axes=(None, None, 0))  # type: ignore
-    def apply(rng, params, x) -> Activation:
+    @jit
+    def apply(key, params, x) -> Activation:
         embeds = embed_fn(params.embeds, x)
-        keys = random.split(rng, cfg.depth * 2).reshape(cfg.depth, 2, 2)
-        z, acts = lax.scan(step, embeds, (keys, params.attn, params.ffwd))
-        acts.logits = ((z[-1] @ params.unbeds) * task.mask).squeeze()
-        return acts
+        z = dropout_fn(key, ffwd_fn(params.ffwd, embeds), dropout)
+        # lax.scan(step, embeds, (keys, params.attn, params.ffwd))
+        logits = ((z[-1] @ params.unbeds) * ds.mask).squeeze()
+        return logits[-1]
 
     return apply
 
@@ -53,10 +50,10 @@ def attn_fn(w, x: Array):
     return (wei @ v @ w.o).sum(axis=0), Activation(wei=wei)
 
 
-def ffwd_fn(w: Feedforward, x: Array) -> Tuple[Array, Array]:
+def ffwd_fn(w: Feedforward, x: Array) -> Array:
     z = jnp.dot(x, w.w_in)  # z: seq_len x emb_dim
     z = jax.nn.relu(z)  # grokfast relu
-    return z @ w.w_out, z  # disable biases as per @nanda2023
+    return jnp.dot(z, w.w_out)  # disable biases as per @nanda2023
 
 
 def embed_fn(w: Embedding, x: Array) -> Array:
@@ -94,30 +91,30 @@ def init_block(cfg: Conf, rng: jnp.ndarray) -> Tuple[Attention, Feedforward]:
     return attn_w, ffwd_w
 
 
-def init_fn(rng: Array, cfg: Conf, ds: Dataset, task: Task):
+def init_fn(rng: Array, cfg: Conf, arg, ds: Dataset):
     keys = random.split(rng, 2 + cfg.depth)
     embeds = init_embed_fn(keys[0], cfg)
-    unbeds = initializer(keys[1], task_size(cfg, task))
+    unbeds = initializer(keys[1], task_size(cfg, arg))
     attn, ffwd = lax.map(partial(init_block, cfg), keys[2:])
     return Params(embeds=embeds, unbeds=unbeds, attn=attn, ffwd=ffwd)
 
 
 def dropout_fn(key: Array, x: Array, dropout: float) -> Array:
     mask = random.bernoulli(key, 1 - dropout, x.shape)
-    return jnp.where(dropout == 0.0, x, x * mask / (1 - dropout))
+    return jnp.where(dropout == 0.0, x, jnp.where(mask, x, 0) / (1 - dropout))
 
 
-def task_size(cfg: Conf, task: Task):
+def task_size(cfg: Conf, arg):
     primes = jnp.array(A000040[1 : cfg.p])
     primes = primes[primes < cfg.p]
-    match task.type, task.span:
-        case "divisible", "prime":
+    match arg.mods, arg.task:
+        case "divisible", "nanda":
             return cfg.latent_dim, 1
-        case "remainder", "prime":
+        case "remainder", "nanda":
             return cfg.latent_dim, cfg.p
-        case "divisible", "factors":
+        case "divisible", "miiii":
             return cfg.latent_dim, primes.shape[0]
-        case "remainder", "factors":
+        case "remainder", "miiii":
             return primes.shape[0], cfg.latent_dim, primes.max()
         case _:
             raise ValueError("Invalid task type or span")

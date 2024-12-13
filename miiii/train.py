@@ -14,7 +14,7 @@ from typing import cast
 from jaxtyping import Array
 
 from miiii.model import apply_fn, init_fn
-from miiii.tasks import Dataset, Task
+from miiii.tasks import Dataset
 from miiii.utils import Conf, Metrics, Params, Split, State
 
 
@@ -24,34 +24,29 @@ ALPHA = 0.98
 
 
 # %% Functions
-def update_fn(opt, ds: Dataset, task: Task, cfg: Conf):
-    train_apply = jit(apply_fn(cfg, ds, task, eval=False))
-    valid_apply = jit(partial(apply_fn(cfg, ds, task, eval=True), random.PRNGKey(0)))
-    grad = jit(grad_fn(ds, task, cfg, train_apply))
-
+def make_update_fn(opt, grad_fn, ds, cfg, arg):
     @jit
-    def update(state, key):
-        loss, grads = grad(state.params, key)
-        grads, emas = filter_fn(grads, state.emas, cfg.lamb)  # grokfast values
+    def update_fn(state, key):
+        loss, grads = grad_fn(state.params, key)
+        grads, emas = filter_fn(grads, state.emas, cfg.lamb)
         updates, opt_state = opt.update(grads, state.opt_state, state.params)
         params = cast(Params, optax.apply_updates(state.params, updates))
-        state = State(params=params, emas=state.emas, opt_state=opt_state)
+        state = State(params=params, emas=emas, opt_state=opt_state)
         return state, loss
 
-    return update, train_apply, valid_apply
+    return update_fn
 
 
-def grad_fn(ds: Dataset, task: Task, cfg: Conf, apply):
-    loss_fn, mask, weight = jit(task.loss_fn), task.mask, task.weight
-    mu = ds.y.train.mean(0)
+def make_grad_fn(ds: Dataset, cfg: Conf, arg, apply, loss_fn):
+    mask, weight = ds.mask, ds.weight
 
     @value_and_grad
-    def grad(params: Params, rng) -> Array:
-        acts = apply(rng, params, ds.x.train)
-        losses = loss_fn(acts.logits, ds.y.train, 1 - mu, 2, mask) * weight
+    def grad_fn(params: Params, rng) -> Array:
+        logits = apply(rng, params, ds.x.train)
+        losses = loss_fn(logits, ds.y.train, mask) * weight
         return losses.mean()
 
-    return grad
+    return grad_fn
 
 
 @jit
@@ -61,54 +56,69 @@ def filter_fn(grads, emas, lamb: float):
     return grads, emas
 
 
-def step_fn(ds: Dataset, task: Task, cfg: Conf, opt, scope):
-    update, train_apply, valid_apply = update_fn(opt, ds, task, cfg)
-    evaluate = evaluate_fn(ds, task, cfg, valid_apply)
+def make_interval_fn(cfg, arg, opt, loss_fn, ds):
+    train_apply = apply_fn(cfg, ds, dropout=cfg.dropout)
+    grad_fn = make_grad_fn(ds, cfg, arg, train_apply, loss_fn)
+    update_fn = make_update_fn(opt, grad_fn, ds, cfg, arg)
 
-    @scan_tqdm(100)
-    @jit
-    def step(state, args):
-        epoch, key = args
-        keys = random.split(key, cfg.epochs // 100)
-        state, loss = lax.scan(update, state, keys)
-        return state, (loss, evaluate(state))
+    @scan_tqdm(arg.tick)
+    def interval_fn(state, inputs):
+        epoch, rng = inputs
+        keys = random.split(rng, cfg.epochs // arg.tick)
+        state, loss = lax.scan(update_fn, state, keys)
+        return state, loss
 
-    return step
-
-
-def init_state(rng, cfg: Conf, ds: Dataset, task: Task, opt):
-    params: Params = init_fn(rng, cfg, ds, task)
-    emas = tree.map(lambda x: jnp.zeros_like(x), params)
-    opt_state = opt.init(params)
-    return State(params=params, opt_state=opt_state, emas=emas)
+    return interval_fn
 
 
-def train(rng, cfg: Conf, ds: Dataset, task: Task, scope=False) -> Tuple[State, Tuple[Array, Metrics]]:
+def init_state(rng, cfg: Conf, arg, ds: Dataset):
     opt = optax.adamw(cfg.lr, weight_decay=cfg.l2, b1=ADAM_BETA1, b2=ADAM_BETA2)  # @nanda2023
-    state = init_state(rng, cfg, ds, task, opt)
-    step = step_fn(ds, task, cfg, opt, scope)
-    state, output = lax.scan(step, state, (jnp.arange(100), random.split(rng, 100)))
-    return state, output
+    params: Params = init_fn(rng, cfg, arg, ds)
+    emas = tree.map(lambda x: jnp.zeros_like(x), params)
+    opt_state = cast(Params, opt.init(params))  # type: ignore
+    return State(params=params, opt_state=opt_state, emas=emas), opt
+
+
+def train_fn(rng, cfg: Conf, arg, ds: Dataset) -> Tuple[State, Array]:
+    loss_fn = vmap(cross_entropy, in_axes=(1, 1, 0))
+    state, opt = init_state(rng, cfg, arg, ds)
+    interval_fn = make_interval_fn(cfg, arg, opt, loss_fn, ds)
+
+    inputs = (jnp.arange(arg.tick), random.split(rng, arg.tick))
+    state, loss = lax.scan(interval_fn, state, inputs)
+    return state, loss
+
+
+# def focal_loss_fn(logits, y, alpha, gamma, mask):
+# logits = logits.astype(jnp.float64)  # enable with some jax bullshit to avoid slingshot
+# return optax.sigmoid_focal_loss(logits, y, alpha, gamma).mean()  # mean across samples
+
+
+def cross_entropy(logits, y, mask):
+    logits = logits.astype(jnp.float64)  # enable with some jax bullshit to avoid slingshot
+    return optax.softmax_cross_entropy_with_integer_labels(logits, y, where=mask).mean()
 
 
 # Evaluate
-def evaluate_fn(ds: Dataset, task: Task, cfg: Conf, apply):
+def make_eval_fn(ds: Dataset, cfg: Conf, arg, apply, loss_fn):
+    apply = partial(apply, random.PRNGKey(0))
+
     def acc_fn(y_pred, y_true):
         return (y_pred == y_true).mean()
 
-    acc_fn = vmap(acc_fn, in_axes=(1, 1)) if task.span == "factors" else acc_fn
-    loss_fn, mask, weight = jit(task.loss_fn), task.mask, task.weight
+    acc_fn = vmap(acc_fn, in_axes=(1, 1)) if arg.task == "miiii" else acc_fn
+    loss_fn, mask, weight = jit(loss_fn), ds.mask, ds.weight
 
-    def aux(state: State, x, y):
-        acts = apply(state.params, x)
-        losses = loss_fn(acts.logits, y, 1 - y.mean(0), 2, mask) * weight
-        accuracy = acc_fn(acts.logits.argmax(-1), y)
+    def aux(params, x, y):
+        logits = apply(params, x)
+        losses = loss_fn(logits, y, mask) * weight
+        accuracy = acc_fn(logits.argmax(-1), y)
         return Split(loss=losses, acc=accuracy)
 
     @jit
     def evaluate(state: State):
-        valid_metrics = aux(state, ds.x.eval, ds.y.eval)
-        train_metrics = aux(state, ds.x.train, ds.y.train)
+        valid_metrics = aux(state.params, ds.x.eval, ds.y.eval)
+        train_metrics = aux(state.params, ds.x.train, ds.y.train)
         metrics = Metrics(train=train_metrics, valid=valid_metrics)
         return metrics
 
