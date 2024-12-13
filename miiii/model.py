@@ -25,13 +25,18 @@ def apply_fn(cfg: Conf, ds: Dataset, dropout: float):
     @partial(vmap, in_axes=(None, None, 0))  # type: ignore
     @jit
     def apply(key, params, x) -> Activation:
-        embeds = embed_fn(params.embeds, x)
-        z = dropout_fn(key, ffwd_fn(params.ffwd, embeds), dropout)
-        # lax.scan(step, embeds, (keys, params.attn, params.ffwd))
-        logits = ((z[-1] @ params.unbeds) * ds.mask).squeeze()
-        return logits[-1]
+        x = embed_fn(params.embeds, x)
+        x, _ = lax.scan(ffwd_fn, x, params.ffwd)
+        logits = ((x[-1] @ params.unbeds) * ds.mask).squeeze()
+        return logits
 
     return apply
+
+def ffwd_fn(x, w):
+    z = jnp.dot(x, w.w_in)  # z: seq_len x emb_dim
+    z = jax.nn.relu(z)  # grokfast relu
+    return jnp.dot(z, w.w_out), None  # disable biases as per @nanda2023
+
 
 
 def block_fn(z, args, dropout):
@@ -49,11 +54,6 @@ def attn_fn(w, x: Array):
     wei = nn.softmax(qk, axis=-1)
     return (wei @ v @ w.o).sum(axis=0), Activation(wei=wei)
 
-
-def ffwd_fn(w: Feedforward, x: Array) -> Array:
-    z = jnp.dot(x, w.w_in)  # z: seq_len x emb_dim
-    z = jax.nn.relu(z)  # grokfast relu
-    return jnp.dot(z, w.w_out)  # disable biases as per @nanda2023
 
 
 def embed_fn(w: Embedding, x: Array) -> Array:
@@ -101,8 +101,7 @@ def init_fn(rng: Array, cfg: Conf, arg, ds: Dataset):
 
 def dropout_fn(key: Array, x: Array, dropout: float) -> Array:
     mask = random.bernoulli(key, 1 - dropout, x.shape)
-    return jnp.where(dropout == 0.0, x, jnp.where(mask, x, 0) / (1 - dropout))
-
+    return jnp.where(dropout == 0.0, x, mask * x / (1 - dropout))
 
 def task_size(cfg: Conf, arg):
     primes = jnp.array(A000040[1 : cfg.p])

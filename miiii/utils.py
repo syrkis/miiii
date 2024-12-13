@@ -156,7 +156,7 @@ def log_fn(cfg, arg, ds, state, metrics):
                         "loss": metrics["loss"][split][(tick, idx) if arg.task == "miiii" else tick].item(),
                     },
                     context={"split": split, "prime": prime},
-                    epoch=tick * (cfg.epochs // arg.tick),
+                    step=tick * (cfg.epochs // arg.tick),
                 )
 
 

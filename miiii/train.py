@@ -16,7 +16,6 @@ from jaxtyping import Array
 from miiii.model import apply_fn, init_fn
 from miiii.tasks import Dataset
 from miiii.utils import Conf, Metrics, Params, Split, State
-from miiii.scope import make_scope_fn
 
 
 ADAM_BETA1 = 0.9  # @nanda2023
@@ -30,8 +29,8 @@ def train_fn(rng, cfg: Conf, arg, ds: Dataset):
     interval_fn = make_interval_fn(cfg, arg, opt, ds)
 
     inputs = (jnp.arange(arg.tick), random.split(rng, arg.tick))
-    state, (scope, loss) = lax.scan(interval_fn, state, inputs)
-    return state, (scope, loss)
+    state, (metrics, loss) = lax.scan(interval_fn, state, inputs)
+    return state, (metrics, loss)
 
 
 def make_update_fn(opt, grad_fn, ds, cfg, arg):
@@ -60,7 +59,7 @@ def make_grad_fn(ds: Dataset, cfg: Conf, arg, apply, loss_fn):
 
 
 @jit
-def filter_fn(grads, emas, lamb: float):
+def filter_fn(grads: Params, emas: Params, lamb: float):
     emas = tree.map(lambda grad, ema: ema * ALPHA + grad * (1 - ALPHA), grads, emas)
     grads = tree.map(lambda grad, ema: grad + lamb * ema, grads, emas)
     return grads, emas
@@ -69,17 +68,16 @@ def filter_fn(grads, emas, lamb: float):
 def make_interval_fn(cfg, arg, opt, ds):
     train_apply = apply_fn(cfg, ds, dropout=cfg.dropout)
     loss_fn = vmap(cross_entropy, in_axes=(1, 1, 0))
-    scope_fn = make_scope_fn(ds, cfg, arg, loss_fn)
     grad_fn = make_grad_fn(ds, cfg, arg, train_apply, loss_fn)
     update_fn = make_update_fn(opt, grad_fn, ds, cfg, arg)
+    eval_fn = make_eval_fn(ds, cfg, arg, loss_fn)
 
     @scan_tqdm(arg.tick)
     def interval_fn(state, inputs):
         epoch, rng = inputs
         keys = random.split(rng, cfg.epochs // arg.tick)
         state, loss = lax.scan(update_fn, state, keys)
-        scope = scope_fn(state)
-        return state, (scope, loss)
+        return state, (eval_fn(state), loss)
 
     return interval_fn
 
@@ -97,10 +95,37 @@ def cross_entropy(logits, y, mask):
     return optax.softmax_cross_entropy_with_integer_labels(logits, y, where=mask).mean()
 
 
-# def aim_logger(run, step, value):
-#     run.track(value, name="scan_value", step=step)
+# Functions
+def make_eval_fn(ds: Dataset, cfg: Conf, arg, loss_fn):
+    apply = partial(apply_fn(cfg, ds, dropout=cfg.dropout), random.PRNGKey(0))
+    metrics_fn = make_metrics_fn(apply, loss_fn, arg, ds)
+
+    @jit
+    def eval_fn(state: State):
+        valid_metrics = metrics_fn(state.params, ds.x.eval, ds.y.eval)
+        train_metrics = metrics_fn(state.params, ds.x.train, ds.y.train)
+        metrics = Metrics(train=train_metrics, valid=valid_metrics)
+        return metrics
+
+    return eval_fn
 
 
-# @jit
-# def jax_aim_logger(step, value):
-#     debug.callback(aim_logger, step, lax.stop_gradient(value))
+def make_acc_fn(arg):
+    def acc_fn(y_pred, y_true):
+        return (y_pred == y_true).mean()
+
+    acc_fn = vmap(acc_fn, in_axes=(1, 1)) if arg.task == "miiii" else acc_fn
+    return acc_fn
+
+
+def make_metrics_fn(apply_fn, loss_fn, arg, ds):
+    acc_fn = make_acc_fn(arg)
+
+    @jit
+    def metrics_fn(params, x, y):
+        logits = apply_fn(params, x)
+        losses = loss_fn(logits, y, ds.mask) * ds.weight
+        accuracy = acc_fn(logits.argmax(-1), y)
+        return Split(loss=losses, acc=accuracy)
+
+    return metrics_fn
