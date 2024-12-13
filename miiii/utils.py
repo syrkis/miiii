@@ -85,7 +85,6 @@ class State:
 
 @dataclass
 class Conf:
-    # alpha: float = 0.98
     p: int = 113
     lamb: float = 2
     latent_dim: int = 128
@@ -98,18 +97,19 @@ class Conf:
     train_frac: float = 0.5
     mask: bool = False  # weather to mask first four tasks
     shuffle: bool = False  # weather to shuffle the y labels
+    alpha: float = 0.98
 
 
-def cfg_fn() -> Conf:
+def cfg_fn(search_space=False):
     """Create a configuration object from parsed command-line arguments."""
     with open("config.yaml", "r") as f:
-        cfg = yaml.safe_load(f)["default"]
-    return Conf(**cfg)
+        cfg = yaml.safe_load(f)
+    return Conf(**cfg['default']) if not search_space else cfg
 
 
 def arg_fn():
     parser = argparse.ArgumentParser(description="Run model with specified hyperparameters.")
-    parser.add_argument("--runs", type=int, help="Number of trials to run", default=10)
+    parser.add_argument("--runs", type=int, help="Number of trials to run", default=1)
     parser.add_argument("--tick", type=int, help="Number of trials to run", default=100)  # how often to scope
     parser.add_argument("--task", type=str, help="Which task to train on", default="miiii")
     parser.add_argument("--mods", type=str, help="Weather to test divisibility or remainders", default="remainder")

@@ -20,7 +20,6 @@ from miiii.utils import Conf, Metrics, Params, Split, State
 
 ADAM_BETA1 = 0.9  # @nanda2023
 ADAM_BETA2 = 0.98  # @nanda2023
-ALPHA = 0.98  # @lee2024a
 
 
 # %% Functions
@@ -37,7 +36,7 @@ def make_update_fn(opt, grad_fn, ds, cfg, arg):
     @jit
     def update_fn(state, key):
         loss, grads = grad_fn(state.params, key)
-        grads, emas = filter_fn(grads, state.emas, cfg.lamb)
+        grads, emas = filter_fn(grads, state.emas, cfg.lamb, cfg.alpha)
         updates, opt_state = opt.update(grads, state.opt_state, state.params)
         params = cast(Params, optax.apply_updates(state.params, updates))
         state = State(params=params, emas=emas, opt_state=opt_state)
@@ -59,8 +58,8 @@ def make_grad_fn(ds: Dataset, cfg: Conf, arg, apply, loss_fn):
 
 
 @jit
-def filter_fn(grads: Params, emas: Params, lamb: float):
-    emas = tree.map(lambda grad, ema: ema * ALPHA + grad * (1 - ALPHA), grads, emas)
+def filter_fn(grads: Params, emas: Params, lamb: float, alpha: float):
+    emas = tree.map(lambda grad, ema: ema * alpha + grad * (1 - alpha), grads, emas)
     grads = tree.map(lambda grad, ema: grad + lamb * ema, grads, emas)
     return grads, emas
 

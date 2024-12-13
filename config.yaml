@@ -2,7 +2,7 @@
 default:
     p: 113
     depth: 1
-    epochs: 20000
+    epochs: 1000
     latent_dim: 128
     lr: 0.0003
     train_frac: 0.5
@@ -12,10 +12,9 @@ default:
     l2: 0.33
 
 search_space:
-    depth: [2, 8]
-    heads: [2, 8]
-    latent_dim: [64, 256]
-    lr: [1e-4, 1e-2]
-    l2: [1e-3, 1e-1]
-    lamb: [1e-3, 1e-1]
-    dropout: [0.0, 0.3]
+    lr: [0.0001, 0.0003, 0.001]
+    l2: [0.1, 0.5, 1.0]
+    alpha: [0.8, 0.95, 0.99]
+    lamb: [0.1, 0.4, 2.0]
+    dropout: [0.1, 0.3, 0.5]
+    train_frac: [0.3, 0.5, 0.7]
