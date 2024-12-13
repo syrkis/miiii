@@ -7,7 +7,7 @@ from typing import Tuple
 
 import jax.numpy as jnp
 import optax
-from jax import lax, random, tree, value_and_grad, vmap, jit
+from jax import lax, random, tree, value_and_grad, vmap, jit, debug
 from jax_tqdm import scan_tqdm
 from functools import partial
 from typing import cast
@@ -95,3 +95,12 @@ def init_state(rng, cfg: Conf, arg, ds: Dataset):
 def cross_entropy(logits, y, mask):
     logits = logits.astype(jnp.float64)  # enable with some jax bullshit to avoid slingshot
     return optax.softmax_cross_entropy_with_integer_labels(logits, y, where=mask).mean()
+
+
+# def aim_logger(run, step, value):
+#     run.track(value, name="scan_value", step=step)
+
+
+# @jit
+# def jax_aim_logger(step, value):
+#     debug.callback(aim_logger, step, lax.stop_gradient(value))

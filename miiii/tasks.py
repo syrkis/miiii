@@ -3,14 +3,10 @@
 # by: Noah Syrkis
 
 # %% Imports
-from typing import Callable
-
 import jax.numpy as jnp
-import optax
 from chex import dataclass
-from jax import Array, random, vmap, jit
+from jax import Array, random
 from oeis import oeis
-from typing import Tuple
 
 from miiii.utils import Conf
 
@@ -29,6 +25,7 @@ class Dataset:
     idxs: Array
     udxs: Array
     mask: Array
+    primes: Array
     weight: Array | None = None
 
 
@@ -60,10 +57,9 @@ def miiii_fn(key, cfg, arg):
     weight = weight.at[:4].set(0) if cfg.mask else weight  # mask first four tasks. maybe.
     x = Split(train=x_train, eval=x_eval)
     y = Split(train=y_train, eval=y_eval)
-    return Dataset(x=x, y=y, idxs=idxs, udxs=idxs.argsort(), mask=mask, weight=weight)
+    return Dataset(x=x, y=y, idxs=idxs, udxs=idxs.argsort(), mask=mask, weight=weight, primes=jnp.array(factors))
 
 
-# MULTI FALSE
 # nanda task  ################################################################
 def nanda_fn(key, cfg: Conf, arg) -> Dataset:
     # modular adition modulo prime
@@ -82,4 +78,4 @@ def nanda_fn(key, cfg: Conf, arg) -> Dataset:
         y_train, y_eval = (y_train == 0).astype(jnp.int8), (y_eval == 0).astype(jnp.int8)
     x = Split(train=x_train, eval=x_eval)
     y = Split(train=y_train, eval=y_eval)
-    return Dataset(x=x, y=y, idxs=idxs, udxs=idxs.argsort(), mask=jnp.array(1))
+    return Dataset(x=x, y=y, idxs=idxs, udxs=idxs.argsort(), mask=jnp.array(1), primes=jnp.array([cfg.p]))

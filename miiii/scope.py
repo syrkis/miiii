@@ -3,20 +3,22 @@
 # by: Noah Syrkis
 
 # Imports
-from typing import Tuple
-from miiii.utils import Conf, Metrics, Params, Split, State
+from miiii.utils import Conf, Metrics, Split, State
 from miiii.tasks import Dataset
-from jax import lax, random, tree, value_and_grad, vmap, jit
+from jax import random, vmap, jit
 from functools import partial
-from miiii.model import apply_fn, init_fn
+from miiii.model import apply_fn
 
 
 def make_scope_fn(ds, cfg, arg, loss_fn):
     eval_fn = make_eval_fn(ds, cfg, arg, loss_fn)
 
-    def scope_fn(state):
+    def scope_fn(state: State) -> Metrics:
         metrics = eval_fn(state)
+        return metrics
+
     return eval_fn
+
 
 # Functions
 def make_eval_fn(ds: Dataset, cfg: Conf, arg, loss_fn):
@@ -32,19 +34,23 @@ def make_eval_fn(ds: Dataset, cfg: Conf, arg, loss_fn):
 
     return eval_fn
 
+
 def make_acc_fn(arg):
     def acc_fn(y_pred, y_true):
         return (y_pred == y_true).mean()
+
     acc_fn = vmap(acc_fn, in_axes=(1, 1)) if arg.task == "miiii" else acc_fn
     return acc_fn
 
 
 def make_metrics_fn(apply_fn, loss_fn, arg, ds):
     acc_fn = make_acc_fn(arg)
+
     @jit
     def metrics_fn(params, x, y):
         logits = apply_fn(params, x)
         losses = loss_fn(logits, y, ds.mask) * ds.weight
         accuracy = acc_fn(logits.argmax(-1), y)
         return Split(loss=losses, acc=accuracy)
+
     return metrics_fn

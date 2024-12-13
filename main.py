@@ -5,12 +5,7 @@
 # Imports
 import miiii as mi
 
-import jax.numpy as jnp
-from jax import random, tree, jit, vmap, lax
-from functools import partial
-from typing import cast
-from tqdm import tqdm
-import optax
+from jax import random
 
 
 # %% Setup
@@ -20,5 +15,5 @@ ds = mi.tasks.task_fn(keys[0], cfg, arg)
 state = mi.utils.State(params=mi.model.init_fn(keys[0], cfg, arg, ds))
 
 # %%
-state, (scope, loss)= mi.train.train_fn(rng, cfg, arg, ds)
-print(tree.map(jnp.shape, scope), loss.shape)
+state, (metrics, loss) = mi.train.train_fn(rng, cfg, arg, ds)
+mi.utils.log_fn(cfg, arg, ds, state, metrics)
