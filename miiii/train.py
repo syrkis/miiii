@@ -16,6 +16,7 @@ from jaxtyping import Array
 from miiii.model import apply_fn, init_fn
 from miiii.tasks import Dataset
 from miiii.utils import Conf, Metrics, Params, Split, State
+from miiii.scope import make_scope_fn
 
 
 ADAM_BETA1 = 0.9  # @nanda2023
@@ -24,6 +25,15 @@ ALPHA = 0.98
 
 
 # %% Functions
+def train_fn(rng, cfg: Conf, arg, ds: Dataset):
+    state, opt = init_state(rng, cfg, arg, ds)
+    interval_fn = make_interval_fn(cfg, arg, opt, ds)
+
+    inputs = (jnp.arange(arg.tick), random.split(rng, arg.tick))
+    state, (scope, loss) = lax.scan(interval_fn, state, inputs)
+    return state, (scope, loss)
+
+
 def make_update_fn(opt, grad_fn, ds, cfg, arg):
     @jit
     def update_fn(state, key):
@@ -56,8 +66,10 @@ def filter_fn(grads, emas, lamb: float):
     return grads, emas
 
 
-def make_interval_fn(cfg, arg, opt, loss_fn, ds):
+def make_interval_fn(cfg, arg, opt, ds):
     train_apply = apply_fn(cfg, ds, dropout=cfg.dropout)
+    loss_fn = vmap(cross_entropy, in_axes=(1, 1, 0))
+    scope_fn = make_scope_fn(ds, cfg, arg, loss_fn)
     grad_fn = make_grad_fn(ds, cfg, arg, train_apply, loss_fn)
     update_fn = make_update_fn(opt, grad_fn, ds, cfg, arg)
 
@@ -66,60 +78,20 @@ def make_interval_fn(cfg, arg, opt, loss_fn, ds):
         epoch, rng = inputs
         keys = random.split(rng, cfg.epochs // arg.tick)
         state, loss = lax.scan(update_fn, state, keys)
-        return state, loss
+        scope = scope_fn(state)
+        return state, (scope, loss)
 
     return interval_fn
 
 
 def init_state(rng, cfg: Conf, arg, ds: Dataset):
     opt = optax.adamw(cfg.lr, weight_decay=cfg.l2, b1=ADAM_BETA1, b2=ADAM_BETA2)  # @nanda2023
-    params: Params = init_fn(rng, cfg, arg, ds)
+    params = init_fn(rng, cfg, arg, ds)
     emas = tree.map(lambda x: jnp.zeros_like(x), params)
     opt_state = cast(Params, opt.init(params))  # type: ignore
     return State(params=params, opt_state=opt_state, emas=emas), opt
 
 
-def train_fn(rng, cfg: Conf, arg, ds: Dataset) -> Tuple[State, Array]:
-    loss_fn = vmap(cross_entropy, in_axes=(1, 1, 0))
-    state, opt = init_state(rng, cfg, arg, ds)
-    interval_fn = make_interval_fn(cfg, arg, opt, loss_fn, ds)
-
-    inputs = (jnp.arange(arg.tick), random.split(rng, arg.tick))
-    state, loss = lax.scan(interval_fn, state, inputs)
-    return state, loss
-
-
-# def focal_loss_fn(logits, y, alpha, gamma, mask):
-# logits = logits.astype(jnp.float64)  # enable with some jax bullshit to avoid slingshot
-# return optax.sigmoid_focal_loss(logits, y, alpha, gamma).mean()  # mean across samples
-
-
 def cross_entropy(logits, y, mask):
     logits = logits.astype(jnp.float64)  # enable with some jax bullshit to avoid slingshot
     return optax.softmax_cross_entropy_with_integer_labels(logits, y, where=mask).mean()
-
-
-# Evaluate
-def make_eval_fn(ds: Dataset, cfg: Conf, arg, apply, loss_fn):
-    apply = partial(apply, random.PRNGKey(0))
-
-    def acc_fn(y_pred, y_true):
-        return (y_pred == y_true).mean()
-
-    acc_fn = vmap(acc_fn, in_axes=(1, 1)) if arg.task == "miiii" else acc_fn
-    loss_fn, mask, weight = jit(loss_fn), ds.mask, ds.weight
-
-    def aux(params, x, y):
-        logits = apply(params, x)
-        losses = loss_fn(logits, y, mask) * weight
-        accuracy = acc_fn(logits.argmax(-1), y)
-        return Split(loss=losses, acc=accuracy)
-
-    @jit
-    def evaluate(state: State):
-        valid_metrics = aux(state.params, ds.x.eval, ds.y.eval)
-        train_metrics = aux(state.params, ds.x.train, ds.y.train)
-        metrics = Metrics(train=train_metrics, valid=valid_metrics)
-        return metrics
-
-    return evaluate

@@ -20,6 +20,5 @@ ds = mi.tasks.task_fn(keys[0], cfg, arg)
 state = mi.utils.State(params=mi.model.init_fn(keys[0], cfg, arg, ds))
 
 # %%
-
-
-state, metrics = mi.train.train_fn(rng, cfg, arg, ds)
+state, (scope, loss)= mi.train.train_fn(rng, cfg, arg, ds)
+print(tree.map(jnp.shape, scope), loss.shape)
