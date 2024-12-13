@@ -1,18 +1,18 @@
 # search.py
 import optuna
 import yaml
-from dataclasses import asdict
 from miiii.utils import Conf, log_fn
 from typing import Dict, Any
-import logging
 from jax import random
 from functools import partial
 from miiii.train import train_fn
 from miiii.tasks import task_fn
 
+
 def load_config() -> Dict[str, Any]:
     with open("config.yaml", "r") as f:
         return yaml.safe_load(f)
+
 
 def create_trial_config(trial: optuna.Trial, config: Dict[str, Any]) -> Conf:
     trial_params = config["default"].copy()
@@ -23,6 +23,7 @@ def create_trial_config(trial: optuna.Trial, config: Dict[str, Any]) -> Conf:
 
     return Conf(**trial_params)
 
+
 def objective(arg, trial: optuna.Trial) -> float:
     cfg = create_trial_config(trial, load_config())
     rng = random.PRNGKey(trial.number)
@@ -31,12 +32,10 @@ def objective(arg, trial: optuna.Trial) -> float:
     log_fn(cfg, arg, ds, state, metrics)
     return metrics.valid.acc[-1].mean()
 
-def run_study(arg):
 
+def run_study(arg):
     study = optuna.create_study(
-        direction="maximize",
-        study_name="miiii_optimization",
-        sampler=optuna.samplers.TPESampler(seed=42)
+        direction="maximize", study_name="miiii_optimization", sampler=optuna.samplers.TPESampler(seed=42)
     )
 
     study.optimize(partial(objective, arg), n_trials=arg.runs)
