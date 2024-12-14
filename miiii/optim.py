@@ -1,4 +1,8 @@
-# search.py
+# optim.py
+#   miiiiiiiii hyperparameter optimization
+# by: Noah Syrkis
+
+# Imports
 import optuna
 import yaml
 from miiii.utils import Conf, log_fn
