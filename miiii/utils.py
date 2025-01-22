@@ -1,5 +1,5 @@
-# miiii/miiii/utils.py
-# miiii utils
+# utils.py
+#   miiii utils
 # By: Noah Syrkis
 
 # %% Imports
@@ -10,7 +10,6 @@ import sys
 from dataclasses import field
 from typing import Any, Dict
 
-# import esch
 import jax.numpy as jnp
 import numpy as np
 import yaml
@@ -30,7 +29,6 @@ class Activation:
 @dataclass
 class Split:
     loss: Array
-    # f1: Array
     acc: Array
 
 
@@ -104,7 +102,7 @@ def cfg_fn(search_space=False):
     """Create a configuration object from parsed command-line arguments."""
     with open("config.yaml", "r") as f:
         cfg = yaml.safe_load(f)
-    return Conf(**cfg['default']) if not search_space else cfg
+    return Conf(**cfg["default"]) if not search_space else cfg
 
 
 def arg_fn():

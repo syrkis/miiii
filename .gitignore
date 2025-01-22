@@ -1,7 +1,7 @@
 container.sif
 logs/
 **/__pycache__/
-**/*.pdf
+# **/*.pdf
 **/output/
 **/data/artifacts/
 #data/

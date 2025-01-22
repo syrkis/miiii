@@ -5,8 +5,8 @@ default:
 # Run the Python script with Poetry
 run *ARGS:
     time poetry run python main.py {{ARGS}}
-    @latest_run=$(realpath $(ls -td paper/figs/runs/* | head -n1)); \
-    ln -sfn "$latest_run" paper/figs/latest
+# @latest_run=$(realpath $(ls -td paper/figs/runs/* | head -n1)); \
+# ln -sfn "$latest_run" paper/figs/latest
 
 # Install dependencies
 install:

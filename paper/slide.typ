@@ -1,32 +1,38 @@
-// head /////////////////////////////////////////////////////////////////////////
-#import "@preview/touying:0.5.3": *
-#import "@local/esch:0.0.0": *
-#import "@preview/equate:0.2.1": equate // <- for numbering equations
+// imports ///////////////
+#import "@preview/touying:0.5.5": *
+#import "@local/tyrkis:0.0.0": *
 
-
-// HASHES
+// head ///////////////////////////////////////////
 #let miiii_hash = "50115caac50c4fbfa6bce4cc"
+#let title = "Mechanistic Interpretability on (multi-task) Irreducible Integer Identifiers"
 
-
-#let title = [Mechanistic Interpretability on multi-task Irreducible Integer Identifiers]
-#show: escher-theme.with(
-  aspect-ratio: "16-9",
+#show: slides.with(
   config-info(author: "Noah Syrkis", date: datetime.today(), title: title),
-  config-common(handout: true),   // <- for presentations
+  config-common(handout: false),
 )
 
-#show: equate.with(breakable: true, sub-numbering: true)
-#set math.equation(numbering: "(1.1)", supplement: "Eq.")
+
+#metadata((
+  title: title,
+  slug: "miiii",
+))<frontmatter>
+
 
 #show figure.caption: emph
 
 // body /////////////////////////////////////////////////////////////////////////
+// for every slide:
+//    0. Why is this important
+//    1. headline it with the key take away
+//    2. explain
+//    3. Sumarise verbally
+
 #cover-slide()
 
 #focus-slide[
   #figure(
     image("figs/polar.svg"),
-    caption: [$NN < p^2$ multiples of 13 or 27 (L), 11 (M), or primes (R)],
+    caption: [$NN < p^2$ multiples of 13 or 27 (left) 11 (mid.) or primes (right)],
   )
 ]
 
@@ -49,11 +55,12 @@
 
 #slide[
   - Grokking @power2022 is "sudden generalization" #pause
-  - MI neceitates a mechanism #pause
+  - MI (often) needs a mechanism #pause
   - Grokking is thus convenient for MI #pause
   - #cite(<lee2024a>, form: "prose", style:"american-psychological-association") speeds up grokking by boosting slow gradients as per @grokfast
+  - For more see @ssp
 ][
-  // #meanwhile
+  #meanwhile
   $
     h(t) &= h(t-1) alpha + g(t)(1-alpha)\
     hat(g)(t) &= g(t) + lambda h(t)
@@ -63,10 +70,11 @@
 == Visualizing
 
 #slide[
-  - MI use creativity ... #pause but there are tricks: #pause
-    - For two-token samples, plot them varying one on each axis (@mi_tricks) #pause
+  - MI needs creativity ... #pause but there are tricks: #pause
+    - For two-token samples, plot them varying one on each axis (@mi_tricks)
     - When a matrix is periodic use Fourier
-    - Singular value decomp. ($upright(bold(M)) = upright(bold(U)) upright(bold(Sigma))upright(bold(V^*))$)
+    - Singular value decomp. (@svd).
+    - Take away: get commfy with `esch`-plots
 ][
   #meanwhile
   #figure(
@@ -82,10 +90,19 @@
   )<mi_tricks>
 ]
 
+
+// #focus-slide[
+
+// #figure(
+// image("figs/neuroscope.svg", width: 75%),
+// caption: [Shamleless plug: visit `github.com/syrkis/esch` for more esch plots],
+// )
+// ]
+
 = Modular Arithmetic
 
 #slide[
-  - "Seminal" MI paper by #cite(<nanda2023>, form: "prose", style:"american-psychological-association") focus on modular additon (@nanda_task)
+  - "Seminal" MI paper by #cite(<nanda2023>, form: "prose", style:"american-psychological-association") focuses on modular additon (@nanda_task)
     // #footnote[Nanda worked at Anthropic under the great Chris Olah, and popularized
     // #footnote[To the extent there is such a thing as popularity in this niece a subject] MI]
   - Their final setup trains on $p=113$
@@ -105,9 +122,22 @@
 ]
 
 
+#slide[
+  - $cal(T)_"miiii"$ is non-commutative ...
+  - ... and multi-task: $q$ ranges from 2 to 109#footnote[Largest prime less than $p=113$]
+  - $cal(T)_"nanda"$ use a single layer transformer
+  - Note that these tasks are synthetic and trivial to solve with conventional programming
+  - They are used in the MI literature to turn black boxes opaque
+]
+
+
+
+
+
+
 // #focus-slide[
-//   - give architecutre
-//   - What is a transformer?
+//   - Modular addition is a severely solved problem
+//   - The foucs is this solution—not the problem.
 // ]
 
 
@@ -149,19 +179,19 @@
 = Embeddings
 
 #slide[
-  - The pos. embs. of @pos_emb shows $cal(T)_"nanda"$ is commutative and $cal(T)_"miiii"$ is not
-  - Pearsons correlation is $0.95$ for $cal(T)_"nanda"$ and $-0.64$ for $cal(T)_"miiii"$
-  - Conjecture: The pos. embs. correct for non-commutativity of $cal(T)_"miiii"$
+  - The position embs. of @pos_emb reflects that $cal(T)_"nanda"$ is commutative and $cal(T)_"miiii"$ is not #pause
+  - Maybe: this corrects non-comm. of $cal(T)_"miiii"$?
+  - Corr. is $0.95$ for $cal(T)_"nanda"$ and $-0.64$ for $cal(T)_"miiii"$
 ][
+  #meanwhile
   #figure(
     image("figs/pos_emb.svg", width: 100%),
     caption: [Positional embeddings for $cal(T)_"nanda"$ (top) and $cal(T)_"miiii"$ (bottom).],
   )<pos_emb>
 ]
 
-== Token Embeddings
-
 #slide[
+  #meanwhile
   - For $cal(T)_"nanda"$ token embs. are essentially linear combinations of 5 frequencies ($omega$)
   - For $cal(T)_"miiii"$ more frequencies are in play
   - Each $cal(T)_"miiii"$ subtask targets unique prime
@@ -170,7 +200,6 @@
   #figure(
     stack(
       spacing: 1em,
-      // image("figs/fourier_basis_m.svg"),
       image("figs/fourier_nanda_m.svg"),
       image("figs/fourier_miiii_m.svg"),
     ),
@@ -180,17 +209,18 @@
 
 #slide[
   - Masking $q in {2,3,5,7}$ yields we see a slight decrease in token emb. freqs. #pause
-  - Sanity check: $cal(T)_"bline"$ has no periodicity
-  - Conjecture: The tok. embs. encode a basis per subtask
+  - Sanity check: $cal(T)_"baseline"$ has no periodicity
+  - The tok. embs. encode a basis per subtask?
 ][
   #figure(
     stack(
       spacing: 1em,
       // image("figs/fourier_basis_m.svg"),
-      image("figs/fourier_masks_m.svg"),
       image("figs/fourier_basis_m.svg"),
+      image("figs/fourier_miiii_m.svg"),
+      image("figs/fourier_masks_m.svg"),
     ),
-    caption: [$cal(T)_"nanda"$ (top) and $cal(T)_"miiii"$ (bottom) token embeddings in Fourier basis],
+    caption: [$cal(T)_"baseline"$ (top), $cal(T)_"miiii"$ (middle) and $cal(T)_"masked"$ (bottom) token embeddings in Fourier basis],
   )<tok_emb>
 ]
 
@@ -223,6 +253,24 @@
   )<fft_neurs>
 ]
 
+
+#focus-slide[
+  #figure(
+    stack(
+      dir: ltr,
+      stack(
+        image("figs/neurs_113_basis.svg", width: 50%),
+        image("figs/neurs_113_miiii.svg", width: 50%),
+      ),
+      stack(
+        image("figs/neurs_113_basis_fft.svg", width: 50%),
+        image("figs/neurs_113_miiii_fft.svg", width: 50%),
+      ),
+    ),
+    caption: [Neurons as archive and algorithm. $cal(T)_"basline"$ on top, FFT on right.],
+  )<ava>
+]
+
 #focus-slide[
   #figure(
     stack(
@@ -234,12 +282,12 @@
 ]
 
 
-= $omega$-Spike
+= The $omega$-Spike
 
 #slide[
   // - We reach our central finding
   - Neurs. periodic on solving $q in {2,3,5,7}$
-  - When we generalize to the reamining tasks, many frequencies activate
+  - When we generalize to the reamining tasks, many frequencies activate (64-sample)
   // - Quickly after generalization $omega$'s merge
   - Those $omega$'s are not useful for memory and not useful after generalization
   #figure(
@@ -248,7 +296,7 @@
       align: center,
       inset: 10pt,
       table.header(
-        [*epoch*],
+        [time],
         "256",
         "1024",
         "4096",
@@ -264,250 +312,54 @@
   #figure(
     stack(
       image("figs/miiii_large_finding.svg", width: 96.5%),
-      image("figs/" + miiii_hash + "/acc_valid_training.svg", width: 100%),
-      // image("figs/" + miiii_hash + "/acc_train_training.svg", width: 75%),
+      image(
+        "figs/" + miiii_hash + "/acc_valid_training.svg",
+        width: 100%,
+      ),
     ),
     caption: [@spike (top) and validation accuracy from @training_acc (bottom)],
   )
 ]
 
+#slide[
+  - GrokFast @lee2024a shows time gradient sequences is (arguably) a stocastical signal with:
+    - A fast varying overfitting component
+    - A slow varying generealizing component
+  - My work confirms this to be true for $cal(T)_"miiii"$ ...
+  - ... and observes a strucutre that seems to fit _neither_ of the two
+]
 
+#slide[
+  - Future work:
+    - Modify GrokFast to assume a third stochastic component
+    - Relate to signal processing literature
+    - Can more depth make tok-embedding sparse?
+]
 
-// #v(2em)
-// #pause
-// #figure(
-// stack(
-// image("figs/nanda_u.svg", width: 80%),
-// pause,
-// image("figs/fourier_nanda_m.svg", width: 80%),
-// image("figs/neurs_113_nanda_fft_three.svg", width: 70%),
-// ),
-// caption: [Top 50 % vectors of $upright(bold(U))$],
-// )
-// #pause
-// #v(2em)
-// Behold, periodicity!
-// #pagebreak()
-// #image("figs/fourier_nanda_m.svg")
-
-
-// #slide[
-// #figure(
-// image("figs/fourier_nanda_m.svg"),
-// caption: [All 128-d embeddings are a combination of only five periodic functions!],
-// )
-// ]
-
-// #slide[
-// - $W_E$ is a sine and cosine table
-// - Sends periodic representation to transformer block layer
-// ][
-// $
-// x_0 &-> sin(w x_0), cos(w x_0) \
-// x_1 &-> sin(w x_1), cos(w x_1) \
-// $
-//
-// ]
-
-// #focus-slide[
-// #figure(
-// stack(
-// image("figs/neurs_113_nanda_three.svg", width: 70%),
-// v(1em),
-// image("figs/neurs_113_nanda_fft_three.svg", width: 65%),
-// ),
-// caption: [Neurons in sample (T) and frquency (B) space],
-// )
-// ]
-
-
-// #focus-slide[
-// - Months of #cite(<nanda2023>, form: "author", style: "american-psychological-association") probing, plotting and ablating
-// -
-
-// periodicity
-
-// Practising RASP is a good start #cite(
-// <weiss2021>,
-// form: "prose",
-// style: "american-psychological-association",
-// )
-
-// ]
-
-
-
-// #slide[
-//   // - periodicity #pause
-//   $
-//     sin(w(x_0 + x_1)) &= sin(w x_0) cos(w x_0) + cos(w x_0) sin(w x_1) \
-//     cos(w(x_0 + x_1)) &= cos(w x_1) cos(w x_1) - sin(w x_0) sin(w x_1) \
-//     &= cos(w(x_0 + x_1)) cos(w c) + sin(w(x_0 + x_1)) sin(w c) \
-//     "Logit"(c) &prop cos(w(x_0 + x_1 - c)) \
-//   $<nanda_last_layer>
-// ]
-
-
-// = Multi-Task (and Modulo) Learning
-
-// #slide[
-// - My work extends $cal(T)_"nanda"$ with $cal(T)_"miiii"$
-// - $cal(T)_"miiii"$ computes two-digit base-$p$ modulo remainders for all primes $q<p$
-// - Multi-task and non-commutative (@non_commut)
-// ][
-//
-// $
-// (x_0 p^0 + x_1 p^1) != (x_1 p^0 + x_0 p^1)
-// $<non_commut>
-// ]
-//
-// #focus-slide[
-// #figure(
-// image("figs/y_11_plot.svg", width: 100%),
-// caption: [Representation of target when $p=11$],
-// )
-// ]
-//
-//
-// = Model Architecture / Training
-//
-//
-// #slide[
-// - One layer transformer model
-// - No bias or layernorm (as #cite(<nanda2023>, form: "author", style: "american-psychological-association"))
-// - Trained for 60k+ full batch epochs
-// - Gradient boost as per #cite(<lee2024a>, form: "prose", style: "american-psychological-association")
-//
-// ][
-// ]
-//
-//
-// #figure(
-// image("figs/" + miiii_hash + "/acc_train_training.svg"),
-// caption: [$NN < p^2$ multiples of 13 or 27 (L), 11 (M), or primes (R)],
-// )
-//
-// = Embedding Representations
-//
-// #slide[
-// - Non-commutativity is picked up
-// - But what about periodicity?#pause
-// - $cal(T)_"miiii"$ focus on 29 primes#pause
-// - No overlaping steps when rotating in $CC$.
-// #meanwhile
-// ][
-//
-// #figure(
-// stack(
-// ),
-// caption: [$cal(T)_"miiii"$ is non-commutative],
-// )
-// ]
-//
-// #slide[
-// #figure(
-// stack(
-// image("figs/miiii_u.svg"),
-// ),
-// caption: [many relevant#footnote[and possibly periodic?] singular values in $upright(bold(u))_cal(t)_"miiii"$],
-// )
-// ]
-//
-// #focus-slide[
-// #figure(
-// stack(
-// image("figs/fourier_miiii_m.svg", width: 90%),
-// v(1em),
-// image("figs/fourier_basis_m.svg", width: 90%),
-// ),
-// caption: [$"DFT" dot W_E_cal(T)_"miiii"$ (top) and $"DFT"dot W_E_cal(T)_"bline"$ (bottom)],
-// )
-// ]
-//
-// #focus-slide[
-// $W_E_cal(T)_"miiii"$ is periodic, but a lot more frequencies in play
-// ]
-// - Each prime $q<p$ reaches unique points around the unit circle
-//
-//
-//
-// = Neuron Periodicity
-//
-// #slide[
-// - $W_"out"$ periodic in $cal(T)_"miiii"$
-// - Not so for $cal(T)_"bline"$
-// ][
-//
-// #figure(
-// stack(
-// image("figs/neurs_113_miiii_one.svg", width: 70%),
-// image("figs/neurs_113_miiii_fft_one.svg", width: 60%),
-// ),
-// caption: [$cal(T)_"miiii"$ (periodic)],
-// )
-// ][
-// #figure(
-// stack(
-// image("figs/neurs_113_basis_one.svg", width: 70%),
-// image("figs/neurs_113_basis_fft_one.svg", width: 60%),
-// ),
-// caption: [$cal(T)_"bline"$ (no period)],
-// )
-//
-// ]
-//
-// #focus-slide[
-// #figure(
-// image("figs/neurs_113_miiii_three.svg"),
-// caption: [More periodic $cal(T)_"miiii"$ neuron activations],
-// )
-// ]
-//
-// = Embryology of Neural Circuits
-//
-// #slide[
-// - Freqs. $omega$ in $W_"out"_cal(T)_"miiii"$ follows loss
-// 1. Performace increases
-// 2. Afterwards, circuits proliferate
-// 3. Finally frequencies decrease (merge)
-// ][
-// #figure(
-// stack(
-// image("figs/miiii_large_finding.svg", width: 100%),
-// image("figs/miiii_large_finding.svg", width: 130%),
-// image("figs/" + miiii_hash + "/acc_valid_training.svg", width: 104%),
-// ),
-// caption: [Spike and generalization],
-// )
-// ]
-//
-// #focus-slide[
-// #figure(
-// image("figs/miiii_small_finding.svg"),
-// caption: [Active frequencies in $W_"out"_cal(T)_"miiii"$ in time],
-// )
-// #v(2em)
-// #figure(
-// table(
-// columns: (1fr, 1fr, 1fr, 1fr, 1fr, 1fr),
-// align: center,
-// inset: 15pt,
-// table.header(
-// "epoch",
-// "256",
-// "1024",
-// "4096",
-// "16384",
-// "65536",
-// ),
-//
-// $|omega|$, $0$, $0$, $10$, $18$, "10",
-// ),
-// caption: [Active frequencies in $W_E_cal(T)_"miiii"$ in time],
-// )<tableeeee>
-// ]
+// #bibliography("zotero.bib", title: "References")
 
 #set align(top)
 #show heading.where(level: 1): set heading(numbering: none)
 = References <touying:unoutlined>
 #bibliography("zotero.bib", title: none, style: "ieee")
+
+
+#appendix[
+  // #set align(horizon)
+
+  = Stochastic Signal Processing<ssp>
+
+  We denote the weights of a model as $theta$. The gradient of $theta$ with respect to our loss function at time $t$ we denote $g(t)$.
+  As we train the model, $g(t)$ varies, going up and down. This can be thought of as a stocastic signal.
+  We can represent this signal with a Fourier basis (@dft). GrokFast posits that the slow varying frequencies contribute to grokking.
+  Higer frequencies are then muted, and grokking is indeed accelerated.
+
+  = Discrete Fourier Transform<dft>
+
+  Function can be expressed as a linear combination of cosine and sine waves.
+  A similar thing can be done for data / vectors.
+
+  = Singular Value Decomposition<svd>
+
+  An $n times m$ matrix $M$ can be represented as a $U Sigma V^*$, where $U$ is an $m times m$ complex unitary matrix, $Sigma$ a rectangular $m times n$ diagonal matrix (padded with zeros), and $V$ an $n times n$ complex unitary matrix. Multiplying by $M$ can thus be viewed as first rotating in the $m$-space with $U$, then scaling by $Sigma$ and then rotating by $V$ in the $n$-space.
+]

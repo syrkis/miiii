@@ -1,4 +1,4 @@
-#import "@preview/unequivocal-ams:0.1.2": ams-article, theorem, proof
+#import "@local/tyrkis:0.0.0": *
 #import "@preview/equate:0.2.1": equate // <- for numbering equations
 #import "@preview/unify:0.6.1": num // <- for making numbers look nice
 
@@ -8,34 +8,20 @@
 #let p_hash = "0c848c1444264cbfa1a4de6e"
 #let masks_hash = "ba88bfb237924d5091006372"
 #let nodro_hash = "c7f717cb50ac4762bd866831"
+
 #show: equate.with(breakable: true, sub-numbering: true)
 #set math.equation(numbering: "(1.1)", supplement: "Eq.")
 #set raw(align: center)
 
+
 // Set page margins for the entire document
-#show: ams-article.with(
-  title: [Mechanistic Interpretability on multi-task Irreducible Integer Identifiers],
-  authors: (
-    (
-      name: "Noah Syrkis",
-      // department: [Department of Computer Science],
-      // organization: [University of Copenhagen],
-      // location: [Copenhagen, Denmark],
-      // url: "syrkis.com",
-    ),
-    (
-      name: "Anders Søgaard",
-      // department: [Department of Computer Science],
-      // organization: [University of Copenhagen],
-      // location: [Copenhagen, Denmark],
-      // url: "anderssoegaard.github.io/",
-    ),
-  ),
+#show: paper.with(
+  title: [Mechanistic Interpretability on (multi-task) Irreducible Integer Identifiers],
+  author: "Noah Syrkis",
   abstract: [
     This paper investigates how neural networks solve multiple related mathematical tasks simultaneously through mechanistic interpretability. A transformer model is trained on 29 parallel tasks, each predicting remainders when dividing two-digit base-113 numbers by all primes less than 113. This setup spans task complexity from binary classification (division by 2) to 109-way classification (largest prime less than 113).
     Further, the model, trained using gradient filtering to accelerate generalization, achieves perfect accuracy across all tasks. Embedding analysis, singular value decomposition, and Fourier analysis of neuron activations reveal complex internal representations. The model initially solves simpler tasks (modulo 2, 3, 5, and 7) before developing a shared strategy for the remaining tasks.
     The increased number of active frequencies in neuron activations suggests a phase where additional circuits form during generalization, some facilitating learning but not present in the final solution. Findings also confirm that amplifying slow-moving gradients significantly accelerates generalization.
-
     This study shows that multi-task learning shapes the development of internal mechanisms in deep learning models, offering insights into how these models internalize algorithms across tasks. Future research could automate circuit discovery and explore variations in multi-task learning setups. The project repository is available at https://github.com/syrkis/miiii.
   ],
 )
@@ -45,11 +31,6 @@
 
 
 
-#let appendix(body) = {
-  set heading(numbering: "A", supplement: [Appendix])
-  counter(heading).update(0)
-  body
-}
 
 // body ///////////////////////////////////////////////////////////////////////
 //
@@ -93,9 +74,7 @@ The task of this paper focuses on predicting remainders modulo all primes $q$ le
 
 
 $
-  (
-    x_0 p^0 + x_1 p^1
-  ) mod q, quad forall x_0, x_1 < p, quad forall q < p, quad p = 113
+  ( x_0 p^0 + x_1 p^1 ) mod q, quad forall x_0, x_1 < p, quad forall q < p, quad p = 113
 $<miiii_task>
 
 $cal(T)_("miiii")$ differentiates itself from $cal(T)_("nanda")$ in two significant ways: _1)_ it is non-commutative, and _2)_ it is, as mentioned, multi-task. These differences present unique challenges for mechanistic interpretation, as the model must learn to handle both the order-dependent nature of the inputs and develop shared representations across multiple modular arithmetic tasks. Further, as $cal(T)_("miiii")$ is harder than $cal(T)_("nanda")$ the model can be expected to generalize slower when trained on the former. Therefore, #cite(<lee2024a>, form:"prose", style:"american-psychological-association")'s recent work on speeding up generalization by positing the model parameters gradients through time can be viewed as a sum of _1)_ a slow varying generalizing component (which is boosted), and _2)_, a quick varying overfitting component (which is suppressed), is (successfully) replicated to make training tractable.
@@ -347,11 +326,11 @@ Much of the data worked with here is inherently high dimensional. For training, 
   align(
     horizon,
     stack(
-    dir: ltr,
-    spacing: 0pt, // Adjust this value to control the spacing
-    image("figs/neurs_113_miiii_one.svg", width: 40%),
-    image("figs/neurs_113_miiii_fft_one.svg", width: 46%),
-  ),
+      dir: ltr,
+      spacing: 0pt, // Adjust this value to control the spacing
+      image("figs/neurs_113_miiii_one.svg", width: 40%),
+      image("figs/neurs_113_miiii_fft_one.svg", width: 46%),
+    ),
   ),
   caption: [Plotting a neuron: (left) The activation of a particular neuron as $x_0$ and $x_1$ varies from $0$ to $p$. (right) The same processed with a fast Fourier transform to active frequencies ($omega$).],
 )<plot_example>
@@ -585,9 +564,15 @@ Combining the analysis of embeddings and the transformer block neurons, we see t
 
 #figure(
   stack(
-  image("figs/miiii_wei.svg", width: 110%),  // TODO insert nanda attention, and comment that this might be due to comutativty.
-  image("figs/nanda_wei.svg", width: 110%),  // TODO insert nanda attention, and comment that this might be due to comutativty.
-),
+    image(
+      "figs/miiii_wei.svg",
+      width: 110%,
+    ), // TODO insert nanda attention, and comment that this might be due to comutativty.
+    image(
+      "figs/nanda_wei.svg",
+      width: 110%,
+    ), // TODO insert nanda attention, and comment that this might be due to comutativty.
+  ),
   caption: [Attention from $hat(y)$ to $x_0$ for the four attention heads in the $cal(T)_"miiii"$ model. The attention heads tend to focus on one digit, reflecting the non-commutative nature of the task.],
 )<attention_heads>
 
@@ -629,9 +614,15 @@ This paper explores the impact of multi-task learning on mechanistic interpretab
 
 These findings highlight that multi-task learning influences the emergence and complexity of internal mechanisms, posing challenges for mechanistic interpretability but also offering insights into how models internalize algorithms. Understanding these dynamics is important for advancing interpretability and reliability in deep learning systems. Future work includes exploring the distinction between circuits that aid in learning versus those that contribute to the final mechanism/solution and investigating how variations in task design impact the development of internal representations. Advancing the understanding of how deep learning models handle multiple tasks contributes to the broader goal of making these models more interpretable and reliable.
 
-#bibliography("zotero.bib")
+#bibliography("zotero.bib", title: "References")
 
 #pagebreak()
+
+#let appendix(body) = {
+  set heading(numbering: "A", supplement: [Appendix])
+  counter(heading).update(0)
+  body
+}
 
 #appendix[
   #heading(level: 1, "Appendix", numbering: none)

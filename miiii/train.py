@@ -2,22 +2,23 @@
 #   miiii train
 # by: Noah Syrkis
 
-# %% Imports
-from typing import Tuple
+# Imports
+from functools import partial
+from typing import cast
 
 import jax.numpy as jnp
 import optax
-from jax import lax, random, tree, value_and_grad, vmap, jit, debug
+from einops import rearrange
+from jax import jit, lax, random, tree, value_and_grad, vmap
+from jax.numpy import fft
 from jax_tqdm import scan_tqdm
-from functools import partial
-from typing import cast
 from jaxtyping import Array
 
 from miiii.model import apply_fn, init_fn
 from miiii.tasks import Dataset
 from miiii.utils import Conf, Metrics, Params, Split, State
 
-
+# Constants
 ADAM_BETA1 = 0.9  # @nanda2023
 ADAM_BETA2 = 0.98  # @nanda2023
 
@@ -28,8 +29,8 @@ def train_fn(rng, cfg: Conf, arg, ds: Dataset):
     interval_fn = make_interval_fn(cfg, arg, opt, ds)
 
     inputs = (jnp.arange(arg.tick), random.split(rng, arg.tick))
-    state, (metrics, loss) = lax.scan(interval_fn, state, inputs)
-    return state, (metrics, loss)
+    state, (scope, metrics, loss) = lax.scan(interval_fn, state, inputs)
+    return state, (scope, metrics, loss)
 
 
 def make_update_fn(opt, grad_fn, ds, cfg, arg):
@@ -50,7 +51,7 @@ def make_grad_fn(ds: Dataset, cfg: Conf, arg, apply, loss_fn):
 
     @value_and_grad
     def grad_fn(params: Params, rng) -> Array:
-        logits = apply(rng, params, ds.x.train)
+        logits, _ = apply(rng, params, ds.x.train)
         losses = loss_fn(logits, ds.y.train, mask) * weight
         return losses.mean()
 
@@ -66,9 +67,12 @@ def filter_fn(grads: Params, emas: Params, lamb: float, alpha: float):
 
 def make_interval_fn(cfg, arg, opt, ds):
     train_apply = apply_fn(cfg, ds, dropout=cfg.dropout)
+    valid_apply = partial(apply_fn(cfg, ds, dropout=0.0), random.PRNGKey(0))
     loss_fn = vmap(cross_entropy, in_axes=(1, 1, 0))
     grad_fn = make_grad_fn(ds, cfg, arg, train_apply, loss_fn)
     update_fn = make_update_fn(opt, grad_fn, ds, cfg, arg)
+    scope_fn = make_scope_fn(valid_apply, cfg, ds)
+
     eval_fn = make_eval_fn(ds, cfg, arg, loss_fn)
 
     @scan_tqdm(arg.tick)
@@ -76,9 +80,32 @@ def make_interval_fn(cfg, arg, opt, ds):
         epoch, rng = inputs
         keys = random.split(rng, cfg.epochs // arg.tick)
         state, loss = lax.scan(update_fn, state, keys)
-        return state, (eval_fn(state), loss)
+        return state, (scope_fn(state.params), eval_fn(state), loss)
 
     return interval_fn
+
+
+def make_scope_fn(apply_fn, cfg, ds):
+    x = jnp.concatenate([ds.x.train, ds.x.eval], axis=0)[ds.udxs]
+
+    @jit
+    def scope_fn(params: Params):
+        _, neurs = apply_fn(params, x)
+        return neurs
+        neurs = rearrange(neurs[:, 0, 0, :], "(a b) n -> b a n", a=cfg.p)
+        freqs = jnp.abs(fft.fft2(neurs)[1:, 1:])
+        freqs = freqs / freqs.max(axis=(0, 1), keepdims=True)
+        return freqs
+        # mu = freqs.mean(axis=(0, 1), keepdims=True)
+        # sigma = freqs.std(axis=(0, 1), keepdims=True)
+        # thresh = mu + 2 * sigma
+        # z = jnp.where(freqs > thresh, 1, 0)
+        # print(z.shape)
+        # print(neurs.shape, freqs.shape)
+        # exit()
+        # return z
+
+    return scope_fn
 
 
 def init_state(rng, cfg: Conf, arg, ds: Dataset):
@@ -121,7 +148,7 @@ def make_metrics_fn(apply_fn, loss_fn, arg, ds):
 
     @jit
     def metrics_fn(params, x, y):
-        logits = apply_fn(params, x)
+        logits, _ = apply_fn(params, x)
         losses = loss_fn(logits, y, ds.mask) * ds.weight
         accuracy = acc_fn(logits.argmax(-1), y)
         return Split(loss=losses, acc=accuracy)

@@ -3,18 +3,17 @@
 # by: Noah Syrkis
 
 # %% Imports
-from miiii.utils import Conf, Params, Activation, Feedforward, Attention, Embedding
+from miiii.utils import Conf, Params, Feedforward, Attention, Embedding
 from miiii.tasks import Dataset
 import jax
+from typing import Tuple
 from jax import random, lax, nn, vmap, jit
 import jax.numpy as jnp
 from jax import Array
 from functools import partial
-from einops import rearrange
 
 # from einops import rearrange
 from oeis import A000040
-from typing import Tuple
 
 
 # %% Constants
@@ -24,31 +23,34 @@ initializer = nn.initializers.he_normal()
 # %% Forward
 def apply_fn(cfg: Conf, ds: Dataset, dropout: float):
     block_fn = make_block_fn(dropout)
+
     @partial(vmap, in_axes=(None, None, 0))  # type: ignore
     @jit
-    def apply(key, params: Params, x) -> Array:
+    def apply(key, params: Params, x) -> Tuple[Array, Array]:
         x = embed_fn(params.embeds, x)
         rngs = random.split(key, cfg.depth)
-        x = lax.scan(block_fn, x, (rngs, params.attn, params.ffwd))[0]
+        x, z = lax.scan(block_fn, x, (rngs, params.attn, params.ffwd))
         logits = ((x[-1] @ params.unbeds) * ds.mask).squeeze()
-        return logits
+        return logits, z
 
     return apply
+
 
 def ffwd_fn(w, x):
     z = jnp.dot(x, w.w_in)  # z: seq_len x emb_dim
     z = jax.nn.relu(z)  # grokfast relu
-    return jnp.dot(z, w.w_out)  # disable biases as per @nanda2023
+    return jnp.dot(z, w.w_out), z  # disable biases as per @nanda2023
+
 
 def make_block_fn(dropout):
-    def block_fn(z, inputs):
+    def block_fn(x, inputs):
         rng, attn_w, ffwd_w = inputs
         keys = random.split(rng, 2)
-        attn = attn_fn(attn_w, z)
-        z = dropout_fn(keys[0], z + attn, dropout)
-        ffwd = ffwd_fn(ffwd_w, z)
-        z = dropout_fn(keys[1], z + ffwd, dropout)
-        return z, None
+        attn = attn_fn(attn_w, x)
+        x = dropout_fn(keys[0], x + attn, dropout)
+        ffwd, z = ffwd_fn(ffwd_w, x)
+        return dropout_fn(keys[1], x + ffwd, dropout), z
+
     return block_fn
 
 
@@ -56,8 +58,7 @@ def attn_fn(w, x: Array):
     q, k, v = x @ w.q, x @ w.k, x @ w.v
     qk = jnp.einsum("bth,bsh->bts", q, k) / jnp.sqrt(w.k.shape[-1])
     wei = nn.softmax(qk, axis=-1)
-    return (wei @ v @ w.o).sum(axis=0)  #, Activation(wei=wei)
-
+    return (wei @ v @ w.o).sum(axis=0)  # , Activation(wei=wei)
 
 
 def embed_fn(w: Embedding, x: Array) -> Array:
@@ -106,6 +107,7 @@ def init_fn(rng: Array, cfg: Conf, arg, ds: Dataset):
 def dropout_fn(key: Array, x: Array, dropout: float) -> Array:
     mask = random.bernoulli(key, 1 - dropout, x.shape)
     return jnp.where(dropout == 0.0, x, mask * x / (1 - dropout))
+
 
 def task_size(cfg: Conf, arg):
     primes = jnp.array(A000040[1 : cfg.p])

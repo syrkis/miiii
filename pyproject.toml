@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "miiii"
-version = "0.0.0"
+version = "0.0.1"
 description = "Mechanistic interpretability of irriducible integer identifiers"
 authors = ["Noah Syrkis <desk@syrkis.com>"]
 readme = "README.md"
@@ -20,26 +20,20 @@ jupyterlab = "^4.2.2"
 optax = "^0.2.3"
 jax-tqdm = "^0.2.2"
 ipywidgets = "^8.1.5"
-esch = ">=0.5.3"
 jax = "^0.4.35"
 aim = "^3.25.0"
 python-dotenv = "^1.0.1"
 optuna = "^4.1.0"
 jaxtyping = "^0.2.36"
+equinox = "^0.11.11"
 
 [tool.poetry.group.dev.dependencies]
-pytest = "^8.3.2"
-pytest-cov = "^5.0.0"
 ruff = "^0.6.3"
+esch = { path = "../esch" }
 
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
-
-# [tool.pytest.ini_options]
-# minversion = "6.0"
-# addopts = "--cov=miiiii --cov-report=term-missing"
-# testpaths = ["test"]
 
 [tool.pyright]
 venvPath = "."

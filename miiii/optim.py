@@ -32,7 +32,7 @@ def objective(arg, trial: optuna.Trial) -> float:
     cfg = create_trial_config(trial, load_config())
     rng = random.PRNGKey(trial.number)
     ds = task_fn(rng, cfg, arg)
-    state, (metrics, loss) = train_fn(rng, cfg, arg, ds)
+    state, (scope, metrics, loss) = train_fn(rng, cfg, arg, ds)
     log_fn(cfg, arg, ds, state, metrics)
     return metrics.valid.acc[-1].mean()
 
