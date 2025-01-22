@@ -17,7 +17,7 @@
 // Set page margins for the entire document
 #show: paper.with(
   title: [Mechanistic Interpretability on (multi-task) Irreducible Integer Identifiers],
-  author: "Noah Syrkis",
+  author: "Noah Syrkis and Anders Søgaard",
   abstract: [
     This paper investigates how neural networks solve multiple related mathematical tasks simultaneously through mechanistic interpretability. A transformer model is trained on 29 parallel tasks, each predicting remainders when dividing two-digit base-113 numbers by all primes less than 113. This setup spans task complexity from binary classification (division by 2) to 109-way classification (largest prime less than 113).
     Further, the model, trained using gradient filtering to accelerate generalization, achieves perfect accuracy across all tasks. Embedding analysis, singular value decomposition, and Fourier analysis of neuron activations reveal complex internal representations. The model initially solves simpler tasks (modulo 2, 3, 5, and 7) before developing a shared strategy for the remaining tasks.
