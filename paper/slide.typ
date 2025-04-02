@@ -1,42 +1,22 @@
-// imports ///////////////
-#import "@preview/touying:0.5.5": *
-#import "@local/tyrkis:0.0.0": *
+// import /////////////////////////////////////////
+#import "@preview/touying:0.6.1": *
+#import "@local/tyrquois:0.0.0": *
+#show: tyrquois
 
 // head ///////////////////////////////////////////
-#let miiii_hash = "50115caac50c4fbfa6bce4cc"
 #let title = "Mechanistic Interpretability on (multi-task) Irreducible Integer Identifiers"
-
-#show: slides.with(
-  config-info(author: "Noah Syrkis", date: datetime.today(), title: title),
-  config-common(handout: false),
-)
+#let info = (author: "Noah Syrkis", date: datetime.today(), title: title)
+#show: slides.with(config-info(..info), config-common(handout: false))
+#metadata((title: title, slug: "miiii"))<frontmatter>
 
 
-#metadata((
-  title: title,
-  slug: "miiii",
-))<frontmatter>
+#let miiii_hash = "50115caac50c4fbfa6bce4cc"
+
+// body //////////////////////////////////////////
+#title-slide()
 
 
-#show figure.caption: emph
-
-// body /////////////////////////////////////////////////////////////////////////
-// for every slide:
-//    0. Why is this important
-//    1. headline it with the key take away
-//    2. explain
-//    3. Sumarise verbally
-
-#cover-slide()
-
-#focus-slide[
-  #figure(
-    image("figs/polar.svg"),
-    caption: [$NN < p^2$ multiples of 13 or 27 (left) 11 (mid.) or primes (right)],
-  )
-]
-
-= Mechanistic Interpretability (MI)
+= Mechanistic Interpretability
 
 
 #focus-slide[
@@ -51,43 +31,28 @@
   - How does a given model work? How can we train it faster? Is it safe?
 ]
 
+
 == Grokking
 
 #slide[
   - Grokking @power2022 is "sudden generalization" #pause
   - MI (often) needs a mechanism #pause
-  - Grokking is thus convenient for MI #pause
-  - #cite(<lee2024a>, form: "prose", style:"american-psychological-association") speeds up grokking by boosting slow gradients as per @grokfast
-  - For more see @ssp
-][
-  #meanwhile
-  $
-    h(t) &= h(t-1) alpha + g(t)(1-alpha)\
-    hat(g)(t) &= g(t) + lambda h(t)
-  $<grokfast>
-]
-
-== Visualizing
-
-#slide[
-  - MI needs creativity ... #pause but there are tricks: #pause
-    - For two-token samples, plot them varying one on each axis (@mi_tricks)
-    - When a matrix is periodic use Fourier
-    - Singular value decomp. (@svd).
-    - Take away: get commfy with `esch`-plots
+  - Grokking is thus convenient for MI
+  // - #cite(<lee2024a>, form: "prose", style:"american-psychological-association") speeds up grokking by boosting slow gradients as per @grokfast
+  // - For more see @svd
 ][
   #meanwhile
   #figure(
     stack(
-      image("figs/nanda_U.svg", width: 90%),
-      stack(
-        dir: ltr,
-        image("figs/neurs_113_nanda_one.svg", width: 45%),
-        image("figs/neurs_113_nanda_fft_one.svg", width: 50%),
-      ),
+      image("figs/" + miiii_hash + "/acc_train_training.svg", width: 100%),
+      image("figs/" + miiii_hash + "/acc_valid_training.svg", width: 100%),
     ),
-    caption: [Top singular vectors of $bold(upright(U))_W_E_cal(T)_"nanda"$ (top), varying $x_0$ and $x_1$ in sample (left) and freq. (right) space in $W_"out"_cal(T)_"miiii"$],
-  )<mi_tricks>
+    caption: [Grokking],
+  )<grokking>
+  // $
+  // h(t) &= h(t-1) alpha + g(t)(1-alpha)\
+  // hat(g)(t) &= g(t) + lambda h(t)
+  // $<grokfast>
 ]
 
 
@@ -102,24 +67,22 @@
 = Modular Arithmetic
 
 #slide[
-  - "Seminal" MI paper by #cite(<nanda2023>, form: "prose", style:"american-psychological-association") focuses on modular additon (@nanda_task)
+  - "Seminal" MI paper by #cite(<nanda2023>, form: "prose", style:"american-psychological-association") focuses on modular addition ($cal(T)_"nanda"$)
     // #footnote[Nanda worked at Anthropic under the great Chris Olah, and popularized
     // #footnote[To the extent there is such a thing as popularity in this niece a subject] MI]
   - Their final setup trains on $p=113$
   - They train a one-layer transformer
   // #footnote[MLP would have been better / simpler according to Nanda]
   - We call their task $cal(T)_"nanda"$#pause
-  - And ours, seen in @miiii_task, we call $cal(T)_"miiii"$
+  - And ours we call $cal(T)_"miiii"$
 ][
   #meanwhile
   $
-    (x_0 + x_1) mod p, quad forall x_0, x_1
-  $<nanda_task>
-  #pause
-  $
-    (x_0 p^0 + x_1 p^1) mod q, quad forall q < p
+    cal(T)_"nanda" = (x_0 + x_1) mod p, forall x_0, x_1 \
+    cal(T)_"miiii" = (x_0 p^0 + x_1 p^1) mod q, forall q < p
   $<miiii_task>
 ]
+
 
 
 #slide[
@@ -131,6 +94,12 @@
 ]
 
 
+#focus-slide[
+  #figure(
+    image("figs/polar.svg"),
+    caption: [$NN < p^2$ multiples of 13 or 27 (left) 11 (mid.) or primes (right)],
+  )
+]
 
 
 
@@ -142,6 +111,27 @@
 
 
 = Grokking on $cal(T)_"miiii"$
+
+#slide[
+  // - MI needs creativity ... #pause but there are tricks: #pause
+  - For two-token samples, plot them varying one on each axis (@mi_tricks)
+  - When a matrix is periodic use Fourier
+  - Singular value decomposition
+  // - Deep learning purposely phrases the solution space in a way that makes it incomprehensiblo
+][
+  #meanwhile
+  #figure(
+    stack(
+      image("figs/nanda_U.svg", width: 90%),
+      stack(
+        dir: ltr,
+        image("figs/neurs_113_nanda_one.svg", width: 45%),
+        image("figs/neurs_113_nanda_fft_one.svg", width: 50%),
+      ),
+    ),
+    caption: [Top singular vectors of $bold(upright(U))_W_E_cal(T)_"nanda"$ (top), varying $x_0$ and $x_1$ in sample (left) and freq. (right) space in $W_"out"_cal(T)_"miiii"$],
+  )<mi_tricks>
+]
 
 #slide[
 
@@ -178,6 +168,11 @@
 
 = Embeddings
 
+How the embedding layer deals with the difference between $cal(T)_"nanda"$ and $cal(T)_"miiii"$
+
+
+== Correcting for non-commutativity
+
 #slide[
   - The position embs. of @pos_emb reflects that $cal(T)_"nanda"$ is commutative and $cal(T)_"miiii"$ is not #pause
   - Maybe: this corrects non-comm. of $cal(T)_"miiii"$?
@@ -189,6 +184,8 @@
     caption: [Positional embeddings for $cal(T)_"nanda"$ (top) and $cal(T)_"miiii"$ (bottom).],
   )<pos_emb>
 ]
+
+== Correcting for multi-tasking
 
 #slide[
   #meanwhile
@@ -207,8 +204,10 @@
   )<tok_emb>
 ]
 
+== Sanity-check and task-mask
+
 #slide[
-  - Masking $q in {2,3,5,7}$ yields we see a slight decrease in token emb. freqs. #pause
+  - Masking $q in {2,3,5,7}$ yields we see a slight decrease in token emb. freqs.
   - Sanity check: $cal(T)_"baseline"$ has no periodicity
   - The tok. embs. encode a basis per subtask?
 ][
@@ -257,18 +256,21 @@
 #focus-slide[
   #figure(
     stack(
-      dir: ltr,
-      stack(
-        image("figs/neurs_113_basis.svg", width: 50%),
-        image("figs/neurs_113_miiii.svg", width: 50%),
-      ),
-      stack(
-        image("figs/neurs_113_basis_fft.svg", width: 50%),
-        image("figs/neurs_113_miiii_fft.svg", width: 50%),
-      ),
+      image("figs/neurs_113_basis.svg", width: 50%),
+      image("figs/neurs_113_basis_fft.svg", width: 50%),
     ),
-    caption: [Neurons as archive and algorithm. $cal(T)_"basline"$ on top, FFT on right.],
+    caption: [Neurons as archive for $cal(T)_"basline"$],
   )<ava>
+]
+
+#focus-slide[
+  #figure(
+    stack(
+      image("figs/neurs_113_miiii.svg", width: 50%),
+      image("figs/neurs_113_miiii_fft.svg", width: 50%),
+    ),
+    caption: [Neurons as algorithm $cal(T)_"miiii"$],
+  )<algorithm>
 ]
 
 #focus-slide[
@@ -336,30 +338,33 @@
     - Can more depth make tok-embedding sparse?
 ]
 
-// #bibliography("zotero.bib", title: "References")
 
-#set align(top)
-#show heading.where(level: 1): set heading(numbering: none)
-= References <touying:unoutlined>
-#bibliography("zotero.bib", title: none, style: "ieee")
+#focus-slide[
+  TAK
+]
 
+#[
+  #show heading.where(level: 1): set heading(numbering: none)
+  = References <touying:unoutlined>
+  #set align(top)
+  #pad(y: 2em, bibliography("zotero.bib", title: none, style: "ieee"))
+]
 
 #appendix[
-  // #set align(horizon)
 
-  = Stochastic Signal Processing<ssp>
+  = Stochastic Signal Processing
 
   We denote the weights of a model as $theta$. The gradient of $theta$ with respect to our loss function at time $t$ we denote $g(t)$.
   As we train the model, $g(t)$ varies, going up and down. This can be thought of as a stocastic signal.
-  We can represent this signal with a Fourier basis (@dft). GrokFast posits that the slow varying frequencies contribute to grokking.
+  We can represent this signal with a Fourier basis. GrokFast posits that the slow varying frequencies contribute to grokking.
   Higer frequencies are then muted, and grokking is indeed accelerated.
 
-  = Discrete Fourier Transform<dft>
+  = Discrete Fourier Transform
 
   Function can be expressed as a linear combination of cosine and sine waves.
   A similar thing can be done for data / vectors.
 
-  = Singular Value Decomposition<svd>
+  = Singular Value Decomposition <svd>
 
   An $n times m$ matrix $M$ can be represented as a $U Sigma V^*$, where $U$ is an $m times m$ complex unitary matrix, $Sigma$ a rectangular $m times n$ diagonal matrix (padded with zeros), and $V$ an $n times n$ complex unitary matrix. Multiplying by $M$ can thus be viewed as first rotating in the $m$-space with $U$, then scaling by $Sigma$ and then rotating by $V$ in the $n$-space.
 ]

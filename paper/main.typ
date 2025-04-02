@@ -1,5 +1,7 @@
-#import "@local/tyrkis:0.0.0": *
-#import "@preview/equate:0.2.1": equate // <- for numbering equations
+#import "@local/lilka:0.0.0": *
+#show: lilka
+#import "@preview/lilaq:0.1.0" as lq
+#import "@preview/equate:0.3.1": equate // <- for numbering equations
 #import "@preview/unify:0.6.1": num // <- for making numbers look nice
 
 
@@ -12,6 +14,7 @@
 #show: equate.with(breakable: true, sub-numbering: true)
 #set math.equation(numbering: "(1.1)", supplement: "Eq.")
 #set raw(align: center)
+
 
 
 // Set page margins for the entire document
@@ -27,17 +30,31 @@
 )
 
 
-
-
-
-
-
 // body ///////////////////////////////////////////////////////////////////////
 //
 // TODO: LABEL PLOTS OR DIE
 // - In intro explain it to a 4 year old baby.
 // - Concepts.
 // - add tables.
+//
+
+
+// lq.stem(x, y, color=auto, stroke=auto, mark=auto, mark-size=5pt, mark-color=auto, base=0, base-stroke=red, label=none, clip=true, z-index=2)
+
+#let xs = lq.linspace(0, 10, num: 30)
+
+#figure(
+  lq.diagram(
+    lq.stem(
+      xs,
+      xs.map(calc.cos),
+      color: black,
+      mark: "diamond",
+      base: -0.25,
+      base-stroke: black,
+    ),
+  ),
+)
 
 = Introduction
 
