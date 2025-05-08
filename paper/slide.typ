@@ -1,7 +1,7 @@
 // import /////////////////////////////////////////
 #import "@preview/touying:0.6.1": *
-#import "@local/tyrquois:0.0.0": *
-#show: tyrquois
+#import "@local/lilka:0.0.0": *
+#show: lilka
 
 // head ///////////////////////////////////////////
 #let title = "Mechanistic Interpretability on (multi-task) Irreducible Integer Identifiers"
@@ -67,9 +67,9 @@
 = Modular Arithmetic
 
 #slide[
-  - "Seminal" MI paper by #cite(<nanda2023>, form: "prose", style:"american-psychological-association") focuses on modular addition ($cal(T)_"nanda"$)
-    // #footnote[Nanda worked at Anthropic under the great Chris Olah, and popularized
-    // #footnote[To the extent there is such a thing as popularity in this niece a subject] MI]
+  - "Seminal" MI paper by #cite(<nanda2023>, form: "prose", style: "american-psychological-association") focuses on modular addition ($cal(T)_"nanda"$)
+  // #footnote[Nanda worked at Anthropic under the great Chris Olah, and popularized
+  // #footnote[To the extent there is such a thing as popularity in this niece a subject] MI]
   - Their final setup trains on $p=113$
   - They train a one-layer transformer
   // #footnote[MLP would have been better / simpler according to Nanda]
@@ -121,14 +121,11 @@
 ][
   #meanwhile
   #figure(
-    stack(
-      image("figs/nanda_U.svg", width: 90%),
-      stack(
-        dir: ltr,
-        image("figs/neurs_113_nanda_one.svg", width: 45%),
-        image("figs/neurs_113_nanda_fft_one.svg", width: 50%),
-      ),
-    ),
+    stack(image("figs/nanda_U.svg", width: 90%), stack(
+      dir: ltr,
+      image("figs/neurs_113_nanda_one.svg", width: 45%),
+      image("figs/neurs_113_nanda_fft_one.svg", width: 50%),
+    )),
     caption: [Top singular vectors of $bold(upright(U))_W_E_cal(T)_"nanda"$ (top), varying $x_0$ and $x_1$ in sample (left) and freq. (right) space in $W_"out"_cal(T)_"miiii"$],
   )<mi_tricks>
 ]
@@ -143,25 +140,16 @@
     table(
       columns: (1fr, 1fr, 1fr, 1fr, 1fr, 1fr),
       inset: 15pt,
-      table.header(
-        "rate",
-        $lambda$,
-        "wd",
-        $d$,
-        "lr",
-        "heads",
-      ),
-
+      table.header("rate", $lambda$, "wd", $d$, "lr", "heads"),
       $1 / 10$, $1 / 2$, $1 / 3$, "256", $3 / 10^4$, "4",
     ),
     caption: [Hyperparams for $cal(T)_"miiii"$],
   )<hyper_param_search_result>
 ][
   #figure(
-    stack(
-      image("figs/" + miiii_hash + "/acc_train_training.svg"),
-      image("figs/" + miiii_hash + "/acc_valid_training.svg"),
-    ),
+    stack(image("figs/" + miiii_hash + "/acc_train_training.svg"), image(
+      "figs/" + miiii_hash + "/acc_valid_training.svg",
+    )),
     caption: [Training (top) and validation (bottom) accuracy during training on $cal(T)_"miiii"$],
   )<training_acc>
 ]
@@ -195,11 +183,9 @@ How the embedding layer deals with the difference between $cal(T)_"nanda"$ and $
   - Possibility: One basis per prime task
 ][
   #figure(
-    stack(
-      spacing: 1em,
-      image("figs/fourier_nanda_m.svg"),
-      image("figs/fourier_miiii_m.svg"),
-    ),
+    stack(spacing: 1em, image("figs/fourier_nanda_m.svg"), image(
+      "figs/fourier_miiii_m.svg",
+    )),
     caption: [$cal(T)_"nanda"$ (top) and $cal(T)_"miiii"$ (bottom) token embeddings in Fourier basis],
   )<tok_emb>
 ]
@@ -230,10 +216,7 @@ How the embedding layer deals with the difference between $cal(T)_"nanda"$ and $
   - Inspite of the dense Fourier basis of $W_E_cal(T)_"miiii"$ the periodicity is clear
 ][
   #figure(
-    stack(
-      image("figs/neurs_113_nanda.svg"),
-      image("figs/neurs_113_miiii.svg"),
-    ),
+    stack(image("figs/neurs_113_nanda.svg"), image("figs/neurs_113_miiii.svg")),
     caption: [Activations of first three neurons for $cal(T)_"nanda"$ (top) and $cal(T)_"miiii"$ (bottom)],
   )<neurs>
 ]
@@ -244,10 +227,9 @@ How the embedding layer deals with the difference between $cal(T)_"nanda"$ and $
   - Lets log $|omega > mu_omega + 2 sigma_omega|$ while training
 ][
   #figure(
-    stack(
-      image("figs/neurs_113_nanda_fft.svg"),
-      image("figs/neurs_113_miiii_fft.svg"),
-    ),
+    stack(image("figs/neurs_113_nanda_fft.svg"), image(
+      "figs/neurs_113_miiii_fft.svg",
+    )),
     caption: [FFT of Activations of first three neurons for $cal(T)_"nanda"$ (top) and $cal(T)_"miiii"$ (bottom)],
   )<fft_neurs>
 ]
@@ -255,20 +237,20 @@ How the embedding layer deals with the difference between $cal(T)_"nanda"$ and $
 
 #focus-slide[
   #figure(
-    stack(
-      image("figs/neurs_113_basis.svg", width: 50%),
-      image("figs/neurs_113_basis_fft.svg", width: 50%),
-    ),
+    stack(image("figs/neurs_113_basis.svg", width: 50%), image(
+      "figs/neurs_113_basis_fft.svg",
+      width: 50%,
+    )),
     caption: [Neurons as archive for $cal(T)_"basline"$],
   )<ava>
 ]
 
 #focus-slide[
   #figure(
-    stack(
-      image("figs/neurs_113_miiii.svg", width: 50%),
-      image("figs/neurs_113_miiii_fft.svg", width: 50%),
-    ),
+    stack(image("figs/neurs_113_miiii.svg", width: 50%), image(
+      "figs/neurs_113_miiii_fft.svg",
+      width: 50%,
+    )),
     caption: [Neurons as algorithm $cal(T)_"miiii"$],
   )<algorithm>
 ]
@@ -297,28 +279,17 @@ How the embedding layer deals with the difference between $cal(T)_"nanda"$ and $
       columns: (1fr, 1fr, 1fr, 1fr, 1fr, 1fr),
       align: center,
       inset: 10pt,
-      table.header(
-        [time],
-        "256",
-        "1024",
-        "4096",
-        "16384",
-        "65536",
-      ),
-
+      table.header([time], "256", "1024", "4096", "16384", "65536"),
       $bold(|omega|)$, $0$, $0$, $10$, $18$, "10",
     ),
     caption: [active $omega$'s through training],
   )<tableeeee>
 ][
   #figure(
-    stack(
-      image("figs/miiii_large_finding.svg", width: 96.5%),
-      image(
-        "figs/" + miiii_hash + "/acc_valid_training.svg",
-        width: 100%,
-      ),
-    ),
+    stack(image("figs/miiii_large_finding.svg", width: 96.5%), image(
+      "figs/" + miiii_hash + "/acc_valid_training.svg",
+      width: 100%,
+    )),
     caption: [@spike (top) and validation accuracy from @training_acc (bottom)],
   )
 ]
