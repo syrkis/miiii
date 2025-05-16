@@ -16,7 +16,7 @@ from jaxtyping import Array
 
 from miiii.model import apply_fn, init_fn
 from miiii.tasks import Dataset
-from miiii.utils import Conf, Metrics, Params, Split, State
+from miiii.types import Conf, Metrics, Params, MetricSplit, State
 
 # Constants
 ADAM_BETA1 = 0.9  # @nanda2023
@@ -151,6 +151,6 @@ def make_metrics_fn(apply_fn, loss_fn, arg, ds):
         logits, _ = apply_fn(params, x)
         losses = loss_fn(logits, y, ds.mask) * ds.weight
         accuracy = acc_fn(logits.argmax(-1), y)
-        return Split(loss=losses, acc=accuracy)
+        return MetricSplit(loss=losses, acc=accuracy)
 
     return metrics_fn

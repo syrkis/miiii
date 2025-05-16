@@ -7,95 +7,12 @@ import argparse
 import os
 import pickle
 import sys
-from dataclasses import field
 from typing import Any, Dict
 
-import jax.numpy as jnp
 import numpy as np
 import yaml
 from aim import Repo, Run
-from chex import dataclass
-from jaxtyping import Array
-
-
-# %% Types
-@dataclass
-class Activation:
-    wei: Array
-    ffwd: Array = field(default_factory=lambda: jnp.array([]))
-    logits: Array = field(default_factory=lambda: jnp.array([]))
-
-
-@dataclass
-class Split:
-    loss: Array
-    acc: Array
-
-
-# %% Data classes
-@dataclass
-class Feedforward:
-    w_in: Array
-    w_out: Array
-
-
-@dataclass
-class Attention:
-    q: Array
-    k: Array
-    v: Array
-    o: Array
-
-
-@dataclass
-class Embedding:
-    tok_emb: Array
-    pos_emb: Array
-
-
-@dataclass
-class Params:
-    embeds: Embedding
-    ffwd: Feedforward
-    attn: Attention
-    unbeds: Array  # should be a linear layer ?
-
-
-@dataclass
-class Metrics:
-    train: Split
-    valid: Split
-
-
-@dataclass
-class Scope:
-    # logit_freqs: Array
-    grad_norms: Params | None
-    neuron_freqs: Array
-
-
-@dataclass
-class State:
-    params: Params
-    opt_state: Params | None = None
-    emas: Params | None = None
-
-
-@dataclass
-class Conf:
-    p: int = 113
-    lamb: float = 2
-    latent_dim: int = 128
-    depth: int = 1
-    heads: int = 4
-    epochs: int = 20000
-    lr: float = 3e-4  # i just usually do this.
-    l2: float = 1.0
-    dropout: float = 0.5
-    train_frac: float = 0.5
-    mask: bool = False  # weather to mask first four tasks
-    shuffle: bool = False  # weather to shuffle the y labels
-    alpha: float = 0.98
+from miiii.types import Conf
 
 
 def cfg_fn(search_space=False):

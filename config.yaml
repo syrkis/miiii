@@ -2,8 +2,8 @@
 default:
   p: 37 #113
   depth: 1
-  epochs: 5_000 # 65_536
-  latent_dim: 62 # 256
+  epochs: 1_000 # 65_536
+  latent_dim: 32 # 256
   lr: 0.0003
   train_frac: 0.5
   heads: 4

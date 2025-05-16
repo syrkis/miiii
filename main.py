@@ -6,6 +6,7 @@
 import miiii as mi
 from jax import random
 import jax.numpy as jnp
+import numpy as np
 from einops import rearrange
 import esch
 
@@ -24,5 +25,13 @@ state, (scope, metrics, loss) = mi.train.train_fn(rng, cfg, arg, ds)
 # mi.utils.log_fn(cfg, arg, ds, state, metrics)
 
 # %%
+rearrange(ds.y.train, "(a b) c -> a b c", a=jnp.int32(jnp.sqrt(ds.y.train.shape[0])))
+# %%
 tmp = rearrange(scope[0][:, 0, 0, :4], "(a b) n -> n a b 1", a=cfg.p)
-esch.grid(tmp, path="miiii.svg")
+
+
+# %%
+arr = np.array(tmp.squeeze()[0])
+dwg = esch.init(*arr.shape)
+esch.grid_fn(arr / arr.max(), dwg, dwg, shape="square")
+esch.save(dwg, "miiii.svg")

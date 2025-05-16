@@ -571,7 +571,7 @@ wheels = [
 
 [[package]]
 name = "esch"
-version = "1.1.14"
+version = "0.0.7"
 source = { directory = "../esch" }
 dependencies = [
     { name = "chex" },
@@ -591,19 +591,19 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "chex", specifier = ">=0.1.87,<0.2.0" },
-    { name = "darkdetect", specifier = ">=0.8.0,<0.9.0" },
-    { name = "einops", specifier = ">=0.8.0,<0.9.0" },
-    { name = "ipython", specifier = ">=8.29.0,<9.0.0" },
-    { name = "ipywidgets", specifier = ">=8.1.5,<9.0.0" },
-    { name = "jax", specifier = ">=0.6.0,<0.7.0" },
-    { name = "jaxtyping", specifier = ">=0.2.36,<0.3.0" },
-    { name = "jupyterlab", specifier = ">=4.3.3,<5.0.0" },
-    { name = "matplotlib", specifier = ">=3.9.2,<4.0.0" },
-    { name = "pdf2image", specifier = ">=1.17.0,<2.0.0" },
-    { name = "svglib", specifier = ">=1.5.1,<2.0.0" },
-    { name = "svgwrite", specifier = ">=1.4.3,<2.0.0" },
-    { name = "tqdm", specifier = ">=4.66.5,<5.0.0" },
+    { name = "chex", specifier = ">=0.1.87,<0.2" },
+    { name = "darkdetect", specifier = ">=0.8.0,<0.9" },
+    { name = "einops", specifier = ">=0.8.0,<0.9" },
+    { name = "ipython", specifier = ">=8.29.0,<9" },
+    { name = "ipywidgets", specifier = ">=8.1.5,<9" },
+    { name = "jax", specifier = ">=0.6.0,<0.7" },
+    { name = "jaxtyping", specifier = ">=0.2.36,<0.3" },
+    { name = "jupyterlab", specifier = ">=4.3.3,<5" },
+    { name = "matplotlib", specifier = ">=3.9.2,<4" },
+    { name = "pdf2image", specifier = ">=1.17.0,<2" },
+    { name = "svglib", specifier = ">=1.5.1,<2" },
+    { name = "svgwrite", specifier = ">=1.4.3,<2" },
+    { name = "tqdm", specifier = ">=4.66.5,<5" },
 ]
 
 [[package]]

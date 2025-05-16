@@ -4,29 +4,9 @@
 
 # %% Imports
 import jax.numpy as jnp
-from chex import dataclass
 from jax import Array, random
 from oeis import oeis
-
-from miiii.utils import Conf
-
-
-# %% Data classes #################################################################
-@dataclass
-class Split:
-    train: Array
-    eval: Array
-
-
-@dataclass
-class Dataset:
-    x: Split
-    y: Split
-    idxs: Array
-    udxs: Array
-    mask: Array
-    primes: Array
-    weight: Array | None = None
+from miiii.types import Conf, DataSplit, Dataset
 
 
 def task_fn(key: Array, cfg: Conf, arg) -> Dataset:  # five me nanda or miiii task
@@ -55,8 +35,8 @@ def miiii_fn(key, cfg, arg):
     mask = mask if arg.mods == "remainder" else jnp.array(1)
     weight = 1 / jnp.log(mask.sum(-1))  # modify to ignore masked away tasks
     weight = weight.at[:4].set(0) if cfg.mask else weight  # mask first four tasks. maybe.
-    x = Split(train=x_train, eval=x_eval)
-    y = Split(train=y_train, eval=y_eval)
+    x = DataSplit(train=x_train, eval=x_eval)
+    y = DataSplit(train=y_train, eval=y_eval)
     return Dataset(x=x, y=y, idxs=idxs, udxs=idxs.argsort(), mask=mask, weight=weight, primes=jnp.array(factors))
 
 
@@ -76,6 +56,6 @@ def nanda_fn(key, cfg: Conf, arg) -> Dataset:
     y_train, y_eval = y[:sep], y[sep:]
     if arg.mods == "divisible":
         y_train, y_eval = (y_train == 0).astype(jnp.int8), (y_eval == 0).astype(jnp.int8)
-    x = Split(train=x_train, eval=x_eval)
-    y = Split(train=y_train, eval=y_eval)
+    x = DataSplit(train=x_train, eval=x_eval)
+    y = DataSplit(train=y_train, eval=y_eval)
     return Dataset(x=x, y=y, idxs=idxs, udxs=idxs.argsort(), mask=jnp.array(1), primes=jnp.array([cfg.p]))
