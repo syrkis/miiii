@@ -3,7 +3,7 @@
 # by: Noah Syrkis
 
 # %% Imports
-from miiii.utils import Conf, Params, Feedforward, Attention, Embedding
+from miiii.types import Conf, Params, Feedforward, Attention, Embedding
 from miiii.tasks import Dataset
 import jax
 from typing import Tuple

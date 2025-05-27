@@ -9,7 +9,7 @@ from typing import cast
 import jax.numpy as jnp
 import optax
 from einops import rearrange
-from jax import jit, lax, random, tree, value_and_grad, vmap
+from jax import jit, lax, random, tree, value_and_grad, vmap, debug
 from jax.numpy import fft
 from jax_tqdm import scan_tqdm
 from jaxtyping import Array
@@ -33,8 +33,7 @@ def train_fn(rng, cfg: Conf, arg, ds: Dataset):
     return state, (scope, metrics, loss)
 
 
-def make_update_fn(opt, grad_fn, ds, cfg, arg):
-    @jit
+def make_update_fn(opt, grad_fn, ds: Dataset, cfg, arg):
     def update_fn(state, key):
         loss, grads = grad_fn(state.params, key)
         grads, emas = filter_fn(grads, state.emas, cfg.lamb, cfg.alpha)
@@ -51,8 +50,8 @@ def make_grad_fn(ds: Dataset, cfg: Conf, arg, apply, loss_fn):
 
     @value_and_grad
     def grad_fn(params: Params, rng) -> Array:
-        logits, _ = apply(rng, params, ds.x.train)
-        losses = loss_fn(logits, ds.y.train, mask) * weight
+        logits, _ = apply(rng, params, ds.train[0])
+        losses = loss_fn(logits, ds.train[1], mask) * weight
         return losses.mean()
 
     return grad_fn
@@ -65,7 +64,7 @@ def filter_fn(grads: Params, emas: Params, lamb: float, alpha: float):
     return grads, emas
 
 
-def make_interval_fn(cfg, arg, opt, ds):
+def make_interval_fn(cfg, arg, opt, ds: Dataset):
     train_apply = apply_fn(cfg, ds, dropout=cfg.dropout)
     valid_apply = partial(apply_fn(cfg, ds, dropout=0.0), random.PRNGKey(0))
     loss_fn = vmap(cross_entropy, in_axes=(1, 1, 0))
@@ -85,12 +84,10 @@ def make_interval_fn(cfg, arg, opt, ds):
     return interval_fn
 
 
-def make_scope_fn(apply_fn, cfg, ds):
-    x = jnp.concatenate([ds.x.train, ds.x.eval], axis=0)[ds.udxs]
-
+def make_scope_fn(apply_fn, cfg, ds: Dataset):
     @jit
     def scope_fn(params: Params):
-        _, neurs = apply_fn(params, x)
+        _, neurs = apply_fn(params, ds.x)
         return neurs
         neurs = rearrange(neurs[:, 0, 0, :], "(a b) n -> b a n", a=cfg.p)
         freqs = jnp.abs(fft.fft2(neurs)[1:, 1:])
@@ -127,8 +124,8 @@ def make_eval_fn(ds: Dataset, cfg: Conf, arg, loss_fn):
 
     @jit
     def eval_fn(state: State):
-        valid_metrics = metrics_fn(state.params, ds.x.eval, ds.y.eval)
-        train_metrics = metrics_fn(state.params, ds.x.train, ds.y.train)
+        valid_metrics = metrics_fn(state.params, ds.valid[0], ds.valid[1])
+        train_metrics = metrics_fn(state.params, ds.train[0], ds.train[1])
         metrics = Metrics(train=train_metrics, valid=valid_metrics)
         return metrics
 

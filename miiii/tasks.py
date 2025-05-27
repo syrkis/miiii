@@ -6,7 +6,7 @@
 import jax.numpy as jnp
 from jax import Array, random
 from oeis import oeis
-from miiii.types import Conf, DataSplit, Dataset
+from miiii.types import Conf, Dataset
 
 
 def task_fn(key: Array, cfg: Conf, arg) -> Dataset:  # five me nanda or miiii task
@@ -25,19 +25,13 @@ def miiii_fn(key, cfg, arg):
     x = repr_fn(jnp.arange(cfg.p**2), cfg.p)  # x is the representation of the numbers
     y = (jnp.arange(cfg.p**2)[:, None] % factors[None, :]).astype(jnp.int8)
     y = y if arg.mods == "remainder" else (y == 0).astype(jnp.int8)  # this was a serious bug i just fixed it
-    x, y = x[idxs], y[idxs]
-    y = y[random.permutation(random.split(key)[0], jnp.arange(cfg.p**2))] if cfg.shuffle else y
-    sep = int(cfg.train_frac * cfg.p**2)
-    x_train, y_train = x[:sep], y[:sep]
-    x_eval, y_eval = x[sep:], y[sep:]
-    primes = jnp.array(oeis["A000040"][1 : y_train.shape[1] + 1])
+    # y = y[random.permutation(random.split(key)[0], jnp.arange(cfg.p**2))] if cfg.shuffle else y
+    primes = jnp.array(oeis["A000040"][1 : y.shape[1] + 1])
     mask = jnp.tile(jnp.arange(primes.max()), primes.size).reshape((primes.size, -1)) < primes[:, None]
     mask = mask if arg.mods == "remainder" else jnp.array(1)
     weight = 1 / jnp.log(mask.sum(-1))  # modify to ignore masked away tasks
     weight = weight.at[:4].set(0) if cfg.mask else weight  # mask first four tasks. maybe.
-    x = DataSplit(train=x_train, eval=x_eval)
-    y = DataSplit(train=y_train, eval=y_eval)
-    return Dataset(x=x, y=y, idxs=idxs, udxs=idxs.argsort(), mask=mask, weight=weight, primes=jnp.array(factors))
+    return Dataset(x=x, y=y, idxs=idxs, mask=mask, weight=weight, frac=cfg.train_frac, primes=jnp.array(factors))
 
 
 # nanda task  ################################################################
@@ -48,14 +42,7 @@ def nanda_fn(key, cfg: Conf, arg) -> Dataset:
     y = (a + b) % cfg.p
     data = jnp.stack([a, b, jnp.array(cfg.p).repeat(cfg.p**2), y], axis=-1)
     idxs = random.permutation(key, len(data))
-    data = data[idxs]
     x = data[:, :-1]
     y = data[:, -1]
-    sep = int(len(x) * cfg.train_frac)
-    x_train, x_eval = x[:sep], x[sep:]
-    y_train, y_eval = y[:sep], y[sep:]
-    if arg.mods == "divisible":
-        y_train, y_eval = (y_train == 0).astype(jnp.int8), (y_eval == 0).astype(jnp.int8)
-    x = DataSplit(train=x_train, eval=x_eval)
-    y = DataSplit(train=y_train, eval=y_eval)
-    return Dataset(x=x, y=y, idxs=idxs, udxs=idxs.argsort(), mask=jnp.array(1), primes=jnp.array([cfg.p]))
+    y = (y == 0).astype(jnp.int8) if arg.mods == "divisible" else y
+    return Dataset(x=x, y=y, idxs=idxs, frac=cfg.train_frac, mask=jnp.array(1), primes=jnp.array([cfg.p]))

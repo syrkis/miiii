@@ -154,9 +154,9 @@ def polar_plot(ps: Sequence[Sequence] | Sequence | np.ndarray, f_name: Sequence[
 
 
 def small_multiples(fnames, seqs, f_name, n_rows=2, n_cols=2):
-    assert (
-        len(fnames) == len(seqs) and len(fnames) >= n_rows * n_cols
-    ), "fnames and seqs must be the same length and n_rows * n_cols"
+    assert len(fnames) == len(seqs) and len(fnames) >= n_rows * n_cols, (
+        "fnames and seqs must be the same length and n_rows * n_cols"
+    )
     fig, axes = plt.subplots(n_rows, n_cols, subplot_kw=dict(polar=True), figsize=(n_cols * 5, n_rows * 5), dpi=100)
     for ax, fname, seqs in zip(axes.flat, fnames, seqs):  # type: ignore
         polar_plot(seqs, fname, ax=ax)

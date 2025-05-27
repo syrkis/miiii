@@ -1,5 +1,6 @@
 # Imports
 from dataclasses import field
+from functools import cached_property
 from chex import dataclass
 from jaxtyping import Array
 import jax.numpy as jnp
@@ -7,20 +8,26 @@ import jax.numpy as jnp
 
 # %% Types
 @dataclass
-class DataSplit:
-    train: Array
-    eval: Array
-
-
-@dataclass
 class Dataset:
-    x: DataSplit
-    y: DataSplit
+    x: Array
+    y: Array
+    frac: float
     idxs: Array
-    udxs: Array
-    mask: Array
+    mask: Array  # for masking tasks? Not sure
     primes: Array
     weight: Array | None = None
+
+    @cached_property
+    def train(self):
+        return self.x[self.idxs][: self.limit], self.y[self.idxs][: self.limit]
+
+    @cached_property
+    def valid(self):
+        return self.x[self.idxs][self.limit :], self.y[self.idxs][self.limit :]
+
+    @cached_property
+    def limit(self):
+        return int(self.frac * self.x.shape[0])
 
 
 @dataclass
