@@ -24,23 +24,13 @@ dependencies = [
     "jax>=0.6.0,<0.7",
 ]
 
-[project.scripts]
-package_command = "main:main"
-
 [dependency-groups]
-dev = [
-    "ruff>=0.6.3,<0.7",
-    "esch",
-]
+dev = ["esch"]
 
 [tool.uv]
 
 [tool.uv.sources]
 esch = { path = "../esch" }
-
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
 
 [tool.pyright]
 venvPath = "."

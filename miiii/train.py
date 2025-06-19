@@ -10,6 +10,8 @@ import jax.numpy as jnp
 import optax
 from einops import rearrange
 from jax import jit, lax, random, tree, value_and_grad, vmap, debug
+from typing import Tuple
+from optax import GradientTransformation
 from jax.numpy import fft
 from jax_tqdm import scan_tqdm
 from jaxtyping import Array
@@ -24,10 +26,8 @@ ADAM_BETA2 = 0.98  # @nanda2023
 
 
 # %% Functions
-def train_fn(rng, cfg: Conf, arg, ds: Dataset):
-    state, opt = init_state(rng, cfg, arg, ds)
+def train_fn(rng, cfg: Conf, arg, ds: Dataset, state: State, opt: GradientTransformation):
     interval_fn = make_interval_fn(cfg, arg, opt, ds)
-
     inputs = (jnp.arange(arg.tick), random.split(rng, arg.tick))
     state, (scope, metrics, loss) = lax.scan(interval_fn, state, inputs)
     return state, (scope, metrics, loss)
@@ -105,7 +105,7 @@ def make_scope_fn(apply_fn, cfg, ds: Dataset):
     return scope_fn
 
 
-def init_state(rng, cfg: Conf, arg, ds: Dataset):
+def init_state(rng, cfg: Conf, arg, ds: Dataset) -> Tuple[State, GradientTransformation]:
     opt = optax.adamw(cfg.lr, weight_decay=cfg.l2, b1=ADAM_BETA1, b2=ADAM_BETA2)  # @nanda2023
     params = init_fn(rng, cfg, arg, ds)
     emas = tree.map(lambda x: jnp.zeros_like(x), params)

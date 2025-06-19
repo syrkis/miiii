@@ -25,7 +25,6 @@ def apply_fn(cfg: Conf, ds: Dataset, dropout: float):
     block_fn = make_block_fn(dropout)
 
     @partial(vmap, in_axes=(None, None, 0))  # type: ignore
-    @jit
     def apply(key, params: Params, x) -> Tuple[Array, Array]:
         x = embed_fn(params.embeds, x)
         rngs = random.split(key, cfg.depth)
