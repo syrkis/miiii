@@ -26,18 +26,14 @@ ADAM_BETA2 = 0.98
 
 # %% Functions
 def train_fn(rng, cfg, ds: Dataset, state: State, opt: GradientTransformation) -> Tuple[State, Array]:
-    update = partial(update_fn, opt, ds, cfg)
-    state, loss = update(state, rng)
-
     @scan_tqdm(cfg.tick)
     def step(state, idx_rng) -> Tuple[State, Array]:
         keys = random.split(idx_rng[1], cfg.epochs // cfg.tick)
-        state, loss = lax.scan(update, state, keys)
+        state, loss = lax.scan(partial(update_fn, opt, ds, cfg), state, keys)
         return state, loss
 
     input = (jnp.arange(cfg.tick), random.split(rng, cfg.tick))
     state, loss = lax.scan(step, state, input)
-
     return state, loss
 
 
@@ -51,8 +47,8 @@ def update_fn(opt: GradientTransformation, ds: Dataset, cfg, state: State, key) 
 
 def loss_fn(ds: Dataset, params: Params, rng: Array) -> Array:
     logits, z = model.apply(ds, rng, params, ds.x)
-    losses: Array = cross_entropy(logits, ds.y, ds.mask)
-    return (losses / ds.weight).mean()  # mean across tasks (weigted by expected n-ary classification loss)
+    losses: Array = cross_entropy(logits, ds.y, ds.mask) * ds.task
+    return losses.sum()  # mean across tasks (weigted by expected n-ary classification loss)
 
 
 def filter_fn(grad: Params, emas: Params, lamb: float, alpha: float) -> Tuple[Params, Params]:

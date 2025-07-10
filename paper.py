@@ -163,8 +163,8 @@ def emb_fourier_plots(m, f, s, name):
     esch.mesh(m, path=f"paper/figs/fourier_{name}_m.svg", edge=edge, font_size=28)
 
     # this is the line plot
-    ticks_bottom = [(i.item(), f"cos {i//2}") for i in jnp.where(s)[0] if i % 2 == 1]
-    ticks_top = [(0, "const")] + [(i.item(), f"sin {i//2}") for i in jnp.where(s)[0] if i % 2 == 0]
+    ticks_bottom = [(i.item(), f"cos {i // 2}") for i in jnp.where(s)[0] if i % 2 == 1]
+    ticks_top = [(0, "const")] + [(i.item(), f"sin {i // 2}") for i in jnp.where(s)[0] if i % 2 == 0]
     top = esch.EdgeConfig(ticks=ticks_top, show_on="all")  # type: ignore
     bottom = esch.EdgeConfig(ticks=ticks_bottom, show_on="all")
     edge = esch.EdgeConfigs(top=top, bottom=bottom)
@@ -223,7 +223,9 @@ def finding_fn(scope, cfg, task):
 def wei_plot(acts, cfg, task):
     wei = rearrange(acts.wei[:, 0, :, -1, 0], "(x0 x1) h -> h x0 x1", x0=cfg.p, x1=cfg.p)
     wei = wei[:, :slice, :slice]
-    top = esch.EdgeConfig(label=[f"Head {i+1}" for i in range(wei.shape[0])] if task != "nanda" else "", show_on="all")
+    top = esch.EdgeConfig(
+        label=[f"Head {i + 1}" for i in range(wei.shape[0])] if task != "nanda" else "", show_on="all"
+    )
     left = esch.EdgeConfig(label="𝑥₀", show_on="first")
     right = esch.EdgeConfig(label=task, show_on="last")
     bottom = esch.EdgeConfig(label="𝑥₁", show_on="first")

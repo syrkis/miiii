@@ -12,11 +12,12 @@ import jax.numpy as jnp
 class Dataset:
     x: Array
     y: Array
-    idxs: Array
-    mask: Array
     frac: float
-    primes: Array
-    weight: Array  # for masking tasks? Not sure
+    idxs: Array
+    mask: Array  # mask away n-2 classes when doing binary classification
+    task: Array  # correct for n-ary classification
+    # task: Array  # masking away particular tasks
+    primes: Array  # prime numbers used
 
     @cached_property
     def train(self):

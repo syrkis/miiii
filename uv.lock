@@ -599,7 +599,7 @@ wheels = [
 
 [[package]]
 name = "esch"
-version = "0.0.84"
+version = "0.0.85"
 source = { directory = "../esch" }
 dependencies = [
     { name = "darkdetect" },
