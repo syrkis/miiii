@@ -650,6 +650,18 @@ wheels = [
 ]
 
 [[package]]
+name = "fastcore"
+version = "1.8.5"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "packaging" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/eb/a8/c3d0a2684efb94d0149eec9781db317e414dd4cfe8667afb31a2f638ab7f/fastcore-1.8.5.tar.gz", hash = "sha256:5b6549f44f8df2d81ec378885c17a6a706a02bb40e38f14f6b44f5296180b76d", size = 76516, upload-time = "2025-07-08T06:17:38.135Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/7b/0a/a572b458862649a67511977ef5b744d0e856d94e12fe47e860428755d7fc/fastcore-1.8.5-py3-none-any.whl", hash = "sha256:84b0301691926a2fd2ea45f0cc66a0fbb4b531244d2995cf69e67db75b4a40f6", size = 79259, upload-time = "2025-07-08T06:17:36.175Z" },
+]
+
+[[package]]
 name = "fastjsonschema"
 version = "2.21.1"
 source = { registry = "https://pypi.org/simple" }
@@ -1224,6 +1236,34 @@ wheels = [
 ]
 
 [[package]]
+name = "lovely-jax"
+version = "0.1.3"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "jax" },
+    { name = "lovely-numpy" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/f2/3b/fa555a87e1f9ad96cab448f81e8b773e645e6183ad0acc27f0943e39c3a5/lovely-jax-0.1.3.tar.gz", hash = "sha256:43b1c44bf072de3a878873fcd041dd309f44974f6cca158dffb823e563297d1a", size = 19718, upload-time = "2023-09-18T06:59:11.768Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/43/9e/201612808489798b6b4937d5f78598f271897edf7539338a12c98d914aa8/lovely_jax-0.1.3-py3-none-any.whl", hash = "sha256:453f0fc5ab3f35bd32a0e663728b2ef6f8c0f81cbc7e0d4f979426c2c84045b7", size = 17980, upload-time = "2023-09-18T06:59:09.1Z" },
+]
+
+[[package]]
+name = "lovely-numpy"
+version = "0.2.13"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "fastcore" },
+    { name = "ipython" },
+    { name = "matplotlib" },
+    { name = "numpy" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/f7/46/ba51024fbf97d8370afa8a764fe18bf5c663e64badf129dfb2949a7ccbdd/lovely_numpy-0.2.13.tar.gz", hash = "sha256:0ed56660986731db3d3d7ff130e85e8d162e96c96042a0bd9a3992d32a3b34e2", size = 23920, upload-time = "2024-06-28T06:37:27.63Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/92/f7/a74742c9f9823a6a1fb18eb11fe77da61ea9426770ede6406f2f97a9622a/lovely_numpy-0.2.13-py3-none-any.whl", hash = "sha256:2e696d145d301264390f790cd602560ca5e525534d9059e0fcd3f313b63b5786", size = 24357, upload-time = "2024-06-28T06:37:25.206Z" },
+]
+
+[[package]]
 name = "lxml"
 version = "6.0.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1328,6 +1368,7 @@ dependencies = [
     { name = "jax-tqdm" },
     { name = "jaxtyping" },
     { name = "jupyterlab" },
+    { name = "lovely-jax" },
     { name = "matplotlib" },
     { name = "mlxp" },
     { name = "oeis" },
@@ -1358,6 +1399,7 @@ requires-dist = [
     { name = "jax-tqdm", specifier = ">=0.2.2,<0.3" },
     { name = "jaxtyping", specifier = ">=0.2.36,<0.3" },
     { name = "jupyterlab", specifier = ">=4.2.2,<5" },
+    { name = "lovely-jax", specifier = ">=0.1.3" },
     { name = "matplotlib", specifier = ">=3.9.0,<4" },
     { name = "mlxp", specifier = ">=1.0.4" },
     { name = "oeis", specifier = ">=2023.3.10,<2024" },

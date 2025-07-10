@@ -13,11 +13,10 @@ class Dataset:
     x: Array
     y: Array
     idxs: Array
-    fact_mask: Array  # for masking tasks? Not sure
-    task_mask: Array
+    mask: Array
+    frac: float
     primes: Array
-    # size: Tuple[int, int] | Tuple[int, int, int]
-    frac: float = 0.5
+    weight: Array  # for masking tasks? Not sure
 
     @cached_property
     def train(self):
