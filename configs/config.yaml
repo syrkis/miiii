@@ -1,0 +1,17 @@
+# config.yaml
+p: 37 #113
+depth: 1
+epochs: 1_000 # 65_536
+latent_dim: 32 # 256
+lr: 0.0003
+train_frac: 0.5
+heads: 4
+dropout: 0.1
+lamb: 0.5
+l2: 0.33
+# search_space:
+# lr: [0.0001, 0.0003, 0.001]
+# l2: [0.0, 0.005, 0.1, 0.5, 1.0]
+# alpha: [0.8, 0.9, 0.95, 0.98, 0.99]
+# lamb: [1, 2, 5]
+# dropout: [0.0, 0.1, 0.3, 0.5]

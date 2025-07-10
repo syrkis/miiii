@@ -52,7 +52,7 @@ def init_ffwd_fn(rng: Array, cfg: Conf) -> Feedforward:
     return Feedforward(w_i=w_i, w_o=w_o)
 
 
-def init_fn(rng: Array, cfg: Conf, arg, ds: Dataset) -> Params:
+def init_fn(rng: Array, cfg: Conf, ds: Dataset) -> Params:
     keys = random.split(rng, 2 + cfg.depth)
     embeds = init_embed_fn(keys[0], cfg)
     unbeds = initializer(keys[1], (*ds.y.shape[1:], cfg.latent_dim, *(ds.y.shape[-1],)))
