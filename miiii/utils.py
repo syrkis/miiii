@@ -15,14 +15,14 @@ from aim import Repo, Run
 from miiii.types import Conf
 
 
-def cfg_fn(search_space=False):
+def cfg_fn(search_space=False) -> Conf:
     """Create a configuration object from parsed command-line arguments."""
     with open("config.yaml", "r") as f:
         cfg = yaml.safe_load(f)
     return Conf(**cfg["default"]) if not search_space else cfg
 
 
-def arg_fn():
+def arg_fn() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Run model with specified hyperparameters.")
     parser.add_argument("--runs", type=int, help="Number of trials to run", default=1)
     parser.add_argument("--tick", type=int, help="Number of trials to run", default=100)  # how often to scope

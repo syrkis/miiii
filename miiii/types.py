@@ -3,6 +3,7 @@ from dataclasses import field
 from functools import cached_property
 from chex import dataclass
 from jaxtyping import Array
+from typing import Tuple
 import jax.numpy as jnp
 
 
@@ -11,11 +12,12 @@ import jax.numpy as jnp
 class Dataset:
     x: Array
     y: Array
-    frac: float
     idxs: Array
-    mask: Array  # for masking tasks? Not sure
+    fact_mask: Array  # for masking tasks? Not sure
+    task_mask: Array
     primes: Array
-    weight: Array | None = None
+    # size: Tuple[int, int] | Tuple[int, int, int]
+    frac: float = 0.5
 
     @cached_property
     def train(self):
@@ -46,16 +48,16 @@ class MetricSplit:
 # %% Data classes
 @dataclass
 class Feedforward:
-    w_in: Array
-    w_out: Array
+    w_i: Array  # in
+    w_o: Array  # out
 
 
-@dataclass
-class Attention:
-    q: Array
-    k: Array
-    v: Array
-    o: Array
+# @dataclass
+# class Attention:
+# q: Array
+# k: Array
+# v: Array
+# o: Array
 
 
 @dataclass
@@ -68,7 +70,7 @@ class Embedding:
 class Params:
     embeds: Embedding
     ffwd: Feedforward
-    attn: Attention
+    # attn: Attention
     unbeds: Array  # should be a linear layer ?
 
 
@@ -78,18 +80,18 @@ class Metrics:
     valid: MetricSplit
 
 
-@dataclass
-class Scope:
-    # logit_freqs: Array
-    grad_norms: Params | None
-    neuron_freqs: Array
+# @dataclass
+# class Scope:
+# logit_freqs: Array
+# grad_norms: Params
+# neuron_freqs: Array
 
 
 @dataclass
 class State:
     params: Params
-    opt_state: Params | None = None
-    emas: Params | None = None
+    opt_state: Params
+    emas: Params
 
 
 @dataclass
@@ -107,3 +109,7 @@ class Conf:
     mask: bool = False  # weather to mask first four tasks
     shuffle: bool = False  # weather to shuffle the y labels
     alpha: float = 0.98
+
+    @property
+    def n(self):
+        return self.p**2
