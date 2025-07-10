@@ -14,12 +14,9 @@ def main(ctx: mlxp.Context) -> None:
     rng, key = random.split(random.PRNGKey(ctx.config.seed))
     ds = mi.tasks.task_fn(key, ctx.config)
     state, opt = mi.train.init_fn(rng, ctx.config, ds)
-    logits, z = mi.model.apply(ds, key, state.params, ds.x)
     loss = mi.train.loss_fn(ds, state.params, rng)
-    print(loss)
-    # logits.shape, ds.y.shape)
-    # state, loss = mi.train.train_fn(rng, ctx.config, ds, state, opt)
-    # log_fn(ctx, loss)
+    state, loss = mi.train.train_fn(rng, ctx.config, ds, state, opt)
+    log_fn(ctx, loss)
 
 
 def log_fn(ctx, loss):

@@ -1,8 +1,8 @@
 # config.yaml
-p: 7 #113
+p: 37 #113
 seed: 0
 depth: 1
-epochs: 1_000 # 65_536
+epochs: 10_000 # 65_536
 latent_dim: 32 # 256
 lr: 0.0003
 frac: 0.5
