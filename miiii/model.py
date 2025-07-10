@@ -22,7 +22,7 @@ initializer = nn.initializers.he_normal()
 def apply(ds: Dataset, key: Array, params: Params, x) -> Tuple[Array, Array]:
     x = embed_fn(params.embeds, x)
     x, z = ffwd_fn(params.ffwd, x)
-    logits = jnp.dot(x[-1], params.unbeds)  # * ds.mask
+    logits = jnp.dot(x[-1], params.unbeds)
     return logits, z
 
 
@@ -39,24 +39,24 @@ def embed_fn(w: Embedding, x: Array) -> Array:
 
 
 # Init
-def init_embed_fn(rng: Array, ctx) -> Embedding:
+def init_embed_fn(rng: Array, cfg) -> Embedding:
     keys = random.split(rng, 2)
-    tok_emb = initializer(keys[0], (ctx.p + 1, ctx.latent_dim))
-    pos_emb = initializer(keys[1], (3, ctx.latent_dim))
+    tok_emb = initializer(keys[0], (cfg.p + 1, cfg.latent_dim))
+    pos_emb = initializer(keys[1], (3, cfg.latent_dim))
     return Embedding(tok_emb=tok_emb, pos_emb=pos_emb)
 
 
-def init_ffwd_fn(rng: Array, ctx) -> Feedforward:
-    w_i = initializer(rng, (ctx.latent_dim, ctx.latent_dim * 4))
-    w_o = initializer(rng, (ctx.latent_dim * 4, ctx.latent_dim))
+def init_ffwd_fn(rng: Array, cfg) -> Feedforward:
+    w_i = initializer(rng, (cfg.latent_dim, cfg.latent_dim * 4))
+    w_o = initializer(rng, (cfg.latent_dim * 4, cfg.latent_dim))
     return Feedforward(w_i=w_i, w_o=w_o)
 
 
-def init_fn(rng: Array, ctx, ds: Dataset) -> Params:
-    keys = random.split(rng, 2 + ctx.depth)
-    embeds = init_embed_fn(keys[0], ctx)
-    unbeds = initializer(keys[1], (*ds.y.shape[1:], ctx.latent_dim, *(ds.y.shape[-1],)))
-    ffwd = init_ffwd_fn(keys[2], ctx)
+def init_fn(rng: Array, cfg, ds: Dataset) -> Params:
+    keys = random.split(rng, 2 + cfg.depth)
+    embeds = init_embed_fn(keys[0], cfg)
+    unbeds = initializer(keys[1], (*ds.y.shape[1:], cfg.latent_dim, *(cfg.p,)))
+    ffwd = init_ffwd_fn(keys[2], cfg)
     return Params(embeds=embeds, unbeds=unbeds, ffwd=ffwd)
 
 

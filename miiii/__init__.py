@@ -4,9 +4,10 @@ from . import train  # noqa
 from . import types  # noqa
 from . import model  # noqa
 from .plots import plot_y, plot_x  # noqa
-# import lovely_jax as lj
+import lovely_jax as lj
 
-# lj.monkey_patch()
+lj.monkey_patch()
+
 plots = [plot_y, plot_x]
 
 

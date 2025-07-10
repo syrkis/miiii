@@ -49,9 +49,9 @@ def update_fn(opt: GradientTransformation, ds: Dataset, cfg, state: State, key) 
     return State(params=params, emas=emas, opt_state=opt_state), loss  # type: ignore
 
 
-def loss_fn(ds: Dataset, params: Params, rng) -> Array:
+def loss_fn(ds: Dataset, params: Params, rng: Array) -> Array:
     logits, z = model.apply(ds, rng, params, ds.x)
-    losses = cross_entropy(logits, ds.y, ds.weight)  # * ds.mask
+    losses: Array = cross_entropy(logits, ds.y, ds.mask) / ds.weight
     return losses.mean()
 
 
@@ -72,5 +72,7 @@ def init_fn(rng, cfg, ds: Dataset) -> Tuple[State, GradientTransformation]:
 
 # %% HELPERS
 @partial(vmap, in_axes=(1, 1, 0))
-def cross_entropy(logits: Array, y: Array, mask: Array):
+def cross_entropy(logits: Array, y: Array, mask: Array) -> Array:
+    # print(mask.shape, logits.shape, y.shape)
+    # exit()
     return optax.softmax_cross_entropy_with_integer_labels(logits, y, where=mask).mean()
