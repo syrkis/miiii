@@ -1,16 +1,12 @@
 # config.yaml
 p: 13 #113
-seed: 0
-depth: 1
-epochs: 1_000 # 65_536
+seed: 1
+epochs: 10_000 # 65_536
 latent_dim: 32 # 256
-lr: 0.01
+lr: 0.001
 frac: 0.5
-dropout: 0.0
-lamb: 0.5
-l2: 0.0
-tick: 10
-alpha: 0.99
+# l2: 0.0
+tick: 100
 # search_space:
 # lr: [0.0001, 0.0003, 0.001]
 # l2: [0.0, 0.005, 0.1, 0.5, 1.0]

@@ -15,8 +15,19 @@ def main(ctx: mlxp.Context) -> None:
     rngs = random.split(random.PRNGKey(ctx.config.seed), 4)
     ds = mi.tasks.task_fn(rngs[0], ctx.config)
     state, opt = mi.train.init_fn(rngs[1], ctx.config, ds)
-    state, (loss, scope) = mi.train.train_fn(rngs[3], ctx.config, ds, state, opt)
-    print(scope.sce.T.deeper)
+    logits, z = mi.model.apply(rngs[0], state.params, ds.x)
+    loss = mi.train.loss_fn(ds, state.params, rngs[0])
+    print(loss)
+    # sns.heatmap(ds.mask)
+    # plt.show()
+
+    # state, (loss, scope) = mi.train.train_fn(rngs[3], ctx.config, ds, state, opt)
+    # print(logits.argmax(-1).deeper)
+    # print(ds.y.deeper)
+    # print(ds.y[: ctx.config["p"] * 2].T.deeper)
+    # print(scope.cce.T.deeper)
+    # print(scope.acc.T.deeper)
+    # print(ds.task.deeper)
     # log_fn(ctx, ds, state, loss)
 
 
