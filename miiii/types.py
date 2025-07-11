@@ -17,23 +17,23 @@ class Scope:
 class Dataset:
     x: Array
     y: Array
-    frac: float
+    frac: Array
     idxs: Array
     mask: Array  # mask away n-2 classes when doing binary classification
     task: Array  # correct for n-ary classification
     primes: Array  # prime numbers used
 
-    @cached_property
-    def train(self):
-        return self.x[self.idxs][: self.limit], self.y[self.idxs][: self.limit]
+    # @cached_property
+    # def train(self):
+    #     return self.x[self.idxs][: self.limit], self.y[self.idxs][: self.limit]
 
-    @cached_property
-    def valid(self):
-        return self.x[self.idxs][self.limit :], self.y[self.idxs][self.limit :]
+    # @cached_property
+    # def valid(self):
+    #     return self.x[self.idxs][self.limit :], self.y[self.idxs][self.limit :]
 
-    @cached_property
-    def limit(self):
-        return jnp.int32(self.frac * self.x.shape[0])
+    # @cached_property
+    # def limit(self):
+    #     return jnp.int32(self.frac * self.x.shape[0])
 
 
 @dataclass

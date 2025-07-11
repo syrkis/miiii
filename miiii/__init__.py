@@ -7,6 +7,6 @@ from . import plots
 
 import lovely_jax as lj
 
-lj.monkey_patch()
+# lj.monkey_patch()
 
 __all__ = ["types", "model", "tasks", "utils", "plots", "train", "plots"]

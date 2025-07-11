@@ -48,16 +48,16 @@ def scope_fn(ds, rng, state) -> Scope:
 
 
 def update_fn(opt: GradientTransformation, ds: Dataset, cfg, state: State, key) -> Tuple[State, Array]:
-    loss, grad = value_and_grad(partial(loss_fn, ds))(state.params, key)
+    loss, grad = value_and_grad(loss_fn)(state.params, ds.x, ds.y, ds.mask, key)
     # grad, emas = filter_fn(grad, state.emas, cfg.lamb, cfg.alpha)
     updates, opt_state = opt.update(grad, state.opt_state, state.params)  # type: ignore
     params = optax.apply_updates(state.params, updates)  # type: ignore
     return State(params=params, emas=state.emas, opt_state=opt_state), loss  # type: ignore
 
 
-def loss_fn(ds: Dataset, params: Params, rng: Array) -> Array:
-    logits, z = model.apply(rng, params, ds.x)
-    losses: Array = cross_entropy(logits, ds.y, ds.mask)  # / ds.task  # normalize by n-ary task
+def loss_fn(params: Params, x, y, mask, rng: Array) -> Array:
+    logits, z = model.apply(rng, params, x)
+    losses: Array = cross_entropy(logits, y, mask)  # / ds.task  # normalize by n-ary task
     return losses.mean()  # mean across tasks (weigted by expected n-ary classification loss)
 
 
@@ -69,11 +69,10 @@ def loss_fn(ds: Dataset, params: Params, rng: Array) -> Array:
 
 # %% INIT
 def init_fn(rng, cfg, ds: Dataset) -> Tuple[State, GradientTransformation]:
-    opt = optax.adamw(cfg.lr)  # , weight_decay=cfg.l2, b1=ADAM_BETA1, b2=ADAM_BETA2)
+    opt = optax.adam(cfg.lr)
     params = model.init_fn(rng, cfg, ds)
     emas = tree.map(lambda x: jnp.zeros_like(x), params)
-    opt_state = cast(Params, opt.init(params))  # type: ignore
-    return State(params=params, opt_state=opt_state, emas=emas), opt
+    return State(params=params, opt_state=opt.init(params), emas=emas), opt  # type: ignore
 
 
 # %% HELPERS

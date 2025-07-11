@@ -11,25 +11,25 @@ from miiii.types import Dataset
 
 def task_fn(key: Array, cfg) -> Dataset:
     # inclusive list of primes from 2 to cfg.p
-    primes = jnp.int32(oeis["A000040"][1 : cfg.p])[jnp.array(oeis["A000040"][1 : cfg.p]) <= cfg.p]
+    primes = jnp.int32(oeis["A000040"][1 : cfg.p])[jnp.array(oeis["A000040"][1 : cfg.p]) < cfg.p]
 
     # shuffeling permutation
     idxs = random.permutation(key, jnp.arange(cfg.p**2))  # permute the indices
 
     # x vector in base p (x_0 + x_1 = _)
-    x = jnp.vstack((idxs.sort() % cfg.p, idxs.sort() // cfg.p, jnp.array(cfg.p).repeat(cfg.p**2))).T
+    x = jnp.int32(jnp.vstack((idxs.sort() % cfg.p, idxs.sort() // cfg.p, jnp.ones(cfg.p**2) * cfg.p)).T)
 
     # miiii task target (num samples times num primes less than cfg.p  (including p))
-    y_miiii = (x[:, :-1] * jnp.array((1, cfg.p))).sum(-1, keepdims=True) % primes[:-1]
+    y_miiii = (x[:, :-1] * jnp.array((1, cfg.p))).sum(-1, keepdims=True) % primes
 
     # nanda task target vector
-    y_nanda = x[:, :-1].sum(-1, keepdims=True) % cfg.p
+    # y_nanda = x[:, :-1].sum(-1, keepdims=True) % cfg.p
 
     # joint y vector (could mask different sub tasks)
-    y = jnp.concat((y_miiii, y_nanda), axis=-1)
+    y = y_miiii  # jnp.concat((y_miiii, y_nanda), axis=-1)
 
     # mask away integers larger than the task in question
-    mask = jnp.tile(jnp.arange(primes.max()), primes.size).reshape((primes.size, -1)) < primes[..., None]
+    mask = jnp.tile(jnp.arange(cfg.p), (primes.size, 1)) < primes[:, None]
 
     # weight submask relative to number of classes within it (correcting for expected loss)
     task = jnp.log(mask.sum(-1))  #  * jnp.ones(mask.shape[0])
