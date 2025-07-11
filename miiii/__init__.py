@@ -9,12 +9,4 @@ import lovely_jax as lj
 
 lj.monkey_patch()
 
-__all__ = [
-    "types",
-    "model",
-    "tasks",
-    "utils",
-    "plots",
-    "train",
-    "plots",
-]
+__all__ = ["types", "model", "tasks", "utils", "plots", "train", "plots"]

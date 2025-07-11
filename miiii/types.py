@@ -7,6 +7,12 @@ from jaxtyping import Array
 import jax.numpy as jnp
 
 
+@dataclass
+class Scope:
+    acc: Array
+    sce: Array
+
+
 # %% Types
 @dataclass
 class Dataset:

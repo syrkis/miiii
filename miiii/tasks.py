@@ -7,7 +7,6 @@ import jax.numpy as jnp
 from jax import Array, random
 from oeis import oeis
 from miiii.types import Dataset
-from miiii import plots
 
 
 def task_fn(key: Array, cfg) -> Dataset:
@@ -30,15 +29,10 @@ def task_fn(key: Array, cfg) -> Dataset:
     mask = jnp.tile(jnp.arange(primes.max()), primes.size).reshape((primes.size, -1)) < primes[:, None]
 
     # weight submask relative to number of classes within it (correcting for expected loss)
-    task = (1 / jnp.log(mask.sum(-1))) * jnp.ones(mask.shape[0])
+    task = jnp.log(mask.sum(-1))  #  * jnp.ones(mask.shape[0])
 
     # shuffeling permutation
     idxs = random.permutation(key, jnp.arange(cfg.p**2))  # permute the indices
 
     # final ds to return
-    ds = Dataset(x=x, y=y, idxs=idxs, task=task / task.sum(), mask=mask, primes=primes, frac=cfg.frac)
-
-    # save plots of ds
-    [fn(cfg, ds) for fn in (plots.plot_x, plots.plot_y)]
-
-    return ds
+    return Dataset(x=x, y=y, idxs=idxs, task=task / task.sum(), mask=mask, primes=primes, frac=cfg.frac)

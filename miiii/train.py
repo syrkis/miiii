@@ -8,7 +8,7 @@ from typing import cast
 
 import jax.numpy as jnp
 import optax
-from jax import lax, random, tree, value_and_grad, vmap, debug
+from jax import lax, random, tree, value_and_grad, vmap
 from typing import Tuple
 from optax import GradientTransformation
 from jax_tqdm import scan_tqdm
@@ -16,7 +16,7 @@ from jaxtyping import Array
 
 from miiii import model
 from miiii.tasks import Dataset
-from miiii.types import Params, State
+from miiii.types import Params, State, Scope
 
 
 # Constants
@@ -25,33 +25,39 @@ ADAM_BETA2 = 0.98
 
 
 # %% Functions
-def train_fn(rng, cfg, ds: Dataset, state: State, opt: GradientTransformation) -> Tuple[State, Array]:
+def train_fn(rng, cfg, ds: Dataset, state: State, opt: GradientTransformation) -> Tuple[State, Tuple[Array, Scope]]:
     @scan_tqdm(cfg.tick)
-    def step(state, idx_rng) -> Tuple[State, Array]:
+    def aux(state, idx_rng) -> Tuple[State, Tuple[Array, Scope]]:
         keys = random.split(idx_rng[1], cfg.epochs // cfg.tick)
         state, loss = lax.scan(partial(update_fn, opt, ds, cfg), state, keys)
-        return state, loss
+        return state, (loss, scope_fn(ds, rng, state))
 
-    input = (jnp.arange(cfg.tick), random.split(rng, cfg.tick))
-    state, loss = lax.scan(step, state, input)
-    return state, loss
+    state, (loss, acc) = lax.scan(aux, state, (jnp.arange(cfg.tick), random.split(rng, cfg.tick)))
+    return state, (loss, acc)
+
+
+def scope_fn(ds, rng, state) -> Scope:
+    logits, z = model.apply(ds, rng, state.params, ds.x)
+    acc: Array = (logits.argmax(-1) == ds.y).mean(0)
+    sce: Array = cross_entropy(logits, ds.y, ds.mask)
+    return Scope(acc=acc, sce=sce)
 
 
 def update_fn(opt: GradientTransformation, ds: Dataset, cfg, state: State, key) -> Tuple[State, Array]:
     loss, grad = value_and_grad(partial(loss_fn, ds))(state.params, key)
-    grad, emas = filter_fn(grad, state.emas, cfg.lamb, cfg.alpha)
+    # grad, emas = filter_fn(grad, state.emas, cfg.lamb, cfg.alpha)
     updates, opt_state = opt.update(grad, state.opt_state, state.params)  # type: ignore
     params = optax.apply_updates(state.params, updates)  # type: ignore
-    return State(params=params, emas=emas, opt_state=opt_state), loss  # type: ignore
+    return State(params=params, emas=state.emas, opt_state=opt_state), loss  # type: ignore
 
 
 def loss_fn(ds: Dataset, params: Params, rng: Array) -> Array:
     logits, z = model.apply(ds, rng, params, ds.x)
-    losses: Array = cross_entropy(logits, ds.y, ds.mask) * ds.task
-    return losses.sum()  # mean across tasks (weigted by expected n-ary classification loss)
+    losses: Array = cross_entropy(logits, ds.y, ds.mask)
+    return losses.mean()  # mean across tasks (weigted by expected n-ary classification loss)
 
 
-def filter_fn(grad: Params, emas: Params, lamb: float, alpha: float) -> Tuple[Params, Params]:
+def filter_fn(grad: Params, emas: Params, lamb, alpha) -> Tuple[Params, Params]:  # TODO: mi alg (the third comp)
     emas = tree.map(lambda grad, ema: ema * alpha + grad * (1 - alpha), grad, emas)
     grad = tree.map(lambda grad, ema: grad + lamb * ema, grad, emas)
     return grad, emas

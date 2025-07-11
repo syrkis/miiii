@@ -14,7 +14,7 @@ from functools import partial
 
 
 # Constants
-initializer = nn.initializers.he_normal()
+initializer: nn.initializers.Initializer = nn.initializers.he_normal()
 
 
 # Forward
