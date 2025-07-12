@@ -42,11 +42,15 @@ class Dataset:
 
 @dataclass
 class Params:
-    tok: Array
-    pos: Array
-    out: Array  # should be a linear layer ?
-    w_i: Array  # in
-    w_o: Array  # out
+    tok: Array  # tok_emb
+    pos: Array  # pos_emb
+    out: Array
+    i: Array
+    o: Array
+    k: Array
+    q: Array
+    v: Array
+    p: Array
 
 
 @dataclass
