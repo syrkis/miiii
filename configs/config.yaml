@@ -1,13 +1,14 @@
 # config.yaml
-p: 37 #113
-d: 32 # depth
+p: 113 #113
+d: 128 # depth
 h: 4 # heads
 seed: 1
-epochs: 1_000 # 65_536
+epochs: 65_536
+dropout: 0.4
 lr: 0.001
 tick: 100
 lamb: 2
-alpha: 0.9
+alpha: 0.99
 # search_space:
 # lr: [0.0001, 0.0003, 0.001]
 # l2: [0.0, 0.005, 0.1, 0.5, 1.0]

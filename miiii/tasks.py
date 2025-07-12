@@ -35,4 +35,4 @@ def task_fn(key: Array, p) -> Dataset:
     task = jnp.log(mask.sum(-1))  #  * jnp.ones(mask.shape[0])
 
     # final ds to return
-    return Dataset(x=x, y=y, idxs=idxs, task=task, mask=mask, primes=primes, frac=jnp.array(0.5))
+    return Dataset(x=x, y=y, idxs=idxs, task=task, mask=mask, primes=primes, limit=jnp.int32(0.5 * idxs.size))
