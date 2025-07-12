@@ -40,7 +40,7 @@ def train_fn(rng, cfg, ds: Dataset, state: State, opt: GradientTransformation) -
 
 
 def scope_fn(ds, rng, state) -> Scope:
-    logits, z = model.apply(rng, state.params, ds.x)
+    logits: Array = model.apply(rng, state.params, ds.x)
     acc: Array = (logits.argmax(-1) == ds.y).mean(0)
     cce: Array = cross_entropy(logits, ds.y, ds.mask)
     # debug.print("{i}", i=cce)
@@ -56,7 +56,7 @@ def update_fn(opt: GradientTransformation, ds: Dataset, cfg, state: State, key) 
 
 
 def loss_fn(params: Params, x, y, mask, rng: Array) -> Array:
-    logits, z = model.apply(rng, params, x)
+    logits: Array = model.apply(rng, params, x)
     losses: Array = cross_entropy(logits, y, mask)  # / ds.task  # normalize by n-ary task
     return losses.mean()  # mean across tasks (weigted by expected n-ary classification loss)
 
@@ -69,7 +69,6 @@ def loss_fn(params: Params, x, y, mask, rng: Array) -> Array:
 
 # %% INIT
 def init_fn(rng, cfg, ds: Dataset) -> Tuple[State, GradientTransformation]:
-    opt = optax.adam(cfg.lr)
     params = model.init_fn(rng, cfg, ds)
     emas = tree.map(lambda x: jnp.zeros_like(x), params)
     return State(params=params, opt_state=opt.init(params), emas=emas), opt  # type: ignore

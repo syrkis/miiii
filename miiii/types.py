@@ -23,6 +23,10 @@ class Dataset:
     task: Array  # correct for n-ary classification
     primes: Array  # prime numbers used
 
+    @property
+    def t(self):
+        return self.primes.size
+
     # @cached_property
     # def train(self):
     #     return self.x[self.idxs][: self.limit], self.y[self.idxs][: self.limit]
@@ -38,9 +42,9 @@ class Dataset:
 
 @dataclass
 class Params:
-    tok_emb: Array
-    pos_emb: Array
-    out_emb: Array  # should be a linear layer ?
+    tok: Array
+    pos: Array
+    out: Array  # should be a linear layer ?
     w_i: Array  # in
     w_o: Array  # out
 

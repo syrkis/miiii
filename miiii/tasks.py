@@ -9,30 +9,30 @@ from oeis import oeis
 from miiii.types import Dataset
 
 
-def task_fn(key: Array, cfg) -> Dataset:
-    # inclusive list of primes from 2 to cfg.p
-    primes = jnp.int32(oeis["A000040"][1 : cfg.p])[jnp.array(oeis["A000040"][1 : cfg.p]) < cfg.p]
+def task_fn(key: Array, p) -> Dataset:
+    # inclusive list of primes from 2 to p
+    primes = jnp.int32(oeis["A000040"][1:p])[jnp.array(oeis["A000040"][1:p]) <= p]
 
     # shuffeling permutation
-    idxs = random.permutation(key, jnp.arange(cfg.p**2))  # permute the indices
+    idxs = random.permutation(key, jnp.arange(p**2))  # permute the indices
 
     # x vector in base p (x_0 + x_1 = _)
-    x = jnp.int32(jnp.vstack((idxs.sort() % cfg.p, idxs.sort() // cfg.p, jnp.ones(cfg.p**2) * cfg.p)).T)
+    x = jnp.int32(jnp.vstack((idxs.sort() % p, idxs.sort() // p, jnp.ones(p**2) * p)).T)
 
-    # miiii task target (num samples times num primes less than cfg.p  (including p))
-    y_miiii = (x[:, :-1] * jnp.array((1, cfg.p))).sum(-1, keepdims=True) % primes
+    # miiii task target (num samples times num primes less than p  (including p))
+    y_miiii = (x[:, :-1] * jnp.array((1, p))).sum(-1, keepdims=True) % primes[:-1]
 
     # nanda task target vector
-    # y_nanda = x[:, :-1].sum(-1, keepdims=True) % cfg.p
+    y_nanda = x[:, :-1].sum(-1, keepdims=True) % p
 
     # joint y vector (could mask different sub tasks)
-    y = y_miiii  # jnp.concat((y_miiii, y_nanda), axis=-1)
+    y = jnp.concat((y_miiii, y_nanda), axis=-1)
 
     # mask away integers larger than the task in question
-    mask = jnp.tile(jnp.arange(cfg.p), (primes.size, 1)) < primes[:, None]
+    mask = (jnp.tile(jnp.arange(p), (primes.size, 1)) < primes[:, None])[None, ...]
 
     # weight submask relative to number of classes within it (correcting for expected loss)
     task = jnp.log(mask.sum(-1))  #  * jnp.ones(mask.shape[0])
 
     # final ds to return
-    return Dataset(x=x, y=y, idxs=idxs, task=task, mask=mask, primes=primes, frac=cfg.frac)
+    return Dataset(x=x, y=y, idxs=idxs, task=task, mask=mask, primes=primes, frac=jnp.array(0.5))

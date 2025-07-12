@@ -2,9 +2,8 @@
 p: 13 #113
 seed: 1
 epochs: 10_000 # 65_536
-latent_dim: 64 # 256
+d: 40 # 256
 lr: 0.001
-frac: 0.5
 # l2: 0.0
 tick: 100
 # search_space:
