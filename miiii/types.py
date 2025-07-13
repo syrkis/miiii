@@ -5,6 +5,7 @@
 # Imports
 from functools import cached_property
 from chex import dataclass
+from dataclasses import field
 from jaxtyping import Array
 import jax.numpy as jnp
 
@@ -20,30 +21,26 @@ class Scope:
 
 # %% Types
 @dataclass
-class Dataset:
+class Split:
     x: Array
     y: Array
+
+
+@dataclass
+class Dataset:
     idxs: Array
     mask: Array  # mask away n-2 classes when doing binary classification
     task: Array  # correct for n-ary classification
-    limit: Array
     primes: Array  # prime numbers used
+    train: Split
+    valid: Split
+    x: Array = field(init=False)  # Exclude from __init__
+    y: Array = field(init=False)  # Exclude from __init__
 
-    @property
-    def train_x(self):
-        return self.x[self.idxs][: self.limit]
-
-    @property
-    def valid_x(self):
-        return self.x[self.idxs][self.limit :]
-
-    @property
-    def train_y(self):
-        return self.y[self.idxs][: self.limit]
-
-    @property
-    def valid_y(self):
-        return self.y[self.idxs][self.limit :]
+    def __post_init__(self):
+        # Initialize arr as a jnp.array using x and y
+        object.__setattr__(self, "x", jnp.concat((self.train.x, self.valid.x))[jnp.argsort(self.idxs)])
+        object.__setattr__(self, "y", jnp.concat((self.train.y, self.valid.y))[jnp.argsort(self.idxs)])
 
 
 @dataclass

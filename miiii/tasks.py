@@ -6,7 +6,7 @@
 import jax.numpy as jnp
 from jax import Array, random
 from oeis import oeis
-from miiii.types import Dataset
+from miiii.types import Dataset, Split
 
 
 def task_fn(key: Array, p) -> Dataset:
@@ -34,5 +34,10 @@ def task_fn(key: Array, p) -> Dataset:
     # weight submask relative to number of classes within it (correcting for expected loss)
     task = jnp.log(mask.sum(-1))  #  * jnp.ones(mask.shape[0])
 
-    # final ds to return
-    return Dataset(x=x, y=y, idxs=idxs, task=task, mask=mask, primes=primes, limit=jnp.int32(0.5 * idxs.size))
+    # how large fraction of ds to use for train
+    limit = int(0.5 * idxs.size)
+
+    # train and valid splits
+    train, valid = Split(x=x[:limit], y=y[:limit]), Split(x=x[limit:], y=y[limit:])
+
+    return Dataset(idxs=idxs, task=task, mask=mask, primes=primes, train=train, valid=valid)
