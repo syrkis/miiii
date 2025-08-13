@@ -19,7 +19,7 @@ def log_fn(ctx, ds: mi.types.Dataset, state: mi.types.State, loss, scope) -> Non
     [fn(cfg=ctx.config, ds=ds, params=state.params, scope=scope) for fn in mi.plots.fns]
 
 
-@mlxp.launch(config_path="./configs")
+@mlxp.launch(config_path="./conf")
 def main(ctx: mlxp.Context) -> None:
     rng = random.PRNGKey(ctx.config.seed)
     ds = mi.tasks.task_fn(rng, ctx.config.p)
@@ -28,5 +28,6 @@ def main(ctx: mlxp.Context) -> None:
     log_fn(ctx, ds, state, loss, scope)
 
 
+# %%
 if __name__ == "__main__":
     main()

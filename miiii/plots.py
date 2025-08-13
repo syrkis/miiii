@@ -8,10 +8,11 @@ import esch
 from einops import rearrange
 import numpy as np
 import jax.numpy as jnp
-from jax import tree
+
+# from jax import tree
 import mlxp
-import seaborn as sns
-import matplotlib.pyplot as plt
+# import seaborn as sns
+# import matplotlib.pyplot as plt
 
 
 folder = "/Users/nobr/desk/s3/miiii"
@@ -61,20 +62,6 @@ def plot_params(**kwargs) -> None:  # cfg, ds, params: mi.types.Params):
     esch.save(e.dwg, f"{folder}/{cfg.p}_unbeds_x.svg")
 
 
-def plot_log(**kwargs) -> None:
-    parent_log_dir = "./logs/"
-    reader = mlxp.Reader(parent_log_dir, refresh=True)
-    query: str = "info.status == 'COMPLETE'"
-    # results = reader.filter(query_string=query, result_format="pandas")
-    # tmp = np.array(results["scope.train_cce"].tolist())
-    # sns.heatmap(tmp[-1].T)
-    # plt.show()
-    # tmp = jnp.array(results["train.loss"].to_list())
-    # print(tmp.shape)
-    # sns.heatmap(tmp)
-    # plt.show()
-
-
 def plot_metrics(**kwargs) -> None:
     cfg, params, ds, scope = kwargs["cfg"], kwargs["params"], kwargs["ds"], kwargs["scope"]
 
@@ -87,8 +74,8 @@ def plot_metrics(**kwargs) -> None:
         esch.save(e.dwg, f"{folder}/{cfg_to_str(cfg)}_train.svg")
 
     def period() -> None:
-        neu = rearrange(np.abs(np.array(scope.neu[..., -1], dtype=float)), "a b c -> 1 b c a")[:, 1:, 1:, ...]
-        fft = rearrange(np.abs(np.real(np.array(scope.fft[..., -1], dtype=float))), "a b c -> 1 b c a")[:, 1:, 1:, ...]
+        neu = rearrange(np.array(scope.neu[..., -1]).real, "a b c -> 1 b c a")[:, 1:, 1:, ...].astype(float)
+        fft = rearrange(np.array(scope.fft[..., -1]).real, "a b c -> 1 b c a")[:, 1:, 1:, ...].astype(float)
         data = np.concat((neu, fft)) + 0.0001
         e = esch.Drawing(w=data.shape[1] - 1, h=data.shape[2] - 1, row=1, col=data.shape[0], pad=4)
         esch.grid_fn(e, data / data.max((1, 2, 3), keepdims=True), shape="square", fps=1)
