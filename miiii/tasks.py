@@ -38,6 +38,6 @@ def task_fn(key: Array, p) -> Dataset:
     limit = int(0.5 * idxs.size)
 
     # train and valid splits
-    train, valid = Split(x=x[:limit], y=y[:limit]), Split(x=x[limit:], y=y[limit:])
+    train, valid = Split(x=x[idxs][:limit], y=y[idxs][:limit]), Split(x=x[idxs][limit:], y=y[idxs][limit:])
 
     return Dataset(idxs=idxs, task=task, mask=mask, primes=primes, train=train, valid=valid)

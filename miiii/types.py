@@ -17,6 +17,8 @@ class Scope:
     train_cce: Array
     valid_acc: Array
     valid_cce: Array
+    neu: Array
+    fft: Array
 
 
 # %% Types

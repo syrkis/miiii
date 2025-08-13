@@ -4,10 +4,11 @@
 
 # Imports
 from functools import partial
-from typing import Tuple
+from typing import Tuple, Callable
 
 import jax.numpy as jnp
 import optax
+from einops import rearrange
 from optax import softmax_cross_entropy_with_integer_labels as loss_fn
 from jax import lax, random, tree, value_and_grad, vmap, jit
 from jax_tqdm import scan_tqdm
@@ -20,8 +21,8 @@ from miiii.types import Params, Scope, State
 
 # %% Functions
 def filter_fn(grad: Params, emas: Params, lamb, alpha) -> Tuple[Params, Params]:
-    emas: Params = tree.map(lambda grad, ema: ema * alpha + grad * (1 - alpha), grad, emas)
-    grad: Params = tree.map(lambda grad, ema: grad + lamb * ema, grad, emas)
+    emas = tree.map(lambda grad, ema: ema * alpha + grad * (1 - alpha), grad, emas)
+    grad = tree.map(lambda grad, ema: grad + lamb * ema, grad, emas)
     return grad, emas
 
 
@@ -30,31 +31,32 @@ def train_fn(rng, cfg, ds: Dataset, state: State, opt) -> Tuple[State, Tuple[Arr
     def aux(state: State, inputs: Tuple[Array, Array]) -> Tuple[State, Tuple[Array, Scope]]:
         keys = random.split(inputs[1], cfg.epochs // cfg.tick)
         state, loss = lax.scan(jit(partial(update_fn, opt, ds, cfg)), state, keys)
-        return state, (loss, scope_fn(ds, rng, state))
+        return state, (loss, jit(partial(scope_fn, ds, cfg, rng))(state))
 
     return lax.scan(aux, state, (jnp.arange(cfg.tick), random.split(rng, cfg.tick)))
 
 
-@jit
-def scope_fn(ds: Dataset, rng: Array, state) -> Scope:
-    apply = vmap(partial(model.apply, state.params, 0.0, rng))
-    logits: tuple = apply(ds.train.x), apply(ds.valid.x)
-    acc: tuple = (logits[0].argmax(-1) == ds.train.y).mean(0), (logits[1].argmax(-1) == ds.valid.y).mean(0)
-    cce: tuple = (loss_fn(logits[0], ds.train.y, where=ds.mask), loss_fn(logits[1], ds.valid.y, where=ds.mask))
-    return Scope(train_acc=acc[0], valid_acc=acc[1], train_cce=cce[0].mean(0), valid_cce=cce[1].mean(0))
+def scope_fn(ds: Dataset, cfg, rng: Array, state) -> Scope:
+    apply: Callable[[Array], Tuple[Array, Array]] = vmap(partial(model.apply, state.params, 0.0, rng))
+    train, valid = apply(ds.train.x), apply(ds.valid.x)
+    acc = (train[0].argmax(-1) == ds.train.y).mean(0), (valid[0].argmax(-1) == ds.valid.y).mean(0)
+    cce = loss_fn(train[0], ds.train.y, where=ds.mask).mean(0), loss_fn(valid[0], ds.valid.y, where=ds.mask).mean(0)
+    neu = rearrange(jnp.concat((train[1], valid[1]))[:, -1][ds.idxs.argsort()], "(a b) ... -> a b ...", a=cfg.p)
+    fft = jnp.fft.fft2(neu)
+    return Scope(train_acc=acc[0], valid_acc=acc[1], train_cce=cce[0], valid_cce=cce[1], fft=fft, neu=neu)
 
 
 def update_fn(opt, ds: Dataset, cfg, state: State, rng) -> Tuple[State, Array]:
     loss, grad = grad_fn(state.params, cfg, rng, ds.train.x, ds.train.y, ds.mask, ds.task)
     grad, emas = filter_fn(grad, state.emas, cfg.lamb, cfg.alpha)
     updates, opt_state = opt.update(grad, state.opt_state, state.params)
-    params: Params = optax.apply_updates(state.params, updates)
+    params: Params = optax.apply_updates(state.params, updates)  # type: ignore
     return State(params=params, opt_state=opt_state, emas=emas), loss
 
 
 @value_and_grad
 def grad_fn(params: Params, cfg, rng, x: Array, y: Array, mask: Array, task: Array) -> Array:
-    logits: Array = vmap(partial(model.apply, params, cfg.dropout, rng))(x)
+    logits, z = vmap(partial(model.apply, params, cfg.dropout, rng))(x)
     losses = optax.softmax_cross_entropy_with_integer_labels(logits, y, where=mask) / task
     return losses.mean()
 

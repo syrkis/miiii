@@ -6,17 +6,18 @@
 from miiii.types import Params
 from jax import random, nn
 import jax.numpy as jnp
-from jax import Array
+from typing import Tuple
+from jaxtyping import Array
 from miiii.types import Dataset
 
 
 # %% Functions
-def apply(params: Params, dropout, rng: Array, x: Array) -> Array:
+def apply(params: Params, dropout, rng: Array, x: Array) -> Tuple[Array, Array]:
     keys = random.split(rng, 2)
-    z = params.tok.take(x, axis=0) + params.pos.take(jnp.arange(3), axis=0)
-    z = dropout_fn(keys[0], z + allu(params, z), dropout)  # <--- gets the people going
-    z = dropout_fn(keys[1], z + nn.relu(z @ params.i) @ params.o, dropout)
-    return jnp.dot(z[0], params.out)
+    x = params.tok.take(x, axis=0) + params.pos.take(jnp.arange(3), axis=0)
+    x = dropout_fn(keys[0], x + allu(params, x), dropout)  # <--- gets the people going
+    x = dropout_fn(keys[1], x + (z := nn.relu(x @ params.i)) @ params.o, dropout)
+    return jnp.dot(x[0], params.out), z
 
 
 def allu(params: Params, z: Array) -> Array:  # <-- all you need

@@ -19,6 +19,7 @@ dependencies = [
     "jax>=0.6.2; sys_platform != 'linux'",
     "jax[cuda12]>=0.6.2; sys_platform == 'linux'",
     "equinox>=0.13.0",
+    "jax>=0.6,<0.7",
 ]
 
 [dependency-groups]
