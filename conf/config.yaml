@@ -3,7 +3,7 @@ p: 37 #113
 d: 64 # width
 h: 2 # heads
 seed: 1
-epochs: 50_000
+epochs: 1_000
 dropout: 0.2
 lr: 0.003
 tick: 128
