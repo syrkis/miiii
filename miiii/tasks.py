@@ -1,5 +1,6 @@
 # tasks.py
 #   miii data functions
+# by: Noah Syrkis
 
 # %% Imports
 import jax.numpy as jnp

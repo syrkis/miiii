@@ -1,7 +1,9 @@
 # %% types.py
 #   miiii types
+# by: Noah Syrkis
 
 # Imports
+from functools import cached_property
 from chex import dataclass
 from dataclasses import field
 from jaxtyping import Array

@@ -1,5 +1,6 @@
 # %% model.py
 #   miii model for jax
+# by: Noah Syrkis
 
 # %% Imports
 from miiii.types import Params
