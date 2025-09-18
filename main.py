@@ -1,6 +1,6 @@
 # %% main.py
 #   miiii notebook
-# by: Noah Syrkis
+
 
 # Imports
 from jax import random

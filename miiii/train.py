@@ -1,6 +1,5 @@
 # %% train.py
 #   miiii train
-# by: Noah Syrkis
 
 # Imports
 from functools import partial

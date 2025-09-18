@@ -1,9 +1,9 @@
 # config.yaml
-p: 37 #113
-d: 64 # width
+p: 113 #113
+d: 128 # width
 h: 2 # heads
 seed: 1
-epochs: 1_000
+epochs: 50_000
 dropout: 0.2
 lr: 0.003
 tick: 128
