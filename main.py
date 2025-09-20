@@ -6,7 +6,6 @@
 from jax import random
 import miiii as mi
 import mlxp
-import os
 
 
 def log_fn(ctx, ds: mi.types.Dataset, state: mi.types.State, loss, scope) -> None:
