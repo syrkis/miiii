@@ -3,7 +3,6 @@ import mlxp
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
-import jax.numpy as jnp
 from oeis import oeis
 from omegaconf import OmegaConf
 
@@ -15,9 +14,17 @@ def primes_fn(p):  # return array of primes up to and including p
 # %%
 cfg = OmegaConf.load("conf/config.yaml")
 reader = mlxp.Reader("./logs/", refresh=True)
-query: str = "info.status == 'COMPLETE' & config.epochs == 65536 & config.p == 113"
+query: str = "info.status == 'COMPLETE' & config.epochs == 1000 & config.p == 23 & config.tick == 256"
 df = pd.DataFrame(reader.filter(query_string=query))
-df = df.loc[df["info.hostname"].map(lambda x: x.endswith("hpc.itu.dk"))]  # use remote
+# df = df.loc[df["info.hostname"].map(lambda x: x.endswith("hpc.itu.dk"))]  # use remote
+
+# %%
+
+np.array(df["train.loss"].to_list()).shape
+plt.plot(np.array(df["train.loss"].to_list()[-1]), label=primes_fn(23)[::-1])
+plt.legend()
+# np.array(df["scope.valid_cce"].to_list()).shape
+
 
 # %%
 fig, axes = plt.subplots(1, 2, figsize=(25, 10))
