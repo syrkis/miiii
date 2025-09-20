@@ -1,6 +1,8 @@
 # config.yaml
-p: 53 #113
-d: 128 # width
+device: "mac"
+
+p: 113
+d: 256
 lr: 0.003
 dropout: 0.2
 lamb: 0.5

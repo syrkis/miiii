@@ -16,10 +16,12 @@ def primes_fn(p):  # return array of primes up to and including p
 # %%
 cfg = OmegaConf.load("conf/config.yaml")
 reader = mlxp.Reader("./logs/", refresh=True)
-query = f"info.status == 'COMPLETE' & config.p == {cfg.p} & config.epochs == {cfg.epochs} & config.tick == {cfg.tick}"
+query = f"info.status == 'COMPLETE' & config.p == {cfg.p} & config.epochs == {cfg.epochs} & config.tick == {cfg.tick} & config.device == 'hpc'"
 df = pd.DataFrame(reader.filter(query_string=query))
 
 
+df
+# %%
 fig, axes = plt.subplots(1, 2, figsize=(15, 5))
 axes[0].plot(np.array(df["scope.train_acc"].to_list())[-1], alpha=0.5, label=primes_fn(cfg.p))
 axes[1].plot(np.array(df["scope.valid_acc"].to_list())[-1], alpha=0.5, label=primes_fn(cfg.p))
