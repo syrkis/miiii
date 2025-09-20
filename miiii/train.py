@@ -27,7 +27,7 @@ def filter_fn(grad: Params, emas: Params, lamb, alpha) -> Tuple[Params, Params]:
 
 
 def train_fn(rng, cfg, ds: Dataset, state: State, opt, mask: Array) -> Tuple[State, Tuple[Array, Scope]]:
-    # @scan_tqdm(cfg.tick)
+    @scan_tqdm(cfg.tick)
     def aux(state: State, inputs: Tuple[Array, Array]) -> Tuple[State, Tuple[Array, Scope]]:
         keys = random.split(inputs[1], cfg.epochs // cfg.tick)
         state, loss = lax.scan(jit(partial(update_fn, opt, ds, cfg, mask)), state, keys)
