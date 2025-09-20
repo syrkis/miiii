@@ -2,8 +2,8 @@
 #SBATCH --job-name=noah
 #SBATCH --output=outs/job.%j.out      # Name of output file (%j expands to jobId)
 #SBATCH --time=06:00:00
-# #SBATCH --gres=gpu:h100:1
-#SBATCH --gpus=1
+#SBATCH --gres=gpu:v100:1
+# #SBATCH --gpus=1
 #sbatch --mem=64G
 
 # Run your Python script
