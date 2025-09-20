@@ -1,14 +1,14 @@
 # config.yaml
-p: 37 #113
-d: 64 # width
-epochs: 65_536
-dropout: 0.2
+p: 53 #113
+d: 128 # width
 lr: 0.003
-tick: 256
+dropout: 0.2
 lamb: 0.5
+tick: 256
+epochs: 65_536
 
 # keep constant
-l2: 1.0 # nanda
+l2: .1 # nanda
 alpha: 0.98 # nanda
 b1: 0.9 # nanda
 b2: 0.98 # nanda

@@ -17,7 +17,7 @@ def log_fn(ctx, ds: mi.types.Dataset, state: mi.types.State, loss, scope) -> Non
         for jdx, entry in enumerate(tick):
             ctx.logger.log_metrics(dict(epoch=idx * loss.shape[1] + jdx, loss=entry.item()), "train")
 
-    [fn(cfg=ctx.config, ds=ds, params=state.params, scope=scope) for fn in mi.plots.fns]
+    # [fn(cfg=ctx.config, ds=ds, params=state.params, scope=scope) for fn in mi.plots.fns]
 
 
 @mlxp.launch(config_path="./conf")

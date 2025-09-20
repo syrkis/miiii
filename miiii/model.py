@@ -15,7 +15,7 @@ from miiii.types import Dataset
 def apply(params: Params, dropout, rng: Array, x: Array) -> Tuple[Array, Array]:
     keys = random.split(rng, 2)
     x = params.tok.take(x, axis=0) + params.pos.take(jnp.arange(3), axis=0)
-    x = dropout_fn(keys[0], x + attn(params, x), dropout)  # <--- gets the people going
+    x = dropout_fn(keys[0], x + attn(params, x), dropout)
     x = dropout_fn(keys[1], x + (z := nn.relu(x @ params.i)) @ params.o, dropout)
     return jnp.dot(x[0], params.out), z
 
@@ -24,7 +24,8 @@ def attn(params: Params, z: Array) -> Array:  # <-- all you need
     k, v, q = z @ params.k, z @ params.v, z @ params.q
     qk = jnp.einsum("bth, bsh -> bts", q, k) / jnp.sqrt(params.k.shape[-1])
     wei = nn.softmax(qk, axis=-1)
-    return vmap(jnp.dot)(vmap(jnp.dot)(wei, v), params.p).sum(0)
+    return (wei @ v @ params.p).sum(0)
+    # return vmap(jnp.dot)(vmap(jnp.dot)(wei, v), params.p).sum(0)
 
 
 def dropout_fn(key: Array, x: Array, dropout: float) -> Array:
