@@ -1,11 +1,18 @@
 # Push local changes to git
-push = "git add . && git commit -m 'WIP' && git push"
+push:
+    git add .
+    git commit -m 'WIP'
+    git push
 
 # SSH into cluster, pull repo, run job
-remote = "ssh nobr@hpc.itu.dk 'cd ~/miiii && git pull && sbatch script.sh'"
+remote:
+    ssh nobr@hpc.itu.dk 'cd ~/miiii && git pull && sbatch script.sh'
 
 # Copy result from cluster to local machine
-pull = "scp -r nobr@hpc.itu.dk:~/miiii/logs ."
+pull:
+    # rclone sync -P hpc:miiii/logs ./logs
+    # or, if you prefer scp:
+    scp -r nobr@hpc.itu.dk:~/miiii/logs .
 
 # Chain it all
 run:

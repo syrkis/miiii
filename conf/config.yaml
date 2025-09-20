@@ -1,13 +1,11 @@
 # config.yaml
-device: "mac"
-
-p: 113
-d: 256
+p: 23
+d: 32
 lr: 0.003
 dropout: 0.2
 lamb: 0.5
 tick: 256
-epochs: 65_536
+epochs: 1000
 
 # keep constant
 l2: .1 # nanda

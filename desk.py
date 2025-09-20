@@ -3,6 +3,7 @@ import mlxp
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
+import jax.numpy as jnp
 from oeis import oeis
 from omegaconf import OmegaConf
 
@@ -14,15 +15,14 @@ def primes_fn(p):  # return array of primes up to and including p
 # %%
 cfg = OmegaConf.load("conf/config.yaml")
 reader = mlxp.Reader("./logs/", refresh=True)
-query = f"info.status == 'COMPLETE' & config.p == 113 & config.epochs == {cfg.epochs} & config.tick == {cfg.tick} & config.device == 'hpc'"
+query: str = "info.status == 'COMPLETE' & config.epochs == 65536 & config.p == 113"
 df = pd.DataFrame(reader.filter(query_string=query))
+df = df.loc[df["info.hostname"].map(lambda x: x.endswith("hpc.itu.dk"))]  # use remote
 
-
-df
 # %%
-fig, axes = plt.subplots(1, 2, figsize=(15, 5))
-axes[0].plot(np.array(df["scope.train_acc"].to_list())[-1], alpha=0.5, label=primes_fn(cfg.p))
-axes[1].plot(np.array(df["scope.valid_acc"].to_list())[-1], alpha=0.5, label=primes_fn(cfg.p))
+fig, axes = plt.subplots(1, 2, figsize=(25, 10))
+axes[0].plot(np.array(df["scope.train_acc"].to_list())[-1], alpha=0.5, label=primes_fn(113).tolist()[:-1] + ["nanda"])
+axes[1].plot(np.array(df["scope.valid_acc"].to_list())[-1], alpha=0.5, label=primes_fn(113).tolist()[:-1] + ["nanda"])
 for ax in axes:
     ax.set_xlabel("Tick")
     ax.set_ylabel("Acc")
