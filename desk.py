@@ -2,15 +2,13 @@
 import mlxp
 import pandas as pd
 import matplotlib.pyplot as plt
-import seaborn as sns
-import jax.numpy as jnp
 import numpy as np
 from oeis import oeis
 from omegaconf import OmegaConf
 
 
 def primes_fn(p):  # return array of primes up to and including p
-    return jnp.array(oeis["A000040"][1:p])[jnp.array(oeis["A000040"][1:p]) <= p]
+    return np.array(oeis["A000040"][1:p])[np.array(oeis["A000040"][1:p]) <= p]
 
 
 # %%
