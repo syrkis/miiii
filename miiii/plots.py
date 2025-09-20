@@ -11,6 +11,7 @@ import jax.numpy as jnp
 from pathlib import Path
 
 
+"""
 # %% plot y
 def plot_y(**kwargs) -> None:
     cfg, ds = kwargs["cfg"], kwargs["ds"]
@@ -98,3 +99,5 @@ def cfg_to_str(cfg):
 
 
 fns = [plot_params, plot_x, plot_y, plot_metrics]
+
+"""

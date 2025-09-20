@@ -19,13 +19,13 @@ dependencies = [
     "jax-tqdm>=0.4.0",
 ]
 
-[dependency-groups]
-dev = ["esch"]
+# [dependency-groups]
+# dev = ["esch"]
 
 [tool.uv]
 
-[tool.uv.sources]
-esch = { path = "../esch" }
+# [tool.uv.sources]
+# esch = { path = "../esch" }
 
 [tool.pyright]
 venvPath = "."
