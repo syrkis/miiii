@@ -16,7 +16,7 @@ def primes_fn(p):  # return array of primes up to and including p
 # %%
 cfg = OmegaConf.load("conf/config.yaml")
 reader = mlxp.Reader("./logs/", refresh=True)
-query = f"info.status == 'COMPLETE' & config.p == {cfg.p} & config.epochs == {cfg.epochs} & config.tick == {cfg.tick} & config.device == 'hpc'"
+query = f"info.status == 'COMPLETE' & config.p == 113 & config.epochs == {cfg.epochs} & config.tick == {cfg.tick} & config.device == 'hpc'"
 df = pd.DataFrame(reader.filter(query_string=query))
 
 
