@@ -35,7 +35,7 @@ def main(ctx: mlxp.Context) -> None:
     rng = random.PRNGKey(ctx.config.seed)
     ds = mi.tasks.task_fn(rng, ctx.config.p)
     state, opt = mi.train.init_fn(rng, ctx.config, ds)
-    mask = jnp.cumsum(jnp.eye(ds.primes.size), 1) == 1
+    mask = (jnp.cumsum(jnp.eye(ds.primes.size), 1) == 1)[::3]
     state, (loss, scope) = pmap(partial(mi.train.train_fn, rng, ctx.config, ds, state, opt))(mask)
     log_fn(ctx, ds, state, loss, scope)
 
