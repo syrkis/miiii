@@ -62,7 +62,7 @@ def grad_fn(params: Params, cfg, rng, x: Array, y: Array, mask: Array, task: Arr
 
 
 def init_fn(rng, cfg, ds: Dataset) -> Tuple[State, optax.GradientTransformation]:
-    opt: optax.GradientTransformation = optax.adamw(cfg.lr, weight_decay=cfg.l2)
+    opt: optax.GradientTransformation = optax.adamw(cfg.lr, weight_decay=cfg.l2, b1=cfg.b1, b2=cfg.b2)
     params = model.init_fn(rng, cfg, ds)
     emas: Params = tree.map(lambda x: jnp.zeros_like(x), params)
     return State(params=params, opt_state=opt.init(params), emas=emas), opt  # type: ignore

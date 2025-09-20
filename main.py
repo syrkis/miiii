@@ -6,6 +6,7 @@
 from jax import random
 import miiii as mi
 import mlxp
+import os
 
 
 def log_fn(ctx, ds: mi.types.Dataset, state: mi.types.State, loss, scope) -> None:
@@ -23,6 +24,7 @@ def log_fn(ctx, ds: mi.types.Dataset, state: mi.types.State, loss, scope) -> Non
 def main(ctx: mlxp.Context) -> None:
     rng = random.PRNGKey(ctx.config.seed)
     ds = mi.tasks.task_fn(rng, ctx.config.p)
+
     state, opt = mi.train.init_fn(rng, ctx.config, ds)
     state, (loss, scope) = mi.train.train_fn(rng, ctx.config, ds, state, opt)
     log_fn(ctx, ds, state, loss, scope)

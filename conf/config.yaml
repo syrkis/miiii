@@ -1,12 +1,16 @@
 # config.yaml
-p: 113 #113
-d: 128 # width
-h: 2 # heads
-seed: 1
-epochs: 50_000
+p: 23 #113
+d: 64 # width
+epochs: 65_536
 dropout: 0.2
 lr: 0.003
-tick: 128
+tick: 256
 lamb: 0.5
-alpha: 0.9
-l2: 2.0
+
+# keep constant
+l2: 1.0 # nanda
+alpha: 0.98 # nanda
+b1: 0.9 # nanda
+b2: 0.98 # nanda
+h: 4 # nanda
+seed: 1 # whatever
