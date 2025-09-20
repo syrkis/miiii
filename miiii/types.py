@@ -30,8 +30,8 @@ class Split:
 @dataclass
 class Dataset:
     idxs: Array
-    mask: Array  # mask away n-2 classes when doing binary classification
-    task: Array  # correct for n-ary classification
+    classes: Array  # mask away n-2 classes when doing binary classification
+    weight: Array  # correct for n-ary classification
     primes: Array  # prime numbers used
     train: Split
     valid: Split

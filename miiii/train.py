@@ -26,11 +26,11 @@ def filter_fn(grad: Params, emas: Params, lamb, alpha) -> Tuple[Params, Params]:
     return grad, emas
 
 
-def train_fn(rng, cfg, ds: Dataset, state: State, opt) -> Tuple[State, Tuple[Array, Scope]]:
-    @scan_tqdm(cfg.tick)
+def train_fn(rng, cfg, ds: Dataset, state: State, opt, mask: Array) -> Tuple[State, Tuple[Array, Scope]]:
+    # @scan_tqdm(cfg.tick)
     def aux(state: State, inputs: Tuple[Array, Array]) -> Tuple[State, Tuple[Array, Scope]]:
         keys = random.split(inputs[1], cfg.epochs // cfg.tick)
-        state, loss = lax.scan(jit(partial(update_fn, opt, ds, cfg)), state, keys)
+        state, loss = lax.scan(jit(partial(update_fn, opt, ds, cfg, mask)), state, keys)
         return state, (loss, jit(partial(scope_fn, ds, cfg, rng))(state))
 
     return lax.scan(aux, state, (jnp.arange(cfg.tick), random.split(rng, cfg.tick)))
@@ -40,13 +40,13 @@ def scope_fn(ds: Dataset, cfg, rng: Array, state) -> Scope:
     apply: Callable[[Array], Tuple[Array, Array]] = vmap(partial(model.apply, state.params, 0.0, rng))
     train, valid = apply(ds.train.x), apply(ds.valid.x)
     acc = (train[0].argmax(-1) == ds.train.y).mean(0), (valid[0].argmax(-1) == ds.valid.y).mean(0)
-    cce = loss_fn(train[0], ds.train.y, where=ds.mask).mean(0), loss_fn(valid[0], ds.valid.y, where=ds.mask).mean(0)
+    cce = (loss_fn(train[0], ds.train.y, where=ds.classes).mean(0), loss_fn(valid[0], ds.valid.y, where=ds.classes).mean(0))
     fft, neo = jnp.zeros(0), jnp.zeros(0)
     return Scope(train_acc=acc[0], valid_acc=acc[1], train_cce=cce[0], valid_cce=cce[1], fft=fft, neu=neo)
 
 
-def update_fn(opt, ds: Dataset, cfg, state: State, rng) -> Tuple[State, Array]:
-    loss, grad = grad_fn(state.params, cfg, rng, ds.train.x, ds.train.y, ds.mask, ds.task)
+def update_fn(opt, ds: Dataset, cfg, mask, state: State, rng) -> Tuple[State, Array]:
+    loss, grad = grad_fn(state.params, cfg, rng, ds.train.x, ds.train.y, ds.classes, ds.weight, mask)
     grad, emas = filter_fn(grad, state.emas, cfg.lamb, cfg.alpha)
     updates, opt_state = opt.update(grad, state.opt_state, state.params)
     params: Params = optax.apply_updates(state.params, updates)  # type: ignore
@@ -54,10 +54,10 @@ def update_fn(opt, ds: Dataset, cfg, state: State, rng) -> Tuple[State, Array]:
 
 
 @value_and_grad
-def grad_fn(params: Params, cfg, rng, x: Array, y: Array, mask: Array, task: Array) -> Array:
+def grad_fn(params: Params, cfg, rng, x: Array, y: Array, classes: Array, weight: Array, mask) -> Array:
     logits, z = vmap(partial(model.apply, params, cfg.dropout, rng))(x)
-    losses = optax.softmax_cross_entropy_with_integer_labels(logits, y, where=mask) / task
-    return losses.mean()
+    losses = optax.softmax_cross_entropy_with_integer_labels(logits, y, where=classes) / weight
+    return (losses * mask).sum() / mask.sum()  # mask away some tasks
 
 
 def init_fn(rng, cfg, ds: Dataset) -> Tuple[State, optax.GradientTransformation]:

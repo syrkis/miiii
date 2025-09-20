@@ -29,10 +29,10 @@ def task_fn(key: Array, p) -> Dataset:
     y = jnp.concat((y_miiii, y_nanda), axis=-1)
 
     # mask away integers larger than the task in question
-    mask = (jnp.tile(jnp.arange(p), (primes.size, 1)) < primes[:, None])[None, ...]
+    classes = (jnp.tile(jnp.arange(p), (primes.size, 1)) < primes[:, None])[None, ...]
 
     # weight submask relative to number of classes within it (correcting for expected loss)
-    task = jnp.log(mask.sum(-1))  #  * jnp.ones(mask.shape[0])
+    weight = jnp.log(classes.sum(-1))  #  * jnp.ones(mask.shape[0])
 
     # how large fraction of ds to use for train
     limit = int(0.5 * idxs.size)
@@ -40,4 +40,4 @@ def task_fn(key: Array, p) -> Dataset:
     # train and valid splits
     train, valid = Split(x=x[idxs][:limit], y=y[idxs][:limit]), Split(x=x[idxs][limit:], y=y[idxs][limit:])
 
-    return Dataset(idxs=idxs, task=task, mask=mask, primes=primes, train=train, valid=valid)
+    return Dataset(idxs=idxs, weight=weight, classes=classes, primes=primes, train=train, valid=valid)
