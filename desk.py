@@ -15,7 +15,7 @@ def primes_fn(p):  # return array of primes up to and including p
 # %%
 cfg = OmegaConf.load("conf/config.yaml")
 reader = mlxp.Reader("./logs/", refresh=True)
-query: str = "info.status == 'COMPLETE' & config.epochs == 1000 & config.p == 23 & config.tick == 256"
+query: str = "info.status == 'COMPLETE' & config.p == 83 & config.tick == 128"
 df = pd.DataFrame(reader.filter(query_string=query))
 # df = df.loc[df["info.hostname"].map(lambda x: x.endswith("hpc.itu.dk"))]  # use remote
 
@@ -25,7 +25,6 @@ def plot_metrics(sample, idx):
     prime = sample["config.p"]
     primes = primes_fn(prime)
     fig, axes = plt.subplots(1, 5, figsize=(30, 5))
-    # for idx, p in enumerate(primes):
     axes[0].plot(np.array(sample["train.loss"])[:, idx])
     axes[1].plot(np.array(sample["scope.train_cce"])[:, idx], alpha=0.5, label=primes.tolist())
     axes[2].plot(np.array(sample["scope.valid_cce"])[:, idx], alpha=0.5, label=primes.tolist())
@@ -43,7 +42,7 @@ def plot_metrics(sample, idx):
 
 sample = df.iloc[-1]
 primes = primes_fn(sample["config.p"])
-for idx, p in enumerate(primes):
+for idx in range(np.array(df["train.loss"].iloc[-1]).shape[1]):
     plot_metrics(sample, idx)
 
 
