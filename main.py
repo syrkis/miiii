@@ -24,15 +24,12 @@ def log_fn(ctx, ds: mi.types.Dataset, state: mi.types.State, loss, scope) -> Non
             ctx.logger.log_metrics(dict(epoch=epoch + jdx, loss=loss[:, idx, jdx].tolist()), "train")
 
 
-# [fn(cfg=ctx.config, ds=ds, params=state.params, scope=scope) for fn in mi.plots.fns]
-
-
 @mlxp.launch(config_path="./conf")
 def main(ctx: mlxp.Context) -> None:
     rng = random.PRNGKey(ctx.config.seed)
     ds = mi.tasks.task_fn(rng, ctx.config.p)
     state, opt = mi.train.init_fn(rng, ctx.config, ds)
-    mask = (jnp.cumsum(jnp.eye(ds.primes.size), 1) == 1)[::5]
+    mask = (jnp.cumsum(jnp.eye(ds.primes.size), 1) == 1)[::6]
     state, (loss, scope) = vmap(partial(mi.train.train_fn, rng, ctx.config, ds, state, opt))(mask)
     log_fn(ctx, ds, state, loss, scope)
 
