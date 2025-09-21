@@ -8,7 +8,7 @@ tick: 256
 epochs: 1000
 
 # keep constant
-l2: .1 # nanda
+l2: 1.0 # nanda
 alpha: 0.98 # nanda
 b1: 0.9 # nanda
 b2: 0.98 # nanda
