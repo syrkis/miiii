@@ -12,6 +12,9 @@ from functools import partial
 
 
 def log_fn(ctx, ds: mi.types.Dataset, state: mi.types.State, loss, scope) -> None:
+    ctx.logger.log_artifacts(np.array(scope.neu), artifact_name="neu.pkl", artifact_type="pickle")
+    print(scope.neu.shape)
+    exit()
     for idx in range(ctx.config.tick):
         epoch = idx * (ctx.config.epochs // ctx.config.tick)
 
@@ -21,9 +24,6 @@ def log_fn(ctx, ds: mi.types.Dataset, state: mi.types.State, loss, scope) -> Non
 
         for jdx in range(ctx.config.epochs // ctx.config.tick):
             ctx.logger.log_metrics(dict(epoch=epoch + jdx, loss=loss[:, idx, jdx].tolist()), "train")
-
-        # TODO: log artifacts
-        ctx.logger.log_artifacts(np.array(scope.neu[:, idx]), artifact_name=f"{idx}_neu.pkl", artifact_type="pickle")
 
 
 # [fn(cfg=ctx.config, ds=ds, params=state.params, scope=scope) for fn in mi.plots.fns]

@@ -19,12 +19,6 @@ query: str = "info.status == 'COMPLETE' & config.epochs == 1000 & config.p == 23
 df = pd.DataFrame(reader.filter(query_string=query))
 # df = df.loc[df["info.hostname"].map(lambda x: x.endswith("hpc.itu.dk"))]  # use remote
 
-# %%
-
-np.array(df["train.loss"].to_list()).shape
-plt.plot(np.array(df["train.loss"].to_list()[-1]), label=primes_fn(23))
-plt.legend()
-
 
 # %%
 def plot_metrics(sample, idx):
@@ -54,14 +48,37 @@ for idx, p in enumerate(primes):
 
 
 # %%
+arr = sample["artifact.pickle."]["neu.pkl"].load()
+
+
 def plot_neu(arr, idx):
-    fig, axes = plt.subplots(8, 16, figsize=(20, 10))
+    fig, axes = plt.subplots(8, 16, figsize=(10, 5))
     for jdx, ax in enumerate(axes.flatten()):
-        sns.heatmap(arr[idx, ..., jdx], ax=ax, cmap="grey", cbar=False)
+        sns.heatmap(arr[idx, -1, jdx], ax=ax, cmap="grey", cbar=False)
         ax.axis("off")
     plt.show()
 
 
-arr = sample["artifact.pickle."]["127_neu.pkl"].load()
 for idx, p in enumerate(primes):
     plot_neu(arr, idx)
+
+
+# %%
+def plot_omega(arr):
+    fig, axes = plt.subplots(3, 3, figsize=(20, 8))
+    for idx, ax in enumerate(axes.flatten()):
+        tmp = arr[idx]
+        fft = np.abs(np.fft.fft2(tmp))[..., 1:, 1:]
+        mu, sigma = fft.mean((-2, -1), keepdims=True), fft.std((-2, -1), keepdims=True)
+        data = (fft > (mu + 5 * sigma)).sum((-2, -1))
+        # Create coordinate grid
+        y_dim, x_dim = data.T.shape
+        x = np.arange(x_dim + 1)
+        y = np.arange(y_dim + 1)
+        pcm = ax.pcolormesh(x, y, data.T, cmap="grey", shading="auto")
+        ax.axis("off")
+
+    plt.show()
+
+
+plot_omega(arr)

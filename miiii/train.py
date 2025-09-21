@@ -43,7 +43,7 @@ def scope_fn(ds: Dataset, cfg, rng: Array, state) -> Scope:
     valid_acc = (valid[0].argmax(-1) == ds.valid.y).mean(0)
     train_cce = loss_fn(train[0], ds.train.y, where=ds.classes).mean(0)
     valid_cce = loss_fn(valid[0], ds.valid.y, where=ds.classes).mean(0)
-    neu = rearrange(jnp.concat((train[1], valid[1]))[:, -1][ds.idxs.argsort()], "(a b) ... -> a b ...", a=cfg.p)
+    neu = rearrange(jnp.concat((train[1], valid[1]))[:, -1][ds.idxs.argsort()], "(a b) n -> n a b", a=cfg.p)
     # fft = jnp.fft.fft2(neu)
     return Scope(train_acc=train_acc, valid_acc=valid_acc, train_cce=train_cce, valid_cce=valid_cce, neu=neu)
 
