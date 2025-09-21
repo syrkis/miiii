@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --output=outs/job.%j.out      # Name of output file (%j expands to jobId)
 #SBATCH --time=06:00:00
-#SBATCH --gres=gpu:v100:1
+#SBATCH --gres=gpu:a100:1
 # #SBATCH --gpus=1
 
 # Run your Python script
