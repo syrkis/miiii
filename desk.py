@@ -68,12 +68,13 @@ def plot_omega(arr):
     fig, axes = plt.subplots(4, figsize=(20, 40))
 
     for idx, ax in enumerate(axes.flatten()):
-        tmp = rearrange(arr[idx], "a b ... -> b a ...")[10:]
+        tmp = rearrange(arr[idx], "a b ... -> b a ...")
+        print(tmp.shape)
         fft = np.abs(np.fft.fft2(tmp))[..., 1:, 1:]
-        mu, sigma = fft.mean((-2, -1), keepdims=True), fft.std((-2, -1), keepdims=True)
+        mu, sigma = fft.mean((-4, -3, -2, -1), keepdims=True), fft.std((-4, -3, -2, -1), keepdims=True)
         data = (fft > (mu + 2 * sigma)).mean((-2, -1))
-        # ax.plot(data.sum(0))
-        sns.heatmap(data, ax=ax, cmap="grey", cbar=False)
+        ax.plot(data.sum(0))
+        # sns.heatmap(data, ax=ax, cmap="grey", cbar=False)
         # logarithmic_data = np.logspace(10, np.log(data.shape[1]), data.shape[1] + 1)
         # ax.pcolormesh(logarithmic_data, np.arange(data.shape[0] + 1), data, shading="flat", cmap="grey")
         # ax.set_xscale("log")

@@ -10,9 +10,9 @@ remote:
 
 # Copy result from cluster to local machine
 pull:
-    # rclone sync -P hpc:miiii/logs ./logs
+    rclone sync -P hpc:miiii/logs ./logs
     # or, if you prefer scp:
-    scp -r nobr@hpc.itu.dk:~/miiii/logs .
+    # scp -r nobr@hpc.itu.dk:~/miiii/logs .
 
 # Chain it all
 run:
