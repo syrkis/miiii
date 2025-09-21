@@ -13,8 +13,6 @@ from functools import partial
 
 def log_fn(ctx, ds: mi.types.Dataset, state: mi.types.State, loss, scope) -> None:
     ctx.logger.log_artifacts(np.array(scope.neu), artifact_name="neu.pkl", artifact_type="pickle")
-    print(scope.neu.shape)
-    exit()
     for idx in range(ctx.config.tick):
         epoch = idx * (ctx.config.epochs // ctx.config.tick)
 
@@ -34,7 +32,7 @@ def main(ctx: mlxp.Context) -> None:
     rng = random.PRNGKey(ctx.config.seed)
     ds = mi.tasks.task_fn(rng, ctx.config.p)
     state, opt = mi.train.init_fn(rng, ctx.config, ds)
-    mask = jnp.cumsum(jnp.eye(ds.primes.size), 1) == 1
+    mask = (jnp.cumsum(jnp.eye(ds.primes.size), 1) == 1)[::5]
     state, (loss, scope) = vmap(partial(mi.train.train_fn, rng, ctx.config, ds, state, opt))(mask)
     log_fn(ctx, ds, state, loss, scope)
 
