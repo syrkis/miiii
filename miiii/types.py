@@ -17,7 +17,6 @@ class Scope:
     valid_acc: Array
     valid_cce: Array
     neu: Array
-    fft: Array
 
 
 # %% Types

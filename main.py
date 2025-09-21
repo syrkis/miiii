@@ -23,12 +23,7 @@ def log_fn(ctx, ds: mi.types.Dataset, state: mi.types.State, loss, scope) -> Non
             ctx.logger.log_metrics(dict(epoch=epoch + jdx, loss=loss[:, idx, jdx].tolist()), "train")
 
         # TODO: log artifacts
-        ctx.logger.log_artifacts(
-            {"neu": np.array(scope.neu[:, idx]), "epoch": epoch}, artifact_name="neu.pkl", artifact_type="pickle"
-        )
-        ctx.logger.log_artifacts(
-            {"fft": np.array(scope.fft[:, idx]), "epoch": epoch}, artifact_name="fft.pkl", artifact_type="pickle"
-        )
+        ctx.logger.log_artifacts(np.array(scope.neu[:, idx]), artifact_name=f"{idx}_neu.pkl", artifact_type="pickle")
 
 
 # [fn(cfg=ctx.config, ds=ds, params=state.params, scope=scope) for fn in mi.plots.fns]

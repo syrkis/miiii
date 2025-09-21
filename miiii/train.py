@@ -39,10 +39,13 @@ def train_fn(rng, cfg, ds: Dataset, state: State, opt, mask: Array) -> Tuple[Sta
 def scope_fn(ds: Dataset, cfg, rng: Array, state) -> Scope:
     apply: Callable[[Array], Tuple[Array, Array]] = vmap(partial(model.apply, state.params, 0.0, rng))
     train, valid = apply(ds.train.x), apply(ds.valid.x)
-    acc = (train[0].argmax(-1) == ds.train.y).mean(0), (valid[0].argmax(-1) == ds.valid.y).mean(0)
-    cce = (loss_fn(train[0], ds.train.y, where=ds.classes).mean(0), loss_fn(valid[0], ds.valid.y, where=ds.classes).mean(0))
-    fft, neo = jnp.zeros(0), jnp.zeros(0)
-    return Scope(train_acc=acc[0], valid_acc=acc[1], train_cce=cce[0], valid_cce=cce[1], fft=fft, neu=neo)
+    train_acc = (train[0].argmax(-1) == ds.train.y).mean(0)
+    valid_acc = (valid[0].argmax(-1) == ds.valid.y).mean(0)
+    train_cce = loss_fn(train[0], ds.train.y, where=ds.classes).mean(0)
+    valid_cce = loss_fn(valid[0], ds.valid.y, where=ds.classes).mean(0)
+    neu = rearrange(jnp.concat((train[1], valid[1]))[:, -1][ds.idxs.argsort()], "(a b) ... -> a b ...", a=cfg.p)
+    # fft = jnp.fft.fft2(neu)
+    return Scope(train_acc=train_acc, valid_acc=valid_acc, train_cce=train_cce, valid_cce=valid_cce, neu=neu)
 
 
 def update_fn(opt, ds: Dataset, cfg, mask, state: State, rng) -> Tuple[State, Array]:
