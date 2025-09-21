@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --output=outs/job.%j.out      # Name of output file (%j expands to jobId)
 #SBATCH --gres=gpu:a100_80gb:1
-#SBATCH --time=00:50:00
+#SBATCH --time=06:00:00
 #SBATCH --partition=acltr
 #SBATCH --nodelist=cn[7]
 #SBATCH --exclusive

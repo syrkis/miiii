@@ -21,8 +21,8 @@ from miiii.types import Params, Scope, State
 
 # %% Functions
 def filter_fn(grad: Params, emas: Params, lamb, alpha) -> Tuple[Params, Params]:
-    emas = tree.map(lambda grad, ema: ema * alpha + grad * (1 - alpha), grad, emas)
-    grad = tree.map(lambda grad, ema: grad + lamb * ema, grad, emas)
+    emas: Params = tree.map(lambda grad, ema: ema * alpha + grad * (1 - alpha), grad, emas)
+    grad: Params = tree.map(lambda grad, ema: grad + lamb * ema, grad, emas)
     return grad, emas
 
 
@@ -43,7 +43,7 @@ def scope_fn(ds: Dataset, cfg, rng: Array, state) -> Scope:
     valid_acc = (valid[0].argmax(-1) == ds.valid.y).mean(0)
     train_cce = loss_fn(train[0], ds.train.y, where=ds.classes).mean(0)
     valid_cce = loss_fn(valid[0], ds.valid.y, where=ds.classes).mean(0)
-    neu = rearrange(jnp.concat((train[1], valid[1]))[:, -1][ds.idxs.argsort()], "(a b) n -> n a b", a=cfg.p)[::8, :23, :23]
+    neu = rearrange(jnp.concat((train[1], valid[1]))[:, -1][ds.idxs.argsort()], "(a b) n -> n a b", a=cfg.p)[::16, :23, :23]
     return Scope(train_acc=train_acc, valid_acc=valid_acc, train_cce=train_cce, valid_cce=valid_cce, neu=neu)
 
 
