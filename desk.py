@@ -6,6 +6,7 @@ import numpy as np
 from oeis import oeis
 import seaborn as sns
 from omegaconf import OmegaConf
+from einops import rearrange
 
 
 def primes_fn(p):  # return array of primes up to and including p
@@ -15,7 +16,7 @@ def primes_fn(p):  # return array of primes up to and including p
 # %%
 cfg = OmegaConf.load("conf/config.yaml")
 reader = mlxp.Reader("./logs/", refresh=True)
-query: str = "info.status == 'COMPLETE' & config.p == 83 & config.tick == 128"
+query: str = "info.status == 'COMPLETE' & config.p == 83 & config.tick == 128 & config.l2 == 0.1"
 df = pd.DataFrame(reader.filter(query_string=query))
 # df = df.loc[df["info.hostname"].map(lambda x: x.endswith("hpc.itu.dk"))]  # use remote
 
@@ -32,7 +33,7 @@ def plot_metrics(sample, idx):
     axes[4].plot(np.array(sample["scope.valid_acc"])[:, idx], alpha=0.5, label=primes.tolist())
     for jdx, ax in enumerate(axes):
         ax.set_title("train_loss train_cce valid_cce train_acc valid_acc".split()[jdx])
-        ax.set_ylabel(str(p) + " or larger" if jdx == 0 else "")
+        ax.set_ylabel("mask " + str(idx) if jdx == 0 else "")
         ax.set_xscale("log")
         if jdx > 0:
             ax.legend()
@@ -51,33 +52,42 @@ arr = sample["artifact.pickle."]["neu.pkl"].load()
 
 
 def plot_neu(arr, idx):
-    fig, axes = plt.subplots(8, 16, figsize=(10, 5))
+    fig, axes = plt.subplots(4, 8, figsize=(10, 5))
     for jdx, ax in enumerate(axes.flatten()):
         sns.heatmap(arr[idx, -1, jdx], ax=ax, cmap="grey", cbar=False)
         ax.axis("off")
     plt.show()
 
 
-for idx, p in enumerate(primes):
+for idx in range(np.array(df["train.loss"].iloc[-1]).shape[1]):
     plot_neu(arr, idx)
 
 
 # %%
 def plot_omega(arr):
-    fig, axes = plt.subplots(3, 3, figsize=(20, 8))
+    fig, axes = plt.subplots(4, figsize=(20, 40))
+
     for idx, ax in enumerate(axes.flatten()):
-        tmp = arr[idx]
+        tmp = rearrange(arr[idx], "a b ... -> b a ...")[10:]
         fft = np.abs(np.fft.fft2(tmp))[..., 1:, 1:]
         mu, sigma = fft.mean((-2, -1), keepdims=True), fft.std((-2, -1), keepdims=True)
-        data = (fft > (mu + 5 * sigma)).sum((-2, -1))
-        # Create coordinate grid
-        y_dim, x_dim = data.T.shape
-        x = np.arange(x_dim + 1)
-        y = np.arange(y_dim + 1)
-        pcm = ax.pcolormesh(x, y, data.T, cmap="grey", shading="auto")
-        ax.axis("off")
+        data = (fft > (mu + 2 * sigma)).mean((-2, -1))
+        # ax.plot(data.sum(0))
+        sns.heatmap(data, ax=ax, cmap="grey", cbar=False)
+        # logarithmic_data = np.logspace(10, np.log(data.shape[1]), data.shape[1] + 1)
+        # ax.pcolormesh(logarithmic_data, np.arange(data.shape[0] + 1), data, shading="flat", cmap="grey")
+        # ax.set_xscale("log")
+        # ax.set_xlim(logarithmic_data[0], logarithmic_data[-1])
 
     plt.show()
 
 
 plot_omega(arr)
+# %%
+
+fft = np.abs(np.fft.fft2(arr))[..., 1:, 1:]
+# %%
+plt.imshow(fft[-1, 70, -1])
+
+# %%
+arr.shape

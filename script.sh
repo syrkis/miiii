@@ -6,4 +6,5 @@
 
 # Run your Python script
 export XLA_PYTHON_CLIENT_MEM_FRACTION="1.00"
-time singularity exec --nv miiii.sif uv run python main.py p=83 epochs=65536 d=128 tick=128
+export JAX_ENABLE_X64=true
+time singularity exec --nv miiii.sif uv run python main.py p=113 epochs=65536 d=256

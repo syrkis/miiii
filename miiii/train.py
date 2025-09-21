@@ -58,7 +58,7 @@ def update_fn(opt, ds: Dataset, cfg, mask, state: State, rng) -> Tuple[State, Ar
 @value_and_grad
 def grad_fn(params: Params, cfg, rng, x: Array, y: Array, classes: Array, weight: Array, mask) -> Array:
     logits, z = vmap(partial(model.apply, params, cfg.dropout, rng))(x)
-    losses = optax.softmax_cross_entropy_with_integer_labels(logits, y, where=classes) / weight
+    losses = optax.softmax_cross_entropy_with_integer_labels(jnp.float64(logits), y, where=classes) / weight
     return (losses.mean(0) * mask).sum() / mask.sum()  # mask away some tasks
 
 
