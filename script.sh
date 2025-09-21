@@ -5,6 +5,7 @@
 #SBATCH --partition=acltr
 #SBATCH --nodelist=cn[7]
 #SBATCH --exclusive
+#SBATCH --nodes=1
 # #SBATCH --gpus=1
 
 # Run your Python script
