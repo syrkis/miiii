@@ -12,6 +12,7 @@ export XLA_PYTHON_CLIENT_MEM_FRACTION="1.00"
 export JAX_ENABLE_X64=true
 time singularity exec --nv miiii.sif uv run python main.py \
     p=113 \
-    epochs=100_000 \
+    epochs=65_536 \
     d=256 \
-    tick=512
+    tick=512 \
+    lambd=0.5

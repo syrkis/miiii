@@ -4,7 +4,7 @@
 
 # %% Imports
 from miiii.types import Params
-from jax import random, nn, vmap
+from jax import random, nn
 import jax.numpy as jnp
 from typing import Tuple
 from jaxtyping import Array

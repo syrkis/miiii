@@ -16,7 +16,7 @@ def primes_fn(p):  # return array of primes up to and including p
 # %%
 cfg = OmegaConf.load("conf/config.yaml")
 reader = mlxp.Reader("./logs/", refresh=True)
-query: str = "info.status == 'COMPLETE' & config.p == 113 & config.tick == 256 & config.l2 == 0.1"
+query: str = "info.status == 'COMPLETE' & config.p == 113 & config.tick == 512 & config.l2 == 0.1"
 df = pd.DataFrame(reader.filter(query_string=query))
 # df = df.loc[df["info.hostname"].map(lambda x: x.endswith("hpc.itu.dk"))]  # use remote
 
@@ -25,7 +25,7 @@ df = pd.DataFrame(reader.filter(query_string=query))
 def plot_metrics(sample, idx):
     prime = sample["config.p"]
     primes = primes_fn(prime)
-    fig, axes = plt.subplots(1, 5, figsize=(20, 4))
+    fig, axes = plt.subplots(1, 5, figsize=(15, 4))
     axes[0].plot(np.array(sample["train.loss"])[:, idx])
     axes[1].plot(np.array(sample["scope.train_cce"])[:, idx], alpha=0.5, label=primes.tolist())
     axes[2].plot(np.array(sample["scope.valid_cce"])[:, idx], alpha=0.5, label=primes.tolist())
@@ -34,7 +34,7 @@ def plot_metrics(sample, idx):
     for jdx, ax in enumerate(axes):
         ax.set_title("train_loss train_cce valid_cce train_acc valid_acc".split()[jdx])
         ax.set_ylabel("mask " + str(idx) if jdx == 0 else "")
-        ax.set_xscale("log")
+        # ax.set_xscale("log")
         # if jdx > 0:
         # ax.legend()
         ax.set_xticklabels([])
@@ -70,26 +70,16 @@ def plot_omega(arr):
     for idx, ax in enumerate(axes.flatten()):
         tmp = rearrange(arr[idx], "a b ... -> b a ...")
         fft = np.abs(np.fft.fft2(tmp))[..., 1:, 1:]
-        mu, sigma = fft.mean(), fft.std()
+        mu, sigma = fft.mean((-4, -3, -2, -1), keepdims=True), fft.std((-4, -3, -2, -1), keepdims=True)
         data = (fft > (mu + 2 * sigma)).mean((-2, -1))
-        # sns.heatmap(data, ax=ax, cmap="viridis", cbar=False)
-        # continue
+        ax.plot(data.sum(0))
+        continue
 
         # Find indices spaced logarithmically from 1 to t (avoid log(0)!)
-        log_indices = np.logspace(0, np.log(data.shape[1] - 1), num=256, base=np.e)
-        log_indices = np.unique(np.round(log_indices)).astype(int)
-        log_indices = np.clip(log_indices, 0, data.shape[1] - 1)
+        # sns.heatmap(data, ax=ax, cmap="viridis", cbar=False)
 
-        # Now sample
-        sns.heatmap(data[:, log_indices], ax=ax, cmap="viridis", cbar=False)
-
-        # print(data.shape)
-        # time = np.linspace(1, 1000, data.shape[0])  # time steps, spaced exponentially or linearly, but > 0
-        # vector_indices = np.arange(data.shape[0] + 1)
-        # time_edges = np.geomspace(time[0], time[-1], data.shape[1] + 1)  # edges for pcolormesh need 1 more than points
-        # pc = ax.pcolormesh(time_edges, vector_indices, data, shading="auto")
-        # ax.set_xscale("log")  # Set log scale on time axis
-
+        log_mask = np.unique(np.round(np.logspace(0, np.log10(data.shape[1] - 1), num=min(data.shape[1], 256)))).astype(int)
+        sns.heatmap(data[:, log_mask], ax=ax, cmap="viridis", cbar=False)
     plt.show()
 
 
@@ -101,4 +91,3 @@ fft = np.abs(np.fft.fft2(arr))[..., 1:, 1:]
 plt.imshow(fft[-1, 70, -1])
 
 # %%
-arr.shape

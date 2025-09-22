@@ -1,16 +1,16 @@
 # config.yaml
 p: 23
 d: 256
-lr: 0.003
-dropout: 0.2
+lr: 0.001
+dropout: 0.1
 lamb: 0.5
 tick: 256
 epochs: 1000
 
 # keep constant
-l2: 0.1 # not nanda
-alpha: 0.98 # nanda
+alpha: 0.98 # lee
+l2: 0.33 # miiii
 b1: 0.9 # nanda
 b2: 0.98 # nanda
-h: 4 # nanda
 seed: 1 # whatever
+h: 4 # nanda

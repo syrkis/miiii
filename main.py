@@ -3,7 +3,7 @@
 # by: Noah Syrkis
 
 # Imports
-from jax import random, vmap, lax
+from jax import random, vmap
 import miiii as mi
 import mlxp
 import jax.numpy as jnp
