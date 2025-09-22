@@ -15,4 +15,4 @@ time singularity exec --nv miiii.sif uv run python main.py \
     epochs=65_536 \
     d=256 \
     tick=512 \
-    lambd=0.5
+    lamb=0.5
