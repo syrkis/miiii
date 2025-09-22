@@ -29,7 +29,8 @@ def main(ctx: mlxp.Context) -> None:
     rng = random.PRNGKey(ctx.config.seed)
     ds = mi.tasks.task_fn(rng, ctx.config.p)
     state, opt = mi.train.init_fn(rng, ctx.config, ds)
-    mask = (jnp.cumsum(jnp.eye(ds.primes.size), 1) == 1)[::6]
+    nanda = jnp.eye(ds.primes.size)[-1] == 1
+    mask = jnp.concat((~nanda[None, :], (jnp.cumsum(jnp.eye(ds.primes.size), 1) == 1)[::6], nanda))
     state, (loss, scope) = vmap(partial(mi.train.train_fn, rng, ctx.config, ds, state, opt))(mask)
     log_fn(ctx, ds, state, loss, scope)
 

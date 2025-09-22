@@ -34,7 +34,7 @@ def plot_metrics(sample, idx):
     for jdx, ax in enumerate(axes):
         ax.set_title("train_loss train_cce valid_cce train_acc valid_acc".split()[jdx])
         ax.set_ylabel("mask " + str(idx) if jdx == 0 else "")
-        # ax.set_xscale("log")
+        ax.set_xscale("log")
         # if jdx > 0:
         # ax.legend()
         ax.set_xticklabels([])
@@ -72,8 +72,9 @@ def plot_omega(arr):
         fft = np.abs(np.fft.fft2(tmp))[..., 1:, 1:]
         mu, sigma = fft.mean((-4, -3, -2, -1), keepdims=True), fft.std((-4, -3, -2, -1), keepdims=True)
         data = (fft > (mu + 2 * sigma)).mean((-2, -1))
-        ax.plot(data.sum(0))
-        continue
+        # ax.plot(data.sum(0))
+        # ax.set_xscale("log")
+        # continue
 
         # Find indices spaced logarithmically from 1 to t (avoid log(0)!)
         # sns.heatmap(data, ax=ax, cmap="viridis", cbar=False)
