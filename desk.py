@@ -86,6 +86,7 @@ def plot_omega(arr):
 plot_omega(arr)
 # %%
 
+
 fft = np.abs(np.fft.fft2(arr))[..., 1:, 1:]
 # %%
 plt.imshow(fft[-1, 70, -1])
