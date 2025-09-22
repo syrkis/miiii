@@ -3,7 +3,7 @@
 #SBATCH --gres=gpu:a100:1
 #SBATCH --time=06:00:00
 #SBATCH --partition=acltr
-#SBATCH --nodelist=cn[7]
+#SBATCH --nodelist=cn[13]
 #SBATCH --exclusive
 #SBATCH --nodes=1
 
