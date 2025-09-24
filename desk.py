@@ -65,6 +65,8 @@ def plot_neu(sample, path):
     tmp = (fft > mu + sigma * 2).mean((-2, -1))
     e = esch.draw("n w h", (tmp / (tmp.max(0, keepdims=True)))[:, log_index(tmp.shape[1])][::3])
     e.save(f"{path}/fft_curve.svg")
+    plt.plot(tmp.sum(-1).T, label=range(7))
+    plt.show()
 
 
 # %%
