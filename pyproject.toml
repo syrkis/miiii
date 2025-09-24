@@ -17,6 +17,7 @@ dependencies = [
     "equinox>=0.13.0",
     "jaxtyping>=0.3.2",
     "jax-tqdm>=0.4.0",
+    "esch==0.0.88",
 ]
 
 # [dependency-groups]
